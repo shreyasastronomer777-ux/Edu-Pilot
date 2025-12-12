@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -9,10 +10,13 @@ import Attendance from './components/Attendance';
 import PlagiarismChecker from './components/PlagiarismChecker';
 import Login from './components/Login';
 import { View } from './types';
-import { Menu, Moon, Sun, LogOut } from 'lucide-react';
+import { Menu, Moon, Sun, LogOut, Loader2 } from 'lucide-react';
+import { auth } from './firebaseConfig';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -37,12 +41,50 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
+  // Auth State Listener
+  useEffect(() => {
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+        setAuthChecking(false);
+      });
+      return () => unsubscribe();
+    } else {
+      // If no auth configured, just stop checking
+      setAuthChecking(false);
+    }
+  }, []);
+
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Logout failed", error);
+      }
+    }
     setIsLoggedIn(false);
     setCurrentView(View.DASHBOARD);
   };
+
+  // If using real auth, show loading while checking state
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <Loader2 className="animate-spin text-indigo-600 dark:text-indigo-400" size={40} />
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />;
+  }
 
   const renderContent = () => {
     switch (currentView) {
@@ -63,10 +105,6 @@ const App: React.FC = () => {
         return <Dashboard onChangeView={setCurrentView} />;
     }
   };
-
-  if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />;
-  }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex`}>

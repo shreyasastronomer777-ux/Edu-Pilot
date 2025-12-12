@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
-import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
-// import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'; // Import when firebase is active
-// import { auth, googleProvider } from '../firebaseConfig';
+import { Mail, Lock, Loader2, ArrowRight, AlertCircle } from 'lucide-react';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../firebaseConfig';
 
 interface LoginProps {
   onLogin: () => void;
@@ -41,21 +42,28 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      // --- REAL FIREBASE LOGIN CODE ---
-      // if (auth) {
-      //   await signInWithEmailAndPassword(auth, email, password);
-      // }
-      
-      // --- MOCK LOGIN FOR DEMO ---
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network
-      
-      if (email && password) {
-        onLogin();
+      if (auth) {
+        // Real Firebase Login
+        await signInWithEmailAndPassword(auth, email, password);
+        // App.tsx onAuthStateChanged will handle the redirect
       } else {
-         setError("Please enter any email and password for demo.");
+        // Fallback Demo Login (if no keys configured)
+        await new Promise(resolve => setTimeout(resolve, 800));
+        if (email && password) {
+          onLogin();
+        } else {
+           throw new Error("Enter any email/password for demo mode.");
+        }
       }
     } catch (err: any) {
-      setError(err.message || "Failed to sign in");
+      console.error(err);
+      let msg = "Failed to sign in.";
+      if (err.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+      if (err.code === 'auth/user-not-found') msg = "No user found with this email.";
+      if (err.code === 'auth/wrong-password') msg = "Incorrect password.";
+      // Use raw message if fallback
+      if (!auth) msg = err.message;
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -66,17 +74,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
     
     try {
-        // --- REAL FIREBASE GOOGLE LOGIN ---
-        // if (auth && googleProvider) {
-        //    await signInWithPopup(auth, googleProvider);
-        //    onLogin();
-        //    return;
-        // }
-
-        // --- MOCK GOOGLE LOGIN ---
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        onLogin();
+        if (auth && googleProvider) {
+           await signInWithPopup(auth, googleProvider);
+           // App.tsx onAuthStateChanged will handle the redirect
+        } else {
+           // Fallback Demo Google Login
+           await new Promise(resolve => setTimeout(resolve, 1000));
+           onLogin();
+        }
     } catch (err: any) {
+        console.error("Google Sign In Error:", err);
         setError(err.message || "Failed to sign in with Google");
     } finally {
         setIsGoogleLoading(false);
@@ -147,8 +154,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
 
               {error && (
-                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm border border-red-100 dark:border-red-900/30">
-                  {error}
+                <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm border border-red-100 dark:border-red-900/30 flex items-start gap-2">
+                  <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
 
@@ -169,14 +177,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
         </div>
         
-        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 text-center border-t border-slate-100 dark:border-slate-700">
-          <button 
-             onClick={onLogin}
-             className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center justify-center gap-1 mx-auto"
-          >
-            Skip for Demo <ArrowRight size={14} />
-          </button>
-        </div>
+        {/* Helper footer for Demo mode if auth is not configured */}
+        {!auth && (
+          <div className="bg-slate-50 dark:bg-slate-900/50 p-4 text-center border-t border-slate-100 dark:border-slate-700">
+            <button 
+               onClick={onLogin}
+               className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline flex items-center justify-center gap-1 mx-auto"
+            >
+              Skip for Demo Mode <ArrowRight size={14} />
+            </button>
+            <p className="text-[10px] text-slate-400 mt-1">(Real Auth requires Firebase Config)</p>
+          </div>
+        )}
       </div>
     </div>
   );
