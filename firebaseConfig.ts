@@ -14,8 +14,8 @@ const firebaseConfig = {
 // Initialize Firebase App
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Services
-// Side-effects in firebase/auth will register the 'auth' component on this 'app' instance
+// Initialize Services strictly after app initialization
+// This ensures the internal component registry is ready
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
