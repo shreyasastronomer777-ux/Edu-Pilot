@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { View } from '../types';
-import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, Calendar, BrainCircuit, ChevronRight, GraduationCap } from 'lucide-react';
+// Added GraduationCap to the lucide-react import list
+import { Sparkles, Clock, FileText, ArrowRight, Rocket, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, Calendar, BrainCircuit, ChevronRight, GraduationCap } from 'lucide-react';
 
 interface DashboardProps {
   onChangeView: (view: View) => void;
@@ -78,6 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
               className="group relative bg-white/50 dark:bg-white/[0.03] backdrop-blur-3xl p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-2 transition-all duration-700 cursor-pointer flex flex-col h-full overflow-hidden" 
               onClick={() => onChangeView(tool.id)}
             >
+              {/* Dynamic Gradient Background Glow */}
               <div className={`absolute -inset-24 bg-gradient-to-br ${colorMap[tool.color]} opacity-0 group-hover:opacity-40 blur-3xl transition-opacity duration-1000 -z-10`}></div>
               
               <div className="flex items-center justify-between mb-8">
@@ -85,7 +87,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
                     <Icon size={26} className={colorMap[tool.color].split(' ')[2]} />
                  </div>
                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-x-4 group-hover:translate-x-0 transition-transform">
-                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Enter Studio</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Launch Module</span>
                    <ChevronRight size={14} className="text-slate-400" />
                  </div>
               </div>
@@ -103,8 +105,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
                      <div key={i} className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800"></div>
                    ))}
                 </div>
-                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 scale-0 group-hover:scale-100 transition-transform duration-500">
-                   <Sparkles size={14} />
+                <div className="w-8 h-8 rounded-full premium-gradient flex items-center justify-center text-white scale-0 group-hover:scale-100 transition-transform duration-500 shadow-lg shadow-indigo-500/20">
+                   <Rocket size={14} />
                 </div>
               </div>
             </div>
@@ -131,7 +133,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
                </div>
                <div className="flex-1">
                  <p className="text-lg font-black text-slate-900 dark:text-white leading-none tracking-tight mb-1">
-                    {isTeacher ? 'Curriculum Synthesis Complete' : 'Academic Insight Logged'}
+                    {isTeacher ? 'Lesson Plan Synthesized' : 'Deep Study Session Logged'}
                  </p>
                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium opacity-70">
                     Neural engine utilized for advanced concept mapping and standard alignment.

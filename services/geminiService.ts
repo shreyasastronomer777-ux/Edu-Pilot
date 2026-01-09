@@ -7,14 +7,14 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
  * EduAssistant Chat Service
- * Upgraded to Gemini 3 Pro for advanced educational reasoning.
+ * Provides a specialized chat interface for the educational assistant.
  */
 export const chatWithEduAssistant = async (message: string, history: {role: string, parts: {text: string}[]}[], userRole: 'teacher' | 'student' | null) => {
-  const model = "gemini-3-pro-preview"; 
+  const model = "gemini-3-flash-preview";
   
   const roleInstruction = userRole === 'teacher' 
-    ? "The user is a TEACHER. Focus on curriculum standards, pedagogy, and lesson optimization."
-    : "The user is a STUDENT. Focus on concept mastery, study techniques, and active recall.";
+    ? "The user is a TEACHER. Focus on curriculum standards, lesson efficiency, creative classroom activities, and professional pedagogical support."
+    : "The user is a STUDENT. Focus on tutoring, explaining complex concepts simply, study techniques, and encouraging academic growth.";
 
   try {
     const response = await ai.models.generateContent({
@@ -24,11 +24,10 @@ export const chatWithEduAssistant = async (message: string, history: {role: stri
         { role: 'user', parts: [{ text: message }] }
       ],
       config: {
-        systemInstruction: `You are EduPilot Pro, an elite academic reasoning engine. 
-        You provide deep, intellectually rigorous support. 
+        systemInstruction: `You are EduAssistant, a brilliant and friendly AI assistant for EduPilot. 
+        Your goal is to help users navigate the app and assist with educational tasks. 
         ${roleInstruction}
-        Format output using elegant Markdown.`,
-        thinkingConfig: { thinkingBudget: 16000 } // Maximum reasoning power
+        Be concise, encouraging, and witty. Always maintain a professional yet approachable educational tone.`,
       }
     });
 
@@ -46,15 +45,23 @@ export const streamLessonPlan = async (
   config: LessonPlanConfig,
   onChunk: (text: string) => void
 ) => {
-  const model = "gemini-3-pro-preview";
+  const model = "gemini-3-flash-preview";
   
   const prompt = `
-    Synthesize an elite instructional plan for a ${config.gradeLevel} ${config.subject} session.
+    Create a comprehensive lesson plan for a ${config.gradeLevel} ${config.subject} class.
     Topic: ${config.topic}
-    Focus: ${config.focus}
     Duration: ${config.duration}
+    Focus Area: ${config.focus}
 
-    Deliver a highly structured, standards-aligned response.
+    Structure the lesson plan with the following sections using Markdown:
+    1. Lesson Objectives
+    2. Materials Needed
+    3. Warm-up Activity
+    4. Main Instruction
+    5. Guided Practice
+    6. Assessment/Wrap-up
+    
+    Make it engaging, practical, and clear.
   `;
 
   try {
@@ -62,8 +69,7 @@ export const streamLessonPlan = async (
       model,
       contents: prompt,
       config: {
-        systemInstruction: "You are a master curriculum engineer. Use deep pedagogical reasoning.",
-        thinkingConfig: { thinkingBudget: 8000 }
+        systemInstruction: "You are an expert educational consultant and curriculum developer specializing in creating engaging, standards-aligned lesson plans.",
       },
     });
 
@@ -87,16 +93,20 @@ export const generateQuiz = async (topic: string, grade: string, count: number):
   const schema = {
     type: Type.OBJECT,
     properties: {
-      title: { type: Type.STRING },
+      title: { type: Type.STRING, description: "A creative title for the quiz" },
       questions: {
         type: Type.ARRAY,
         items: {
           type: Type.OBJECT,
           properties: {
             question: { type: Type.STRING },
-            options: { type: Type.ARRAY, items: { type: Type.STRING } },
-            correctAnswer: { type: Type.STRING },
-            explanation: { type: Type.STRING }
+            options: { 
+              type: Type.ARRAY, 
+              items: { type: Type.STRING },
+              description: "Array of 4 possible answers" 
+            },
+            correctAnswer: { type: Type.STRING, description: "The exact string match of the correct option" },
+            explanation: { type: Type.STRING, description: "Brief explanation of why this answer is correct" }
           },
           required: ["question", "options", "correctAnswer", "explanation"]
         }
@@ -108,7 +118,7 @@ export const generateQuiz = async (topic: string, grade: string, count: number):
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: `Create a ${count}-question high-rigor quiz for "${topic}".`,
+      contents: `Create a ${count}-question multiple choice quiz about "${topic}" for ${grade} students.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: schema,
@@ -117,6 +127,7 @@ export const generateQuiz = async (topic: string, grade: string, count: number):
 
     const text = response.text;
     if (!text) throw new Error("No response from AI");
+    
     return JSON.parse(text) as Quiz;
   } catch (error) {
     console.error("Error generating quiz:", error);
@@ -133,20 +144,18 @@ export const generateVisualAid = async (prompt: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: { parts: [{ text: `A high-detail educational diagram/illustration: ${prompt}` }] },
-      config: {
-        imageConfig: { aspectRatio: "1:1" }
-      }
+      contents: { parts: [{ text: prompt }] },
     });
 
     if (response.candidates?.[0]?.content?.parts) {
       for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          return `data:image/png;base64,${part.inlineData.data}`;
+        if (part.inlineData && part.inlineData.data) {
+          const mimeType = part.inlineData.mimeType || "image/png";
+          return `data:${mimeType};base64,${part.inlineData.data}`;
         }
       }
     }
-    throw new Error("No image generated.");
+    throw new Error("No image data found in response");
   } catch (error) {
     console.error("Error generating image:", error);
     throw error;
@@ -154,21 +163,34 @@ export const generateVisualAid = async (prompt: string): Promise<string> => {
 };
 
 /**
- * Checks homework submission.
+ * Checks homework submission against an assignment description (Text based).
  */
 export const checkHomework = async (assignment: string, studentWork: string): Promise<string> => {
-  const model = "gemini-3-pro-preview";
-  const prompt = `Grade this work rigorously:\n\nAssignment: ${assignment}\n\nStudent: ${studentWork}`;
+  const model = "gemini-3-flash-preview";
+  const prompt = `
+    You are a helpful teacher's assistant.
+    
+    Assignment/Question:
+    ${assignment}
+    
+    Student Submission:
+    ${studentWork}
+    
+    Please grade this submission. Provide:
+    1. A brief summary of the work.
+    2. Strengths.
+    3. Areas for improvement.
+    4. An estimated grade (A-F) or score (0-100) based on quality.
+    
+    Keep the tone encouraging but constructive. Format with Markdown.
+  `;
 
   try {
     const response = await ai.models.generateContent({
       model,
       contents: prompt,
-      config: { 
-        thinkingConfig: { thinkingBudget: 8000 } 
-      }
     });
-    return response.text || "Feedback unavailable.";
+    return response.text || "Could not generate feedback.";
   } catch (error) {
     console.error("Error checking homework:", error);
     throw error;
@@ -176,60 +198,61 @@ export const checkHomework = async (assignment: string, studentWork: string): Pr
 };
 
 /**
- * Grades an uploaded answer sheet against optional context and answer key.
+ * Grades a student's answer sheet from an image scan.
  */
 export const gradeAnswerSheet = async (
-  studentWork: { dataUri: string, mimeType: string },
+  studentImage: { dataUri: string, mimeType: string },
   assignmentContext: string,
   answerKey?: { dataUri: string, mimeType: string }
 ): Promise<string> => {
-  const model = "gemini-3-pro-preview";
-
-  const parts: any[] = [
-    { text: `Grade this student's work. Context: ${assignmentContext || 'No specific context provided.'}` },
-    {
-      inlineData: {
-        data: studentWork.dataUri.includes(',') ? studentWork.dataUri.split(',')[1] : studentWork.dataUri,
-        mimeType: studentWork.mimeType
-      }
-    }
-  ];
-
-  if (answerKey) {
-    parts.push({ text: "Reference this answer key to grade accurately:" });
-    parts.push({
-      inlineData: {
-        data: answerKey.dataUri.includes(',') ? answerKey.dataUri.split(',')[1] : answerKey.dataUri,
-        mimeType: answerKey.mimeType
-      }
-    });
-  }
+  const model = "gemini-3-flash-preview";
+  
+  const promptText = `
+    You are an expert teacher's assistant helping to grade a student's physical answer sheet.
+    Evaluate the student's answers against the context provided.
+    Output in clean Markdown.
+  `;
 
   try {
+    const parts: any[] = [];
+
+    if (answerKey) {
+      const keyBase64 = answerKey.dataUri.split(',')[1];
+      parts.push({ inlineData: { mimeType: answerKey.mimeType, data: keyBase64 } });
+      parts.push({ text: "Above is the Answer Key Document." });
+    }
+
+    const studentBase64 = studentImage.dataUri.split(',')[1];
+    parts.push({ inlineData: { mimeType: studentImage.mimeType, data: studentBase64 } });
+    parts.push({ text: "Above is the Student Submission." });
+    parts.push({ text: promptText });
+
     const response = await ai.models.generateContent({
       model,
-      contents: { parts },
-      config: {
-        systemInstruction: "You are a professional academic evaluator. Provide a rigorous grade and constructive feedback in Markdown format.",
-        thinkingConfig: { thinkingBudget: 8000 }
-      }
+      contents: { parts }
     });
-    return response.text || "Analysis complete, but no text was returned.";
+    
+    return response.text || "Could not analyze the submission.";
   } catch (error) {
-    console.error("Error in gradeAnswerSheet:", error);
+    console.error("Error grading answer sheet:", error);
     throw error;
   }
 };
 
 /**
- * Checks text for plagiarism.
+ * Checks text for plagiarism using Google Search grounding.
  */
 export const checkPlagiarism = async (text: string) => {
   const model = "gemini-3-flash-preview";
+  const prompt = `
+    Analyze the following text for plagiarism.
+    Text to analyze: "${text}"
+  `;
+
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: `Scan this text for originality: "${text}"`,
+      contents: prompt,
       config: { tools: [{ googleSearch: {} }] },
     });
 
@@ -241,9 +264,11 @@ export const checkPlagiarism = async (text: string) => {
         title: chunk.web.title || "Web Source"
       }));
 
+    const uniqueSources = Array.from(new Map(sources.map((item: any) => [item.uri, item])).values());
+
     return {
-      analysis: response.text || "Scan complete.",
-      sources: sources as { uri: string, title: string }[]
+      analysis: response.text || "Analysis complete.",
+      sources: uniqueSources as { uri: string, title: string }[]
     };
   } catch (error) {
     console.error("Error checking plagiarism:", error);
@@ -252,24 +277,20 @@ export const checkPlagiarism = async (text: string) => {
 };
 
 /**
- * Compares two student assignments for similarity.
+ * Compares two student assignments.
  */
-export const compareAssignments = async (textA: string, textB: string): Promise<string> => {
-  const model = "gemini-3-pro-preview";
-  const prompt = `Compare these two submissions for academic integrity. Identify similarities, potential collusion, and provide a final verdict.\n\nSubmission 1:\n${textA}\n\nSubmission 2:\n${textB}`;
+export const compareAssignments = async (text1: string, text2: string) => {
+  const model = "gemini-3-flash-preview";
+  const prompt = `Compare the following two student submissions for plagiarism. Output in Markdown.`;
 
   try {
     const response = await ai.models.generateContent({
       model,
       contents: prompt,
-      config: {
-        systemInstruction: "You are an academic integrity officer. Detect collusion or plagiarism between these two texts.",
-        thinkingConfig: { thinkingBudget: 8000 }
-      }
     });
-    return response.text || "Comparison complete, but no text was returned.";
+    return response.text || "Could not compare assignments.";
   } catch (error) {
-    console.error("Error in compareAssignments:", error);
+    console.error("Error comparing assignments:", error);
     throw error;
   }
 };
@@ -278,14 +299,15 @@ export const compareAssignments = async (textA: string, textB: string): Promise<
  * Summarizes text for study purposes.
  */
 export const summarizeText = async (text: string): Promise<string> => {
-  const model = "gemini-3-pro-preview";
+  const model = "gemini-3-flash-preview";
+  const prompt = `Summarize the following text for a student. Bullet points and Markdown.`;
+
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: `Deeply summarize this material for a scholar:\n\n${text}`,
-      config: { thinkingConfig: { thinkingBudget: 8000 } }
+      contents: prompt,
     });
-    return response.text || "Summary unavailable.";
+    return response.text || "Could not summarize text.";
   } catch (error) {
     console.error("Error summarizing text:", error);
     throw error;

@@ -66,33 +66,15 @@ const VisualStudio: React.FC<VisualStudioProps> = ({ onBack }) => {
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
               placeholder="e.g. A diagram of the water cycle"
-              className="flex-1 px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500 transition-all font-medium"
+              className="flex-1 px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500 transition-all"
            />
-           <button onClick={handleGenerate} disabled={loading || !prompt} className="px-10 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 active:scale-95">
-             {loading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
-             Synthesize
+           <button onClick={handleGenerate} disabled={loading || !prompt} className="px-10 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center gap-2">
+             {loading ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
+             Launch
            </button>
          </div>
        </div>
-       
-       {error && (
-         <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl flex items-center gap-3 animate-in fade-in">
-           <AlertCircle size={20} /> {error}
-         </div>
-       )}
-
-       {imageUrl && (
-         <div className="bg-white dark:bg-slate-800 p-4 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden animate-in zoom-in-95 duration-700 group">
-            <div className="relative rounded-[2rem] overflow-hidden">
-               <img src={imageUrl} alt="Generated visual aid" className="w-full h-auto" />
-               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <button onClick={() => window.open(imageUrl, '_blank')} className="px-6 py-3 bg-white text-slate-900 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform">
-                     <Download size={20} /> Download Asset
-                  </button>
-               </div>
-            </div>
-         </div>
-       )}
+       {/* Error and Preview... */}
     </div>
   );
 };

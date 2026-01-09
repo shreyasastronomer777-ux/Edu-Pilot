@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
@@ -11,12 +12,9 @@ const firebaseConfig = {
   appId: "1:533575761970:web:63964b8af12c1a7343fc2b"
 };
 
-// Initialize Firebase App
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-
-// Initialize Services strictly after app initialization
-// This ensures the internal component registry is ready
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
-export { app, auth, googleProvider };
+export { auth, googleProvider };

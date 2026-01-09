@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { View } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, ShieldAlert, Moon, Sun, Layers, PenTool, Calendar, FileText, BrainCircuit, Github, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, ShieldAlert, Moon, Sun, Layers, PenTool, Calendar, FileText, BrainCircuit, Sparkles } from 'lucide-react';
 
 interface SidebarProps {
   currentView: View;
@@ -38,11 +39,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
     <div className="w-72 bg-white/70 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200/50 dark:border-white/5 h-screen fixed left-0 top-0 flex flex-col z-30 hidden md:flex transition-all duration-700">
       <div className="p-8">
         <div className="flex items-center gap-4 group cursor-pointer" onClick={() => onViewChange(View.DASHBOARD)}>
-          <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500 overflow-hidden border border-slate-200 dark:border-white/10">
-            <img src="https://iili.io/feG2UBt.md.png" alt="SVGPT Logo" className="w-full h-full object-cover" />
+          <div className="w-10 h-10 premium-gradient rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-500">
+            <Sparkles className="text-white" size={20} />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">SVGPT</span>
+            <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">EduPilot</span>
             <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Professional</span>
           </div>
         </div>
@@ -65,25 +66,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
             >
               <Icon size={18} className={`transition-transform duration-500 group-hover:scale-110 ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`} />
               <span className="text-sm font-bold tracking-tight">{item.label}</span>
+              {isActive && (
+                <div className="absolute right-4 w-1.5 h-1.5 bg-indigo-500 dark:bg-indigo-400 rounded-full animate-pulse"></div>
+              )}
             </button>
           );
         })}
       </nav>
 
-      <div className="p-6 mt-auto space-y-4">
-        {/* GitHub Sync Status - Visual reassurance for the user */}
-        <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex items-center justify-between">
-           <div className="flex items-center gap-2">
-              <Github size={16} className="text-indigo-500" />
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase text-indigo-500 tracking-widest">GitHub Status</span>
-                <span className="text-[10px] font-bold text-slate-500">Ready to Export</span>
-              </div>
+      <div className="p-6 mt-auto">
+        <div className="mb-6 p-4 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5">
+           <div className="flex items-center gap-3 mb-3">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${isDarkMode ? 'bg-amber-400' : 'bg-indigo-500'}`}></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">System Mode</span>
            </div>
-           <CheckCircle2 size={16} className="text-green-500 animate-pulse" />
-        </div>
-
-        <div className="p-4 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5">
            <button 
              onClick={toggleTheme}
              className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-white dark:bg-black/40 border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-all group"
