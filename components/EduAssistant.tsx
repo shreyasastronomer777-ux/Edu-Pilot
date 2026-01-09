@@ -10,7 +10,8 @@ const EduAssistant: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const role = localStorage.getItem('edupilot_role') as 'teacher' | 'student' | null;
+    // Key must match App.tsx: 'sv-role'
+    const role = localStorage.getItem('sv-role') as 'teacher' | 'student' | null;
     const initialMsg = role === 'teacher' 
       ? "Greetings, Professor. How may I assist in synthesizing instructional materials today with SVGPT?"
       : "Welcome back, Scholar. Are we preparing for an examination or refining study insights with SVGPT?";
@@ -33,7 +34,7 @@ const EduAssistant: React.FC = () => {
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
       }));
-      const userRole = localStorage.getItem('edupilot_role') as 'teacher' | 'student' | null;
+      const userRole = localStorage.getItem('sv-role') as 'teacher' | 'student' | null;
       const botResponse = await chatWithEduAssistant(userMsg, history, userRole);
       setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
     } catch (error) {
