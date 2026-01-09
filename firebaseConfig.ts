@@ -1,35 +1,22 @@
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
-// REPLACE these strings with your actual Firebase project configuration from the Firebase Console
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "YOUR_API_KEY",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "your-app.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "your-app",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "your-app.appspot.com",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyCn1zfz3qSb7RA5EU0MZHl4e7rbnRYJ_Sc",
+  authDomain: "edupilot-eabe8.firebaseapp.com",
+  projectId: "edupilot-eabe8",
+  storageBucket: "edupilot-eabe8.firebasestorage.app",
+  messagingSenderId: "533575761970",
+  appId: "1:533575761970:web:63964b8af12c1a7343fc2b"
 };
 
-// Initialize Firebase
-let app;
-let auth: any = null;
-let googleProvider: GoogleAuthProvider | null = null;
+// Initialize Firebase App
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-try {
-  // We check if the API key is the placeholder to avoid initializing with invalid config which crashes the app
-  if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    googleProvider = new GoogleAuthProvider();
-  } else {
-    console.warn("Firebase config is missing. Update firebaseConfig.ts with your credentials to enable real Auth.");
-  }
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-}
+// Initialize Services
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
-export { auth, googleProvider };
+export { app, auth, googleProvider };

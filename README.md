@@ -1,20 +1,42 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# SVGPT | Professional AI Academic Workspace
 
-# Run and deploy your AI Studio app
+![SVGPT Logo](https://iili.io/feG2UBt.md.png)
 
-This contains everything you need to run your app locally.
+SVGPT is an elite, high-performance AI workspace designed for educators and scholars. It leverages advanced reasoning models (Gemini 3 Pro) to synthesize instructional materials, conduct rigorous academic evaluations, and provide deep study insights.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1jJjrkKoqEevmpnsFDbMH5hNqt3XJXvGX
+## ✨ Key Features
 
-## Run Locally
+### 🍎 For Educators (Teacher Mode)
+- **Lesson Studio**: Generate standards-aligned, high-rigor instructional plans.
+- **Quiz Engine**: Create sophisticated evaluations with instant explanatory depth.
+- **Creative Suite**: Synthesize ultra-high resolution educational diagrams and imagery.
+- **Evaluator AI**: Precision grading for text and scanned answer sheets.
+- **Guard Rail**: Advanced web-grounded plagiarism detection.
 
-**Prerequisites:**  Node.js
+### 🎓 For Scholars (Student Mode)
+- **Scholar Planner**: AI-optimized deadline tracking.
+- **Study Scribe**: Elegant organization for academic notes.
+- **Flash-Recall**: Neural study modes using spaced-repetition logic.
+- **Digest AI**: Deep summarization of complex academic materials.
 
+## 🛠️ Technology Stack
+- **Frontend**: React 19 (ESM based), Tailwind CSS (Premium Suite)
+- **AI Engine**: Google Gemini 3 Pro & Flash (via @google/genai)
+- **Authentication**: Firebase Auth (Google & Email/Password)
+- **Icons**: Lucide React (Elite variant)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🚀 Getting Started
+
+1. **Environment Setup**: Ensure you have your `API_KEY` for the Gemini API.
+2. **Installation**:
+   ```bash
+   # Standard ESM project - serve via any web server (Live Server, Vite, etc.)
+   npx serve .
+   ```
+3. **Deployment**: Compatible with Vercel, Netlify, or GitHub Pages.
+
+## ⚖️ License
+This project is licensed under the MIT License.
+
+---
+*Synthesized with precision by the SVGPT Neural Core.*

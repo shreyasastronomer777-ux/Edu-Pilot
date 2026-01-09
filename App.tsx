@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -8,9 +7,16 @@ import VisualStudio from './components/VisualStudio';
 import HomeworkChecker from './components/HomeworkChecker';
 import Attendance from './components/Attendance';
 import PlagiarismChecker from './components/PlagiarismChecker';
+import EduAssistant from './components/EduAssistant';
+import Flashcards from './components/Flashcards';
+import StudyNotes from './components/StudyNotes';
+import HomeworkPlanner from './components/HomeworkPlanner';
+import AISummarizer from './components/AISummarizer';
+import StudentQuiz from './components/StudentQuiz';
 import Login from './components/Login';
+import RoleSelection from './components/RoleSelection';
 import { View } from './types';
-import { Menu, Moon, Sun, LogOut, Loader2 } from 'lucide-react';
+import { LogOut, Search, X, Sparkles, BrainCircuit } from 'lucide-react';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
@@ -18,160 +24,104 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  // Theme State
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('edupilot-theme');
-      return saved === 'dark';
-    }
-    return false;
-  });
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('sv-theme') === 'dark');
+  const [userRole, setUserRole] = useState<'teacher' | 'student' | null>(() => localStorage.getItem('sv-role') as any);
 
-  // Apply theme to HTML element
   useEffect(() => {
     const root = window.document.documentElement;
-    if (isDarkMode) {
-      root.classList.add('dark');
-      localStorage.setItem('edupilot-theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('edupilot-theme', 'light');
-    }
+    isDarkMode ? root.classList.add('dark') : root.classList.remove('dark');
+    localStorage.setItem('sv-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  // Auth State Listener
   useEffect(() => {
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
-        setAuthChecking(false);
-      });
-      return () => unsubscribe();
-    } else {
-      // If no auth configured, just stop checking
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
       setAuthChecking(false);
-    }
+    });
+    return unsubscribe;
   }, []);
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setIsCommandPaletteOpen(v => !v); }
+      if (e.key === 'Escape') setIsCommandPaletteOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
-    if (auth) {
-      try {
-        await signOut(auth);
-      } catch (error) {
-        console.error("Logout failed", error);
-      }
-    }
+    await signOut(auth);
+    localStorage.removeItem('sv-role');
     setIsLoggedIn(false);
-    setCurrentView(View.DASHBOARD);
+    setUserRole(null);
   };
 
-  // If using real auth, show loading while checking state
-  if (authChecking) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <Loader2 className="animate-spin text-indigo-600 dark:text-indigo-400" size={40} />
-      </div>
-    );
-  }
+  const handleRoleSelect = (role: 'teacher' | 'student') => {
+    setUserRole(role);
+    localStorage.setItem('sv-role', role);
+  };
 
-  if (!isLoggedIn) {
-    return <Login onLogin={() => setIsLoggedIn(true)} />;
-  }
+  if (authChecking) return (
+    <div className="min-h-screen bg-slate-50 dark:bg-black flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-16 h-16 premium-gradient rounded-2xl animate-pulse flex items-center justify-center">
+          <Sparkles className="text-white" size={32} />
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading SVGPT...</p>
+      </div>
+    </div>
+  );
+
+  if (!isLoggedIn) return <Login onLogin={() => setIsLoggedIn(true)} />;
+  if (!userRole) return <RoleSelection onSelect={handleRoleSelect} />;
 
   const renderContent = () => {
+    const back = () => setCurrentView(View.DASHBOARD);
     switch (currentView) {
-      case View.LESSON_PLANNER:
-        return <LessonPlanner />;
-      case View.QUIZ_MAKER:
-        return <QuizMaker />;
-      case View.VISUAL_STUDIO:
-        return <VisualStudio />;
-      case View.HOMEWORK_CHECKER:
-        return <HomeworkChecker />;
-      case View.ATTENDANCE:
-        return <Attendance />;
-      case View.PLAGIARISM_CHECKER:
-        return <PlagiarismChecker />;
-      case View.DASHBOARD:
-      default:
-        return <Dashboard onChangeView={setCurrentView} />;
+      case View.LESSON_PLANNER: return <LessonPlanner onBack={back} />;
+      case View.QUIZ_MAKER: return <QuizMaker onBack={back} />;
+      case View.VISUAL_STUDIO: return <VisualStudio onBack={back} />;
+      case View.HOMEWORK_CHECKER: return <HomeworkChecker />;
+      case View.ATTENDANCE: return <Attendance onBack={back} />;
+      case View.PLAGIARISM_CHECKER: return <PlagiarismChecker onBack={back} />;
+      case View.FLASHCARDS: return <Flashcards />;
+      case View.STUDY_NOTES: return <StudyNotes />;
+      case View.HOMEWORK_PLANNER: return <HomeworkPlanner />;
+      case View.AI_SUMMARIZER: return <AISummarizer />;
+      case View.STUDENT_QUIZ: return <StudentQuiz />;
+      default: return <Dashboard onChangeView={setCurrentView} userRole={userRole} />;
     }
   };
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} flex`}>
-      {/* Mobile Header */}
-      <div className="md:hidden fixed w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-20 px-4 py-3 flex items-center justify-between transition-colors">
-         <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">E</span>
-            </div>
-            <span className="font-bold text-slate-800 dark:text-white">EduPilot</span>
-         </div>
-         <div className="flex items-center gap-3">
-           <button onClick={toggleTheme} className="p-2 text-slate-600 dark:text-slate-300">
-             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-           </button>
-           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-600 dark:text-slate-300">
-             <Menu />
-           </button>
-         </div>
-      </div>
-
-      {/* Sidebar */}
+    <div className={`min-h-screen flex ${isDarkMode ? 'dark bg-black' : 'bg-slate-50'}`}>
       <Sidebar 
-        currentView={currentView} 
-        onViewChange={setCurrentView} 
-        isDarkMode={isDarkMode}
-        toggleTheme={toggleTheme}
+        currentView={currentView} onViewChange={setCurrentView} 
+        isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} userRole={userRole} 
       />
-      
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-10 bg-white dark:bg-slate-900 pt-20 px-6 md:hidden">
-          <div className="space-y-4">
-             {Object.values(View).map((view) => (
-               <button 
-                key={view}
-                onClick={() => { setCurrentView(view); setIsMobileMenuOpen(false); }} 
-                className="block w-full text-left py-3 border-b border-slate-100 dark:border-slate-800 text-lg font-medium text-slate-800 dark:text-slate-200 capitalize"
-               >
-                 {view.replace('_', ' ').toLowerCase()}
-               </button>
-             ))}
-             <button 
-               onClick={handleLogout}
-               className="block w-full text-left py-3 text-lg font-medium text-red-600 dark:text-red-400 flex items-center gap-2"
-             >
-               <LogOut size={20} /> Sign Out
-             </button>
+      <main className="flex-1 md:ml-72 p-8 pt-24 md:pt-12 relative min-h-screen">
+        <div className="hidden md:flex absolute top-12 right-12 gap-4 z-40">
+          <button onClick={() => setIsCommandPaletteOpen(true)} className="flex items-center gap-3 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest">
+            <Search size={14} /> Spotlight
+          </button>
+          <button onClick={handleLogout} className="p-2.5 text-slate-400 hover:text-red-500 transition-colors"><LogOut size={18} /></button>
+        </div>
+        <div className="animate-in fade-in duration-700">{renderContent()}</div>
+      </main>
+      {isCommandPaletteOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-start justify-center pt-[15vh] px-4">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl border border-white/10 overflow-hidden">
+            <div className="p-6 flex items-center gap-4">
+              <BrainCircuit className="text-indigo-500" size={24} />
+              <input autoFocus placeholder="Search modules..." className="flex-1 bg-transparent border-none outline-none text-lg font-bold" />
+              <button onClick={() => setIsCommandPaletteOpen(false)}><X size={20} /></button>
+            </div>
           </div>
         </div>
       )}
-
-      {/* Main Content Area */}
-      <main className="flex-1 md:ml-64 p-6 pt-20 md:pt-6 overflow-x-hidden relative">
-        {/* Desktop Logout Button */}
-        <div className="hidden md:flex absolute top-6 right-6 gap-3">
-           {/* You can add User Profile here later */}
-           <button 
-             onClick={handleLogout}
-             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-           >
-             <LogOut size={16} /> Sign Out
-           </button>
-        </div>
-
-        {renderContent()}
-      </main>
+      <EduAssistant />
     </div>
   );
 };

@@ -1,101 +1,148 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { View } from '../types';
-import { Sparkles, Clock, FileText, ArrowRight, CheckSquare, Users, ShieldAlert } from 'lucide-react';
+import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, Calendar, BrainCircuit, ChevronRight, GraduationCap } from 'lucide-react';
 
 interface DashboardProps {
   onChangeView: (view: View) => void;
+  userRole: 'teacher' | 'student';
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onChangeView }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
+  const isTeacher = userRole === 'teacher';
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const tools = isTeacher ? [
+    { id: View.LESSON_PLANNER, title: 'Lesson Studio', desc: 'Craft high-performance curriculums with elite AI reasoning.', icon: FileText, color: 'blue' },
+    { id: View.QUIZ_MAKER, title: 'Quiz Engine', desc: 'Generate sophisticated evaluations with instant explanatory depth.', icon: GraduationCap, color: 'emerald' },
+    { id: View.VISUAL_STUDIO, title: 'Creative Suite', desc: 'Synthesize professional classroom imagery in ultra-high resolution.', icon: Sparkles, color: 'purple' },
+    { id: View.HOMEWORK_CHECKER, title: 'Evaluation AI', desc: 'Precision grading and feedback tailored to academic standards.', icon: CheckSquare, color: 'orange' },
+    { id: View.ATTENDANCE, title: 'Registry', desc: 'High-speed student tracking and class management analytics.', icon: Users, color: 'pink' },
+    { id: View.PLAGIARISM_CHECKER, title: 'Guard Rail', desc: 'Advanced originality scanning and web-grounded validation.', icon: ShieldAlert, color: 'red' },
+  ] : [
+    { id: View.HOMEWORK_PLANNER, title: 'Scholar Planner', desc: 'Master your deadlines with precision tracking and AI reminders.', icon: Calendar, color: 'indigo' },
+    { id: View.STUDY_NOTES, title: 'Study Scribe', desc: 'Elegant organization for your academic insights and notes.', icon: PenTool, color: 'teal' },
+    { id: View.FLASHCARDS, title: 'Flash-Recall', icon: Layers, desc: 'Optimized memory retention through neural study modes.', color: 'orange' },
+    { id: View.AI_SUMMARIZER, title: 'Digest AI', desc: 'Condense complex academic texts into refined study guides.', icon: FileText, color: 'sky' },
+    { id: View.STUDENT_QUIZ, title: 'Subject Mastery', desc: 'Pro-level practice exams for competitive academic preparation.', icon: BrainCircuit, color: 'rose' },
+  ];
+
+  const filteredTools = tools.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()));
+
   return (
-    <div className="max-w-5xl mx-auto">
-      <header className="mb-10">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Welcome back, Teacher</h1>
-        <p className="text-slate-500 dark:text-slate-400">Ready to inspire your students today?</p>
+    <div className="max-w-[1200px] mx-auto px-4 py-8">
+      <header className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-12 staggered-fade-in">
+        <div className="space-y-4">
+           <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-indigo-500/20">System Status: Active</span>
+           </div>
+          <h1 className="text-5xl md:text-6xl font-[900] text-slate-900 dark:text-white leading-[0.9] tracking-tighter">
+            Elegance in <span className="text-transparent bg-clip-text premium-gradient">Education.</span>
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-xl opacity-80">
+            Welcome back, {isTeacher ? 'Professor' : 'Scholar'}. Your refined toolkit is prepared for peak academic performance.
+          </p>
+        </div>
+
+        <div className="relative group w-full md:w-[320px]">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+          <input 
+            type="text" 
+            placeholder="Search Modules..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-14 pr-6 py-5 bg-white/50 dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-sm"
+          />
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => onChangeView(View.LESSON_PLANNER)}>
-          <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50 transition-colors">
-            <FileText className="text-blue-600 dark:text-blue-400" size={24} />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Create Lesson Plan</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Generate structured lesson plans aligned with curriculum standards instantly.</p>
-          <span className="flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium">Start planning <ArrowRight size={16} className="ml-1" /></span>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20 staggered-fade-in">
+        {filteredTools.map((tool) => {
+          const Icon = tool.icon || Sparkles;
+          const colorMap: Record<string, string> = {
+            blue: 'from-blue-500/20 to-indigo-500/20 text-blue-500 border-blue-500/10',
+            emerald: 'from-emerald-500/20 to-teal-500/20 text-emerald-500 border-emerald-500/10',
+            purple: 'from-purple-500/20 to-pink-500/20 text-purple-500 border-purple-500/10',
+            orange: 'from-orange-500/20 to-red-500/20 text-orange-500 border-orange-500/10',
+            pink: 'from-pink-500/20 to-rose-500/20 text-pink-500 border-pink-500/10',
+            red: 'from-red-500/20 to-orange-500/20 text-red-500 border-red-500/10',
+            indigo: 'from-indigo-500/20 to-violet-500/20 text-indigo-500 border-indigo-500/10',
+            teal: 'from-teal-500/20 to-cyan-500/20 text-teal-500 border-teal-500/10',
+            sky: 'from-sky-500/20 to-blue-500/20 text-sky-500 border-sky-500/10',
+            rose: 'from-rose-500/20 to-pink-500/20 text-rose-500 border-rose-500/10',
+          };
 
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => onChangeView(View.QUIZ_MAKER)}>
-          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-4 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50 transition-colors">
-            <Sparkles className="text-emerald-600 dark:text-emerald-400" size={24} />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Generate Quiz</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Create engaging multiple-choice quizzes with explanations automatically.</p>
-          <span className="flex items-center text-emerald-600 dark:text-emerald-400 text-sm font-medium">Create quiz <ArrowRight size={16} className="ml-1" /></span>
-        </div>
+          return (
+            <div 
+              key={tool.id} 
+              className="group relative bg-white/50 dark:bg-white/[0.03] backdrop-blur-3xl p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-2 transition-all duration-700 cursor-pointer flex flex-col h-full overflow-hidden" 
+              onClick={() => onChangeView(tool.id)}
+            >
+              <div className={`absolute -inset-24 bg-gradient-to-br ${colorMap[tool.color]} opacity-0 group-hover:opacity-40 blur-3xl transition-opacity duration-1000 -z-10`}></div>
+              
+              <div className="flex items-center justify-between mb-8">
+                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-700`}>
+                    <Icon size={26} className={colorMap[tool.color].split(' ')[2]} />
+                 </div>
+                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-x-4 group-hover:translate-x-0 transition-transform">
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Enter Studio</span>
+                   <ChevronRight size={14} className="text-slate-400" />
+                 </div>
+              </div>
 
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => onChangeView(View.VISUAL_STUDIO)}>
-          <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-full flex items-center justify-center mb-4 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50 transition-colors">
-            <Sparkles className="text-purple-600 dark:text-purple-400" size={24} />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Visual Studio</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Generate unique, copyright-free images for your slides and handouts.</p>
-          <span className="flex items-center text-purple-600 dark:text-purple-400 text-sm font-medium">Generate art <ArrowRight size={16} className="ml-1" /></span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => onChangeView(View.HOMEWORK_CHECKER)}>
-          <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-4 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/50 transition-colors">
-            <CheckSquare className="text-orange-600 dark:text-orange-400" size={24} />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Homework Checker</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">AI-powered grading assistant to review student submissions and provide feedback.</p>
-          <span className="flex items-center text-orange-600 dark:text-orange-400 text-sm font-medium">Check work <ArrowRight size={16} className="ml-1" /></span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => onChangeView(View.ATTENDANCE)}>
-          <div className="w-12 h-12 bg-pink-50 dark:bg-pink-900/30 rounded-full flex items-center justify-center mb-4 group-hover:bg-pink-100 dark:group-hover:bg-pink-900/50 transition-colors">
-            <Users className="text-pink-600 dark:text-pink-400" size={24} />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Attendance</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Quickly mark and track student attendance for your classes.</p>
-          <span className="flex items-center text-pink-600 dark:text-pink-400 text-sm font-medium">Take attendance <ArrowRight size={16} className="ml-1" /></span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => onChangeView(View.PLAGIARISM_CHECKER)}>
-          <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-4 group-hover:bg-red-100 dark:group-hover:bg-red-900/50 transition-colors">
-            <ShieldAlert className="text-red-600 dark:text-red-400" size={24} />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Plagiarism Checker</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Detect internet copying and compare student assignments for duplicates.</p>
-          <span className="flex items-center text-red-600 dark:text-red-400 text-sm font-medium">Scan text <ArrowRight size={16} className="ml-1" /></span>
-        </div>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter transition-colors group-hover:text-indigo-500">
+                {tool.title}
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed flex-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                {tool.desc}
+              </p>
+              
+              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                <div className="flex -space-x-2">
+                   {[1,2,3].map(i => (
+                     <div key={i} className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800"></div>
+                   ))}
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 scale-0 group-hover:scale-100 transition-transform duration-500">
+                   <Sparkles size={14} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Recent Updates</h2>
-          <button className="text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-700 dark:hover:text-indigo-300">View all</button>
+      <section className="staggered-fade-in mb-20">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+             <div className="w-2 h-8 premium-gradient rounded-full"></div>
+             <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Activity Stream</h2>
+          </div>
+          <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-500 transition-colors flex items-center gap-2 group">
+            Global Archive <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+          </button>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 overflow-hidden">
-          <div className="p-4 border-b border-slate-50 dark:border-slate-700 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-              <Clock size={18} className="text-slate-500 dark:text-slate-300" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">Added Plagiarism Checker</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">New tool to verify student work authenticity.</p>
-            </div>
-            <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">Just now</span>
-          </div>
-          <div className="p-4 border-b border-slate-50 dark:border-slate-700 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
-              <Clock size={18} className="text-slate-500 dark:text-slate-300" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-slate-900 dark:text-white">Added Homework Checker & Attendance</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">New tools to help manage your classroom efficiently.</p>
-            </div>
-            <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">1h ago</span>
-          </div>
+
+        <div className="bg-white/50 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[3rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
+          {[1, 2].map((_, i) => (
+             <div key={i} className={`p-8 border-b border-slate-100 dark:border-white/5 last:border-0 flex items-center gap-6 hover:bg-white/40 dark:hover:bg-white/5 transition-all duration-500 group`}>
+               <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                 <Clock size={24} className="text-indigo-500" />
+               </div>
+               <div className="flex-1">
+                 <p className="text-lg font-black text-slate-900 dark:text-white leading-none tracking-tight mb-1">
+                    {isTeacher ? 'Curriculum Synthesis Complete' : 'Academic Insight Logged'}
+                 </p>
+                 <p className="text-sm text-slate-500 dark:text-slate-400 font-medium opacity-70">
+                    Neural engine utilized for advanced concept mapping and standard alignment.
+                 </p>
+               </div>
+               <div className="text-right flex flex-col items-end">
+                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Verified</span>
+                  <span className="text-xs font-bold text-slate-400">12m ago</span>
+               </div>
+             </div>
+          ))}
         </div>
       </section>
     </div>
