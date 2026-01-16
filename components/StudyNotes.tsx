@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PenTool, Search, Plus, Tag, X, Save } from 'lucide-react';
 
 interface Note {
@@ -12,11 +12,14 @@ interface Note {
 }
 
 const StudyNotes: React.FC = () => {
-  const [notes, setNotes] = useState<Note[]>([
-    { id: '1', title: 'Calculus Formulas', subject: 'Math', content: 'Derivative of x^2 is 2x...', color: 'bg-blue-100 dark:bg-blue-900/30', date: '2023-10-01' },
-    { id: '2', title: 'Romeo & Juliet Themes', subject: 'English', content: 'Love vs Hate, Fate vs Free Will...', color: 'bg-rose-100 dark:bg-rose-900/30', date: '2023-10-05' },
-    { id: '3', title: 'Newton Laws', subject: 'Physics', content: '1. Inertia\n2. F=ma\n3. Action/Reaction', color: 'bg-emerald-100 dark:bg-emerald-900/30', date: '2023-10-10' },
-  ]);
+  const [notes, setNotes] = useState<Note[]>(() => {
+    const saved = localStorage.getItem('svgpt_notes');
+    return saved ? JSON.parse(saved) : [
+      { id: '1', title: 'Calculus Formulas', subject: 'Math', content: 'Derivative of x^2 is 2x...', color: 'bg-blue-100 dark:bg-blue-900/30', date: '2023-10-01' },
+      { id: '2', title: 'Romeo & Juliet Themes', subject: 'English', content: 'Love vs Hate, Fate vs Free Will...', color: 'bg-rose-100 dark:bg-rose-900/30', date: '2023-10-05' },
+      { id: '3', title: 'Newton Laws', subject: 'Physics', content: '1. Inertia\n2. F=ma\n3. Action/Reaction', color: 'bg-emerald-100 dark:bg-emerald-900/30', date: '2023-10-10' },
+    ];
+  });
 
   const [search, setSearch] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -27,7 +30,11 @@ const StudyNotes: React.FC = () => {
   const [newContent, setNewContent] = useState('');
   const [newColor, setNewColor] = useState('bg-slate-100 dark:bg-slate-800');
 
-  const subjects = ['Math', 'Science', 'English', 'History', 'General'];
+  useEffect(() => {
+    localStorage.setItem('svgpt_notes', JSON.stringify(notes));
+  }, [notes]);
+
+  const subjects = ['Math', 'Science', 'English', 'History', 'General', 'Synthesis Archive'];
   const colors = [
     { label: 'Blue', val: 'bg-blue-100 dark:bg-blue-900/30' },
     { label: 'Green', val: 'bg-emerald-100 dark:bg-emerald-900/30' },

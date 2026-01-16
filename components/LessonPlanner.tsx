@@ -2,8 +2,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { LessonPlanConfig } from '../types';
 import { streamLessonPlan } from '../services/geminiService';
-import { Send, Loader2, Download, Copy, FileText, ChevronDown, Printer, Wand2, ArrowLeft } from 'lucide-react';
+import { Send, Loader2, Download, Copy, FileText, ChevronDown, Printer, Wand2, ArrowLeft, Search, Save, Trash2, History, Sparkles, Sliders, GraduationCap } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+
+interface SavedPlan {
+  id: string;
+  config: LessonPlanConfig;
+  content: string;
+  date: string;
+}
 
 interface LessonPlannerProps {
   onBack?: () => void;
@@ -13,36 +20,27 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const [config, setConfig] = useState<LessonPlanConfig>({
     topic: '',
     gradeLevel: '5th Grade',
     subject: 'Science',
-    duration: '45 mins',
-    focus: 'Interactive Learning'
+    duration: '40 mins',
+    focus: 'Interactive Learning',
+    standard: 'Common Core',
+    proficiencyLevel: 'Mid-Level'
   });
 
-  const templates = [
-    { label: 'Inquiry-Based', duration: '60 mins', focus: 'Student-led exploration, questioning, and discovery.' },
-    { label: 'Lecture & Practice', duration: '45 mins', focus: 'Direct instruction followed by guided application.' },
-    { label: 'Project-Based', duration: '90 mins', focus: 'Collaborative, hands-on creation of a tangible product.' },
-    { label: 'Gamified Review', duration: '45 mins', focus: 'Interactive games, competition, and rewards.' },
-  ];
-
-  const applyTemplate = (t: typeof templates[0]) => {
-      setConfig(prev => ({ ...prev, duration: t.duration, focus: t.focus }));
-  };
+  const [savedPlans, setSavedPlans] = useState<SavedPlan[]>(() => {
+    const saved = localStorage.getItem('svgpt_lesson_plans');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
-        setShowExportMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    localStorage.setItem('svgpt_lesson_plans', JSON.stringify(savedPlans));
+  }, [savedPlans]);
 
   const handleGenerate = async () => {
     if (!config.topic) return;
@@ -60,167 +58,159 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content);
-    alert("Lesson plan copied to clipboard!");
+  const loadPlan = (plan: SavedPlan) => {
+    setConfig(plan.config);
+    setContent(plan.content);
   };
 
-  const handleExportTxt = () => {
-    if (!content) return;
-    const element = document.createElement("a");
-    const file = new Blob([content], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = `${config.topic.replace(/\s+/g, '-').toLowerCase()}-lesson-plan.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    setShowExportMenu(false);
+  const handleSave = () => {
+    if (!content || !config.topic) return;
+    const newPlan: SavedPlan = {
+      id: Date.now().toString(),
+      config: { ...config },
+      content,
+      date: new Date().toLocaleDateString()
+    };
+    setSavedPlans([newPlan, ...savedPlans]);
+    alert("Architectural asset archived.");
   };
 
-  const handlePrint = () => {
-    if (!content) return;
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>${config.topic} - Lesson Plan</title>
-              <style>
-                body { font-family: sans-serif; line-height: 1.6; padding: 40px; max-width: 800px; margin: 0 auto; color: #1a1a1a; background: #fff; }
-                h1 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-                h2 { color: #555; margin-top: 20px; }
-                ul { padding-left: 20px; }
-              </style>
-            </head>
-            <body>
-              <div style="margin-bottom: 20px; color: #666;">
-                <p><strong>Topic:</strong> ${config.topic}</p>
-                <p><strong>Grade:</strong> ${config.gradeLevel} | <strong>Subject:</strong> ${config.subject}</p>
-              </div>
-              <hr/>
-              <div>${content.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/# (.*?)(<br\/>|$)/g, '<h1>$1</h1>').replace(/## (.*?)(<br\/>|$)/g, '<h2>$1</h2>')}</div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        setTimeout(() => printWindow.print(), 500);
-    }
-    setShowExportMenu(false);
-  };
+  const filteredPlans = savedPlans.filter(p => 
+    p.config.topic.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.config.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="max-w-6xl mx-auto h-[calc(100vh-4rem)] flex flex-col">
-      {/* Module Navigation */}
-      <div className="mb-6">
-         <button 
-           onClick={onBack}
-           className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group"
-         >
+    <div className="max-w-7xl mx-auto h-[calc(100vh-4rem)] flex flex-col">
+      <div className="mb-6 flex items-center justify-between">
+         <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group">
            <div className="p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 group-hover:border-indigo-200">
               <ArrowLeft size={16} />
            </div>
            Back to Dashboard
          </button>
+         <div className="relative group w-full max-w-xs">
+           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+           <input 
+             type="text" 
+             placeholder="Search Plan Archive..."
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+             className="w-full pl-11 pr-4 py-2.5 bg-white/50 dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-2xl outline-none font-bold text-xs"
+           />
+         </div>
       </div>
 
       <div className="flex gap-6 flex-1 overflow-hidden">
-        {/* Input Section */}
-        <div className="w-1/3 flex flex-col gap-4 overflow-y-auto pr-2">
+        <div className="w-80 flex flex-col gap-4 overflow-y-auto pr-1">
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6">Plan Parameters</h2>
+            <h2 className="text-lg font-black text-slate-800 dark:text-white mb-6 uppercase tracking-tight flex items-center gap-2">
+              <Sliders size={18} className="text-indigo-500" /> Plan Architect
+            </h2>
             
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-                  <Wand2 size={14} className="text-indigo-500" /> Quick Templates
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {templates.map(t => (
-                    <button 
-                      key={t.label} 
-                      onClick={() => applyTemplate(t)}
-                      className="px-3 py-1.5 text-xs rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-600 transition-all text-left"
-                      title={`Focus: ${t.focus}`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-slate-100 dark:border-slate-700 pt-2"></div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Topic</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Primary Topic</label>
                 <input 
                   type="text" 
                   value={config.topic}
                   onChange={(e) => setConfig({...config, topic: e.target.value})}
-                  placeholder="e.g. The Water Cycle"
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                  placeholder="e.g. Plate Tectonics"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none font-bold text-sm"
                 />
               </div>
 
-              {/* Rest of inputs... */}
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Curriculum Standard</label>
+                <select 
+                  value={config.standard}
+                  onChange={(e) => setConfig({...config, standard: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-sm"
+                >
+                  <option>Common Core</option>
+                  <option>IB Curriculum</option>
+                  <option>Next Gen Science (NGSS)</option>
+                  <option>TEKS (Texas)</option>
+                  <option>General Excellence</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Proficiency Level</label>
+                <select 
+                  value={config.proficiencyLevel}
+                  onChange={(e) => setConfig({...config, proficiencyLevel: e.target.value})}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold text-sm"
+                >
+                  <option>Beginner (Foundational)</option>
+                  <option>Mid-Level (Intermediate)</option>
+                  <option>Advanced (College Ready)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                 <div>
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Grade</label>
+                   <input 
+                    type="text" 
+                    value={config.gradeLevel}
+                    onChange={(e) => setConfig({...config, gradeLevel: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-xs"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Duration</label>
+                   <input 
+                    type="text" 
+                    value={config.duration}
+                    onChange={(e) => setConfig({...config, duration: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold text-xs"
+                   />
+                 </div>
+              </div>
+
               <button 
                 onClick={handleGenerate}
                 disabled={loading || !config.topic}
-                className={`w-full py-3 rounded-lg flex items-center justify-center gap-2 font-semibold text-white transition-all ${
-                  loading || !config.topic 
-                    ? 'bg-slate-400 dark:bg-slate-600 cursor-not-allowed' 
-                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg'
-                }`}
+                className={`w-full py-4 rounded-xl flex items-center justify-center gap-3 font-black uppercase tracking-widest text-xs text-white transition-all ${loading || !config.topic ? 'bg-slate-400 opacity-50' : 'premium-gradient shadow-lg'}`}
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-                {loading ? 'Planning...' : 'Generate Plan'}
+                {loading ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} />}
+                Synthesize Plan
               </button>
             </div>
+          </div>
+
+          <div className="flex-1 flex flex-col min-h-0">
+             <div className="flex items-center gap-2 mb-4 px-2">
+                <History size={14} className="text-indigo-500" />
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Saved Archive</h3>
+             </div>
+             <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+                {filteredPlans.map(plan => (
+                  <div key={plan.id} onClick={() => loadPlan(plan)} className="p-4 bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500/50 cursor-pointer transition-all">
+                     <p className="text-xs font-black text-slate-900 dark:text-white truncate mb-1">{plan.config.topic}</p>
+                     <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase">
+                        <span>{plan.config.standard}</span>
+                        <span>{plan.date}</span>
+                     </div>
+                  </div>
+                ))}
+             </div>
           </div>
         </div>
 
-        {/* Output Section */}
-        <div className="w-2/3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden transition-colors">
-          <div className="p-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-            <h3 className="font-semibold text-slate-700 dark:text-slate-200">Lesson Plan Preview</h3>
+        <div className="flex-1 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden">
+          <div className="p-5 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-black/20">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+               <FileText size={14} className="text-indigo-500" /> Standard-Aligned Output
+            </h3>
             <div className="flex gap-2">
-              <button onClick={handleCopy} className="p-2 text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors" title="Copy to Clipboard">
-                <Copy size={18} />
-              </button>
-              <div className="h-6 w-px bg-slate-300 dark:bg-slate-600 my-auto mx-1"></div>
-              
-              <div className="relative" ref={exportMenuRef}>
-                 <button 
-                   onClick={() => setShowExportMenu(!showExportMenu)} 
-                   className={`px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-500 rounded-lg transition-all flex items-center gap-2 text-sm font-medium shadow-sm`}
-                 >
-                   <Download size={16} /> Export <ChevronDown size={14} />
-                 </button>
-                 
-                 {showExportMenu && (
-                   <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-10 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                      <div className="p-1">
-                        <button onClick={handleExportTxt} className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg flex items-center gap-2">
-                          <FileText size={16} className="text-slate-400" /> Export as Text
-                        </button>
-                        <button onClick={handlePrint} className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg flex items-center gap-2">
-                          <Printer size={16} className="text-slate-400" /> Print / PDF
-                        </button>
-                      </div>
-                   </div>
-                 )}
-              </div>
+              <button onClick={handleSave} disabled={!content || loading} className="p-2 text-slate-500 hover:text-indigo-600"><Save size={18} /></button>
+              <button onClick={() => { navigator.clipboard.writeText(content); alert("Copied."); }} disabled={!content} className="p-2 text-slate-500 hover:text-indigo-600"><Copy size={18} /></button>
             </div>
           </div>
-          
-          <div className="flex-1 p-8 overflow-y-auto prose prose-slate dark:prose-invert max-w-none">
-            {content ? (
-               <ReactMarkdown>{content}</ReactMarkdown>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60">
-                <FileText size={48} className="mb-4" />
-                <p className="text-lg">Enter details and hit generate to see the magic.</p>
-              </div>
-            )}
+          <div className="flex-1 p-10 overflow-y-auto custom-scrollbar prose prose-slate dark:prose-invert max-w-none">
+            {content ? <ReactMarkdown>{content}</ReactMarkdown> : <div className="h-full flex flex-col items-center justify-center opacity-40"><GraduationCap size={64} /><p className="text-xs font-black uppercase mt-4">Awaiting Architect Blueprint</p></div>}
           </div>
         </div>
       </div>

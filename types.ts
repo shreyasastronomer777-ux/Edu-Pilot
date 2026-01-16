@@ -10,9 +10,10 @@ export enum View {
   // Student Views
   FLASHCARDS = 'FLASHCARDS',
   STUDY_NOTES = 'STUDY_NOTES',
-  HOMEWORK_PLANNER = 'HOMEWORK_PLANNER',
   AI_SUMMARIZER = 'AI_SUMMARIZER',
-  STUDENT_QUIZ = 'STUDENT_QUIZ'
+  STUDENT_QUIZ = 'STUDENT_QUIZ',
+  FOCUS_ROOM = 'FOCUS_ROOM',
+  DOUBT_SOLVER = 'DOUBT_SOLVER'
 }
 
 export interface QuizQuestion {
@@ -33,9 +34,23 @@ export interface LessonPlanConfig {
   subject: string;
   duration: string;
   focus: string;
+  standard?: string;
+  proficiencyLevel?: string;
 }
 
-export interface GeneratedImage {
-  url: string;
-  prompt: string;
+export interface GradeEntry {
+  id: string;
+  name: string;
+  weight: number;
+  score: number;
+}
+
+// Interface for StudyQuest functionality
+export interface Quest {
+  id: string;
+  title: string;
+  xp: number;
+  status: 'available' | 'completed';
+  deadline: string;
+  category: string;
 }

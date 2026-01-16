@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GraduationCap, User, ArrowRight } from 'lucide-react';
 
@@ -11,14 +10,14 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({ onSelect }) => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors duration-300">
       <div className="max-w-4xl w-full">
         <div className="text-center mb-12">
-           <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-200 dark:shadow-none">
-              <span className="text-white font-bold text-3xl">E</span>
+           <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg overflow-hidden border border-slate-200 dark:border-white/10">
+              <img src="https://iili.io/feG2UBt.md.png" alt="SVGPT Logo" className="w-full h-full object-cover" />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              How will you use EduPilot?
+              How will you use SVGPT?
             </h1>
             <p className="text-lg text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
-              Choose your role to customize your experience.
+              Choose your role to customize your high-performance workspace experience.
             </p>
         </div>
 
@@ -40,7 +39,7 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({ onSelect }) => {
             
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Teacher</h3>
             <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-              I want to create lesson plans, generate quizzes, grade homework, and manage my classroom.
+              I want to create lesson plans, generate quizzes, grade homework, and manage my classroom with AI precision.
             </p>
           </button>
 
@@ -61,7 +60,7 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({ onSelect }) => {
             
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Student</h3>
             <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-              I want to check my assignments, use study tools, review feedback, and track my attendance.
+              I want to check my assignments, use study tools, review feedback, and track my performance.
             </p>
           </button>
         </div>

@@ -1,8 +1,7 @@
 
 import React, { useState } from 'react';
 import { View } from '../types';
-// Added GraduationCap to the lucide-react import list
-import { Sparkles, Clock, FileText, ArrowRight, Rocket, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, Calendar, BrainCircuit, ChevronRight, GraduationCap } from 'lucide-react';
+import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, BrainCircuit, ChevronRight, GraduationCap, Swords, Timer, Calculator, Mic, Camera, Zap } from 'lucide-react';
 
 interface DashboardProps {
   onChangeView: (view: View) => void;
@@ -12,6 +11,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
   const isTeacher = userRole === 'teacher';
   const [searchQuery, setSearchQuery] = useState('');
+  const [xp] = useState(() => Number(localStorage.getItem('svgpt_xp')) || 0);
 
   const tools = isTeacher ? [
     { id: View.LESSON_PLANNER, title: 'Lesson Studio', desc: 'Craft high-performance curriculums with elite AI reasoning.', icon: FileText, color: 'blue' },
@@ -21,24 +21,28 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
     { id: View.ATTENDANCE, title: 'Registry', desc: 'High-speed student tracking and class management analytics.', icon: Users, color: 'pink' },
     { id: View.PLAGIARISM_CHECKER, title: 'Guard Rail', desc: 'Advanced originality scanning and web-grounded validation.', icon: ShieldAlert, color: 'red' },
   ] : [
-    { id: View.HOMEWORK_PLANNER, title: 'Scholar Planner', desc: 'Master your deadlines with precision tracking and AI reminders.', icon: Calendar, color: 'indigo' },
-    { id: View.STUDY_NOTES, title: 'Study Scribe', desc: 'Elegant organization for your academic insights and notes.', icon: PenTool, color: 'teal' },
+    { id: View.DOUBT_SOLVER, title: 'Neural Scanner', desc: 'Snap photos of homework and complex problems for instant AI resolution.', icon: Camera, color: 'indigo' },
+    { id: View.FOCUS_ROOM, title: 'Focus Room', desc: 'Deep work environment with custom Pomodoro durations.', icon: Timer, color: 'teal' },
     { id: View.FLASHCARDS, title: 'Flash-Recall', icon: Layers, desc: 'Optimized memory retention through neural study modes.', color: 'orange' },
-    { id: View.AI_SUMMARIZER, title: 'Digest AI', desc: 'Condense complex academic texts into refined study guides.', icon: FileText, color: 'sky' },
-    { id: View.STUDENT_QUIZ, title: 'Subject Mastery', desc: 'Pro-level practice exams for competitive academic preparation.', icon: BrainCircuit, color: 'rose' },
+    { id: View.STUDY_NOTES, title: 'Notes Studio', desc: 'Keep and organize your synthesized homework and study insights.', icon: PenTool, color: 'rose' },
   ];
 
   const filteredTools = tools.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8">
-      <header className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-12 staggered-fade-in">
+      <header className="mb-20 flex flex-col md:flex-row md:items-end justify-between gap-12 staggered-fade-in">
         <div className="space-y-4">
            <div className="flex items-center gap-3">
               <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-indigo-500/20">System Status: Active</span>
+              {!isTeacher && (
+                <span className="px-3 py-1 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-yellow-500/20 flex items-center gap-1">
+                   <Zap size={10} /> {xp} Mastery Points
+                </span>
+              )}
            </div>
           <h1 className="text-5xl md:text-6xl font-[900] text-slate-900 dark:text-white leading-[0.9] tracking-tighter">
-            Elegance in <span className="text-transparent bg-clip-text premium-gradient">Education.</span>
+            Elegance in <span className="inline text-transparent bg-clip-text premium-gradient">Education.</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-xl opacity-80">
             Welcome back, {isTeacher ? 'Professor' : 'Scholar'}. Your refined toolkit is prepared for peak academic performance.
@@ -79,7 +83,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
               className="group relative bg-white/50 dark:bg-white/[0.03] backdrop-blur-3xl p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-2 transition-all duration-700 cursor-pointer flex flex-col h-full overflow-hidden" 
               onClick={() => onChangeView(tool.id)}
             >
-              {/* Dynamic Gradient Background Glow */}
               <div className={`absolute -inset-24 bg-gradient-to-br ${colorMap[tool.color]} opacity-0 group-hover:opacity-40 blur-3xl transition-opacity duration-1000 -z-10`}></div>
               
               <div className="flex items-center justify-between mb-8">
@@ -105,8 +108,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
                      <div key={i} className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800"></div>
                    ))}
                 </div>
-                <div className="w-8 h-8 rounded-full premium-gradient flex items-center justify-center text-white scale-0 group-hover:scale-100 transition-transform duration-500 shadow-lg shadow-indigo-500/20">
-                   <Rocket size={14} />
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 scale-0 group-hover:scale-100 transition-transform duration-500">
+                   <Sparkles size={14} />
                 </div>
               </div>
             </div>
@@ -118,10 +121,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
              <div className="w-2 h-8 premium-gradient rounded-full"></div>
-             <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Activity Stream</h2>
+             <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Academic Feed</h2>
           </div>
           <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-500 transition-colors flex items-center gap-2 group">
-            Global Archive <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+            Personal Records <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
 
@@ -133,15 +136,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
                </div>
                <div className="flex-1">
                  <p className="text-lg font-black text-slate-900 dark:text-white leading-none tracking-tight mb-1">
-                    {isTeacher ? 'Lesson Plan Synthesized' : 'Deep Study Session Logged'}
+                    {isTeacher ? 'Curriculum Synthesis Complete' : 'Study Insight Synthesized'}
                  </p>
                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium opacity-70">
-                    Neural engine utilized for advanced concept mapping and standard alignment.
+                    {isTeacher ? 'Neural engine utilized for advanced concept mapping.' : 'New flashcard deck generated from recent biology notes.'}
                  </p>
                </div>
                <div className="text-right flex flex-col items-end">
-                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Verified</span>
-                  <span className="text-xs font-bold text-slate-400">12m ago</span>
+                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Sync: 100%</span>
+                  <span className="text-xs font-bold text-slate-400">2h ago</span>
                </div>
              </div>
           ))}
