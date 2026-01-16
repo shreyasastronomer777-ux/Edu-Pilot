@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { View } from '../types';
-import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, BrainCircuit, ChevronRight, GraduationCap, Swords, Timer, Calculator, Mic, Camera, Zap } from 'lucide-react';
+import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, BrainCircuit, ChevronRight, GraduationCap, Swords, Timer, Calculator, Mic, Camera, Zap, Headphones } from 'lucide-react';
 
 interface DashboardProps {
   onChangeView: (view: View) => void;
@@ -21,6 +21,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
     { id: View.ATTENDANCE, title: 'Registry', desc: 'High-speed student tracking and class management analytics.', icon: Users, color: 'pink' },
     { id: View.PLAGIARISM_CHECKER, title: 'Guard Rail', desc: 'Advanced originality scanning and web-grounded validation.', icon: ShieldAlert, color: 'red' },
   ] : [
+    { id: View.AUDIO_BRIEFING, title: 'Audio Briefing', desc: 'Transform complex notes into an elite podcast briefing via TTS.', icon: Headphones, color: 'sky' },
     { id: View.DOUBT_SOLVER, title: 'Neural Scanner', desc: 'Snap photos of homework and complex problems for instant AI resolution.', icon: Camera, color: 'indigo' },
     { id: View.FOCUS_ROOM, title: 'Focus Room', desc: 'Deep work environment with custom Pomodoro durations.', icon: Timer, color: 'teal' },
     { id: View.FLASHCARDS, title: 'Flash-Recall', icon: Layers, desc: 'Optimized memory retention through neural study modes.', color: 'orange' },

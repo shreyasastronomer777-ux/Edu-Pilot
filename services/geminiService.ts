@@ -1,11 +1,12 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LessonPlanConfig, Quiz } from "../types";
 
-// Initialize the client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to get client to avoid top-level initialization issues
+const getAI = () => new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
 
@@ -37,6 +38,7 @@ export const solveDoubt = async (base64Data: string, mimeType: string): Promise<
 };
 
 export const generateRevisionInsights = async (base64Data: string, mimeType: string): Promise<string> => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
 
@@ -68,6 +70,7 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
 };
 
 export const chatWithEduAssistant = async (message: string, history: {role: string, parts: {text: string}[]}[], userRole: 'teacher' | 'student' | null) => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview"; 
   const roleInstruction = userRole === 'teacher' 
     ? "The user is a TEACHER. Focus on curriculum standards, pedagogy, and lesson optimization."
@@ -97,6 +100,7 @@ export const chatWithEduAssistant = async (message: string, history: {role: stri
 };
 
 export const convertNotesToFlashcards = async (notes: string): Promise<{front: string, back: string}[]> => {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const schema = {
     type: Type.ARRAY,
@@ -127,6 +131,7 @@ export const convertNotesToFlashcards = async (notes: string): Promise<{front: s
 };
 
 export const convertAssetToFlashcards = async (base64Data: string, mimeType: string): Promise<{front: string, back: string}[]> => {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const schema = {
@@ -166,6 +171,7 @@ export const streamLessonPlan = async (
   config: LessonPlanConfig,
   onChunk: (text: string) => void
 ) => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
   
   const prompt = `
@@ -204,6 +210,7 @@ export const generateQuizFromSource = async (
   source: { type: 'text' | 'file' | 'url', data: string, mimeType?: string },
   count: number = 10
 ): Promise<Quiz> => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
 
   const schema = {
@@ -262,11 +269,13 @@ export const generateQuizFromSource = async (
   }
 };
 
-export const generateQuiz = async (topic: string, grade: string, count: number): Promise<Quiz> => {
-  return generateQuizFromSource({ type: 'text', data: topic }, count);
+// Added missing generateQuiz function to support student practice mode
+export const generateQuiz = async (topic: string, level: string = 'Standard', count: number = 5): Promise<Quiz> => {
+  return generateQuizFromSource({ type: 'text', data: `${topic} (Target Audience: ${level})` }, count);
 };
 
 export const generateVisualAid = async (prompt: string): Promise<string> => {
+  const ai = getAI();
   const model = "gemini-2.5-flash-image"; 
   try {
     const response = await ai.models.generateContent({
@@ -287,6 +296,7 @@ export const generateVisualAid = async (prompt: string): Promise<string> => {
 };
 
 export const checkHomework = async (assignment: string, studentWork: string): Promise<string> => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
   const prompt = `Grade this work rigorously. Focus on handwriting analysis if scan provided:\n\nAssignment: ${assignment}\n\nStudent: ${studentWork}`;
   try {
@@ -307,6 +317,7 @@ export const gradeAnswerSheet = async (
   assignmentContext: string,
   answerKey?: { dataUri: string, mimeType: string }
 ): Promise<string> => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
   const parts: any[] = [
     { text: `Grade this student's work. Focus on OCR/Handwriting extraction. Context: ${assignmentContext || 'No specific context provided.'}` },
@@ -343,6 +354,7 @@ export const gradeAnswerSheet = async (
 };
 
 export const checkPlagiarism = async (text: string) => {
+  const ai = getAI();
   const model = "gemini-3-flash-preview";
   try {
     const response = await ai.models.generateContent({
@@ -365,6 +377,7 @@ export const checkPlagiarism = async (text: string) => {
 };
 
 export const compareAssignments = async (textA: string, textB: string): Promise<string> => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
   const prompt = `Compare these two submissions for academic integrity. Identify similarities, potential collusion, and provide a final verdict.\n\nSubmission 1:\n${textA}\n\nSubmission 2:\n${textB}`;
   try {
@@ -384,6 +397,7 @@ export const compareAssignments = async (textA: string, textB: string): Promise<
 };
 
 export const summarizeText = async (text: string): Promise<string> => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
   try {
     const response = await ai.models.generateContent({
@@ -398,8 +412,8 @@ export const summarizeText = async (text: string): Promise<string> => {
   }
 };
 
-// Fix for LectureRecorder.tsx missing export
 export const summarizeAudioLecture = async (base64Data: string, mimeType: string): Promise<string> => {
+  const ai = getAI();
   const model = "gemini-3-pro-preview";
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
 
@@ -428,4 +442,35 @@ export const summarizeAudioLecture = async (base64Data: string, mimeType: string
     console.error("Audio Summary Error:", error);
     throw error;
   }
+};
+
+export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
+  const ai = getAI();
+  
+  // First generate a script
+  const scriptResponse = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: `Write a professional, engaging podcast-style audio briefing script (approx 1 minute) based on the following academic notes. Start with a warm greeting from the SVGPT Neural Core. Focus on clarity and high-level insights. Notes:\n\n${content}`,
+    config: { systemInstruction: "You are an elite academic news anchor. Speak clearly and intelligently." }
+  });
+  const script = scriptResponse.text || "Welcome to your SVGPT briefing.";
+
+  // Then convert script to speech
+  const ttsResponse = await ai.models.generateContent({
+    model: "gemini-2.5-flash-preview-tts",
+    contents: [{ parts: [{ text: script }] }],
+    config: {
+      responseModalities: [Modality.AUDIO],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: 'Kore' },
+        },
+      },
+    },
+  });
+
+  const audioBase64 = ttsResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  if (!audioBase64) throw new Error("TTS failed");
+
+  return { audioBase64, script };
 };

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { View } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, ShieldAlert, Moon, Sun, Layers, PenTool, Calendar, FileText, BrainCircuit, X, Swords, Timer, Calculator, Mic, Camera } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, ShieldAlert, Moon, Sun, Layers, PenTool, Calendar, FileText, BrainCircuit, X, Swords, Timer, Calculator, Mic, Headphones } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 
 interface SidebarProps {
@@ -27,7 +27,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
   ] : [
     { id: View.DASHBOARD, label: 'My Hub', icon: LayoutDashboard },
     { id: View.FOCUS_ROOM, label: 'Focus Mode', icon: Timer },
-    { id: View.DOUBT_SOLVER, label: 'Doubt Solver', icon: Camera },
+    { id: View.AUDIO_BRIEFING, label: 'Audio Brief', icon: Headphones },
+    { id: View.DOUBT_SOLVER, label: 'Doubt Solver', icon: Mic },
     { id: View.FLASHCARDS, label: 'Flash-Recall', icon: Layers },
     { id: View.STUDY_NOTES, label: 'Notes Studio', icon: PenTool },
   ];
