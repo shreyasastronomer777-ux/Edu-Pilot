@@ -1,7 +1,6 @@
-
-import React, { useState } from 'react';
-import { View } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, ShieldAlert, Moon, Sun, Layers, PenTool, Calendar, FileText, BrainCircuit, X, Swords, Timer, Calculator, Mic, Headphones } from 'lucide-react';
+import React from 'react';
+import { View, Role } from '../types';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, ShieldAlert, Moon, Sun, Layers, PenTool, Timer, Mic, Headphones, Trophy, ShieldCheck, Globe, MessageSquare, Bot } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 
 interface SidebarProps {
@@ -9,29 +8,39 @@ interface SidebarProps {
   onViewChange: (view: View) => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
-  userRole?: 'teacher' | 'student' | null;
+  userRole?: Role | null;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode, toggleTheme, userRole }) => {
-  const isTeacher = userRole === 'teacher';
   const user = auth.currentUser;
 
-  const menuItems = isTeacher ? [
-    { id: View.DASHBOARD, label: 'Control Center', icon: LayoutDashboard },
-    { id: View.LESSON_PLANNER, label: 'Lesson Studio', icon: BookOpen },
-    { id: View.QUIZ_MAKER, label: 'Quiz Engine', icon: GraduationCap },
-    { id: View.VISUAL_STUDIO, label: 'Creative Suite', icon: ImageIcon },
-    { id: View.HOMEWORK_CHECKER, label: 'Evaluator', icon: CheckSquare },
-    { id: View.ATTENDANCE, label: 'Registry', icon: Users },
-    { id: View.PLAGIARISM_CHECKER, label: 'Guard Rail', icon: ShieldAlert },
-  ] : [
-    { id: View.DASHBOARD, label: 'My Hub', icon: LayoutDashboard },
-    { id: View.FOCUS_ROOM, label: 'Focus Mode', icon: Timer },
-    { id: View.AUDIO_BRIEFING, label: 'Audio Brief', icon: Headphones },
-    { id: View.DOUBT_SOLVER, label: 'Doubt Solver', icon: Mic },
-    { id: View.FLASHCARDS, label: 'Flash-Recall', icon: Layers },
-    { id: View.STUDY_NOTES, label: 'Notes Studio', icon: PenTool },
-  ];
+  const getMenuItems = () => {
+    switch (userRole) {
+      case 'teacher':
+        return [
+          { id: View.DASHBOARD, label: 'Control Center', icon: LayoutDashboard },
+          { id: View.SV_CHATBOT, label: 'Neural Lab', icon: Bot },
+          { id: View.LESSON_PLANNER, label: 'Lesson Studio', icon: BookOpen },
+          { id: View.QUIZ_MAKER, label: 'Quiz Engine', icon: GraduationCap },
+          { id: View.VISUAL_STUDIO, label: 'Creative Suite', icon: ImageIcon },
+          { id: View.HOMEWORK_CHECKER, label: 'Evaluator', icon: CheckSquare },
+          { id: View.ATTENDANCE, label: 'Registry', icon: Users },
+          { id: View.PLAGIARISM_CHECKER, label: 'Guard Rail', icon: ShieldAlert },
+        ];
+      case 'student':
+        return [
+          { id: View.DASHBOARD, label: 'My Hub', icon: LayoutDashboard },
+          { id: View.FOCUS_ROOM, label: 'Focus Mode', icon: Timer },
+          { id: View.DOUBT_SOLVER, label: 'Doubt Solver', icon: Mic },
+          { id: View.FLASHCARDS, label: 'Flash-Recall', icon: Layers },
+          { id: View.STUDY_NOTES, label: 'Notes Studio', icon: PenTool },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const menuItems = getMenuItems();
 
   return (
     <div className="w-72 bg-white/70 dark:bg-black/40 backdrop-blur-3xl border-r border-slate-200/50 dark:border-white/5 h-screen fixed left-0 top-0 flex flex-col z-30 hidden md:flex transition-all duration-700">
@@ -42,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">SVGPT</span>
-            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Professional</span>
+            <span className="text-[10px] font-black text-[#4B49AC] uppercase tracking-widest mt-1">Professional</span>
           </div>
         </div>
       </div>
@@ -79,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
                {isDarkMode ? <Moon size={14} /> : <Sun size={14} />}
                {isDarkMode ? 'Midnight' : 'Daylight'}
              </span>
-             <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${isDarkMode ? 'bg-indigo-600' : 'bg-slate-300'}`}>
+             <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${isDarkMode ? 'bg-[#4B49AC]' : 'bg-slate-300'}`}>
                 <div className={`w-3 h-3 rounded-full bg-white shadow-sm transform transition-transform duration-500 ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
              </div>
            </button>
@@ -93,8 +102,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
               <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate">
                 {user?.displayName || 'Scholar'}
               </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold truncate">
-                {isTeacher ? 'Elite Educator' : 'Scholar'}
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold truncate capitalize">
+                {userRole}
               </span>
            </div>
         </div>

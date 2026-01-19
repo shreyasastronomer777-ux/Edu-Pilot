@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { View } from '../types';
-import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, BrainCircuit, ChevronRight, GraduationCap, Swords, Timer, Calculator, Mic, Camera, Zap, Headphones } from 'lucide-react';
+import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, BrainCircuit, ChevronRight, GraduationCap, Swords, Timer, Calculator, Mic, Camera, Zap, Headphones, BookOpenCheck, Trophy, Bot } from 'lucide-react';
 
 interface DashboardProps {
   onChangeView: (view: View) => void;
@@ -14,18 +13,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
   const [xp] = useState(() => Number(localStorage.getItem('svgpt_xp')) || 0);
 
   const tools = isTeacher ? [
+    { id: View.SV_CHATBOT, title: 'Neural Lab', desc: 'Interact with the elite pedagogical co-pilot for curriculum design.', icon: Bot, color: 'indigo' },
     { id: View.LESSON_PLANNER, title: 'Lesson Studio', desc: 'Craft high-performance curriculums with elite AI reasoning.', icon: FileText, color: 'blue' },
     { id: View.QUIZ_MAKER, title: 'Quiz Engine', desc: 'Generate sophisticated evaluations with instant explanatory depth.', icon: GraduationCap, color: 'emerald' },
     { id: View.VISUAL_STUDIO, title: 'Creative Suite', desc: 'Synthesize professional classroom imagery in ultra-high resolution.', icon: Sparkles, color: 'purple' },
     { id: View.HOMEWORK_CHECKER, title: 'Evaluation AI', desc: 'Precision grading and feedback tailored to academic standards.', icon: CheckSquare, color: 'orange' },
     { id: View.ATTENDANCE, title: 'Registry', desc: 'High-speed student tracking and class management analytics.', icon: Users, color: 'pink' },
-    { id: View.PLAGIARISM_CHECKER, title: 'Guard Rail', desc: 'Advanced originality scanning and web-grounded validation.', icon: ShieldAlert, color: 'red' },
   ] : [
-    { id: View.AUDIO_BRIEFING, title: 'Audio Briefing', desc: 'Transform complex notes into an elite podcast briefing via TTS.', icon: Headphones, color: 'sky' },
+    { id: View.QUICK_REVISION, title: 'Quick Revision', desc: 'Synthesize high-speed revision notes and core definitions from documents.', icon: BookOpenCheck, color: 'violet' },
     { id: View.DOUBT_SOLVER, title: 'Neural Scanner', desc: 'Snap photos of homework and complex problems for instant AI resolution.', icon: Camera, color: 'indigo' },
     { id: View.FOCUS_ROOM, title: 'Focus Room', desc: 'Deep work environment with custom Pomodoro durations.', icon: Timer, color: 'teal' },
-    { id: View.FLASHCARDS, title: 'Flash-Recall', icon: Layers, desc: 'Optimized memory retention through neural study modes.', color: 'orange' },
-    { id: View.STUDY_NOTES, title: 'Notes Studio', desc: 'Keep and organize your synthesized homework and study insights.', icon: PenTool, color: 'rose' },
   ];
 
   const filteredTools = tools.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -69,6 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
             blue: 'from-blue-500/20 to-indigo-500/20 text-blue-500 border-blue-500/10',
             emerald: 'from-emerald-500/20 to-teal-500/20 text-emerald-500 border-emerald-500/10',
             purple: 'from-purple-500/20 to-pink-500/20 text-purple-500 border-purple-500/10',
+            violet: 'from-violet-600/20 to-indigo-600/20 text-violet-600 border-violet-600/10',
             orange: 'from-orange-500/20 to-red-500/20 text-orange-500 border-orange-500/10',
             pink: 'from-pink-500/20 to-rose-500/20 text-pink-500 border-pink-500/10',
             red: 'from-red-500/20 to-orange-500/20 text-red-500 border-red-500/10',
@@ -76,6 +74,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
             teal: 'from-teal-500/20 to-cyan-500/20 text-teal-500 border-teal-500/10',
             sky: 'from-sky-500/20 to-blue-500/20 text-sky-500 border-sky-500/10',
             rose: 'from-rose-500/20 to-pink-500/20 text-rose-500 border-rose-500/10',
+            yellow: 'from-yellow-500/20 to-orange-500/20 text-yellow-500 border-yellow-500/10',
           };
 
           return (

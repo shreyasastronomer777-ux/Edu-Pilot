@@ -1,5 +1,6 @@
 
 export enum View {
+  LANDING = 'LANDING',
   DASHBOARD = 'DASHBOARD',
   LESSON_PLANNER = 'LESSON_PLANNER',
   QUIZ_MAKER = 'QUIZ_MAKER',
@@ -7,6 +8,7 @@ export enum View {
   HOMEWORK_CHECKER = 'HOMEWORK_CHECKER',
   ATTENDANCE = 'ATTENDANCE',
   PLAGIARISM_CHECKER = 'PLAGIARISM_CHECKER',
+  SV_CHATBOT = 'SV_CHATBOT',
   // Student Views
   FLASHCARDS = 'FLASHCARDS',
   STUDY_NOTES = 'STUDY_NOTES',
@@ -14,8 +16,12 @@ export enum View {
   STUDENT_QUIZ = 'STUDENT_QUIZ',
   FOCUS_ROOM = 'FOCUS_ROOM',
   DOUBT_SOLVER = 'DOUBT_SOLVER',
-  AUDIO_BRIEFING = 'AUDIO_BRIEFING'
+  AUDIO_BRIEFING = 'AUDIO_BRIEFING',
+  QUICK_REVISION = 'QUICK_REVISION',
+  STUDY_QUEST = 'STUDY_QUEST'
 }
+
+export type Role = 'teacher' | 'student';
 
 export interface QuizQuestion {
   question: string;
@@ -27,6 +33,18 @@ export interface QuizQuestion {
 export interface Quiz {
   title: string;
   questions: QuizQuestion[];
+}
+
+export interface SlideDeck {
+  title: string;
+  slides: { title: string; content: string[]; visualPrompt: string }[];
+}
+
+export interface BrainBreak {
+  activityName: string;
+  duration: string;
+  instructions: string[];
+  pedagogicalBenefit: string;
 }
 
 export interface LessonPlanConfig {
@@ -46,7 +64,6 @@ export interface GradeEntry {
   score: number;
 }
 
-// Interface for StudyQuest functionality
 export interface Quest {
   id: string;
   title: string;
@@ -54,4 +71,27 @@ export interface Quest {
   status: 'available' | 'completed';
   deadline: string;
   category: string;
+}
+
+export interface DailyChallenge {
+  id: string;
+  task: string;
+  xp: number;
+  completed: boolean;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: Role;
+  text: string;
+  timestamp: string;
+}
+
+export interface AccessCode {
+  code: string;
+  studentId: string;
+  studentName: string;
+  expires: string;
 }
