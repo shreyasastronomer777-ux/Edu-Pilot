@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { View, Role } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, ShieldAlert, Moon, Sun, Layers, PenTool, Timer, Mic, Headphones, Trophy, ShieldCheck, Globe, MessageSquare, Bot } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 
 interface SidebarProps {
@@ -25,28 +25,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
           { id: View.QUIZ_MAKER, label: 'Quiz Engine', icon: GraduationCap },
           { id: View.VISUAL_STUDIO, label: 'Creative Suite', icon: ImageIcon },
           { id: View.HOMEWORK_CHECKER, label: 'Evaluator AI', icon: CheckSquare },
-          { id: View.MESSAGES, label: 'Secure Comms', icon: MessageSquare },
           { id: View.ATTENDANCE, label: 'Registry', icon: Users },
         ];
       case 'student':
         return [
           { id: View.DASHBOARD, label: 'Scholar Hub', icon: LayoutDashboard },
-          { id: View.STUDY_QUEST, label: 'Study Quest', icon: Trophy },
           { id: View.FOCUS_ROOM, label: 'Focus Mode', icon: Timer },
-          { id: View.AUDIO_BRIEFING, label: 'Audio Brief', icon: Headphones },
           { id: View.DOUBT_SOLVER, label: 'Neural Scanner', icon: Mic },
           { id: View.FLASHCARDS, label: 'Recall Node', icon: Layers },
           { id: View.STUDY_NOTES, label: 'Knowledge Archive', icon: PenTool },
-        ];
-      case 'parent':
-        return [
-          { id: View.PARENT_PORTAL, label: 'Heartbeat Dashboard', icon: LayoutDashboard },
-          { id: View.MESSAGES, label: 'Secure Comms', icon: MessageSquare },
-        ];
-      case 'admin':
-        return [
-          { id: View.SCHOOL_ADMIN, label: 'Admin Hub', icon: Globe },
-          { id: View.MESSAGES, label: 'Security Portal', icon: ShieldCheck },
         ];
       default:
         return [];

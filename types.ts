@@ -16,16 +16,10 @@ export enum View {
   STUDENT_QUIZ = 'STUDENT_QUIZ',
   FOCUS_ROOM = 'FOCUS_ROOM',
   DOUBT_SOLVER = 'DOUBT_SOLVER',
-  AUDIO_BRIEFING = 'AUDIO_BRIEFING',
-  QUICK_REVISION = 'QUICK_REVISION',
-  STUDY_QUEST = 'STUDY_QUEST',
-  // New Ecosystem Views
-  PARENT_PORTAL = 'PARENT_PORTAL',
-  SCHOOL_ADMIN = 'SCHOOL_ADMIN',
-  MESSAGES = 'MESSAGES'
+  QUICK_REVISION = 'QUICK_REVISION'
 }
 
-export type Role = 'teacher' | 'student' | 'parent' | 'admin';
+export type Role = 'teacher' | 'student';
 
 export interface QuizQuestion {
   question: string;

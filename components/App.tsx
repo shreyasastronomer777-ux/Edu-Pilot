@@ -15,9 +15,7 @@ import AISummarizer from './components/AISummarizer';
 import StudentQuiz from './components/StudentQuiz';
 import FocusRoom from './components/FocusRoom';
 import DoubtSolver from './components/DoubtSolver';
-import AudioBriefing from './components/AudioBriefing';
 import QuickRevision from './components/QuickRevision';
-import StudyQuest from './components/StudyQuest';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import RoleSelection from './components/RoleSelection';
@@ -72,12 +70,10 @@ const App: React.FC = () => {
     setCurrentView(role === 'parent' ? View.PARENT_PORTAL : role === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
   };
 
-  const handleGetStarted = () => {
-    // Transition from landing to the next logical step (either Dashboard or Login)
+  const handleGetStartedFromLanding = () => {
     if (isLoggedIn && userRole) {
       setCurrentView(userRole === 'parent' ? View.PARENT_PORTAL : userRole === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
     } else {
-      // Logic inside return statement will catch !isLoggedIn and show Login
       setCurrentView(View.DASHBOARD); 
     }
   };
@@ -99,8 +95,6 @@ const App: React.FC = () => {
       case View.FOCUS_ROOM: return <FocusRoom />;
       case View.DOUBT_SOLVER: return <DoubtSolver onBack={backToRoot} />;
       case View.QUICK_REVISION: return <QuickRevision onBack={backToRoot} />;
-      case View.STUDY_QUEST: return <StudyQuest onBack={backToRoot} />;
-      case View.AUDIO_BRIEFING: return <AudioBriefing onBack={backToRoot} />;
       case View.SV_CHATBOT: return <SVChatbot onBack={backToRoot} userRole={userRole === 'teacher' ? 'teacher' : 'student'} />;
       case View.PARENT_PORTAL: return <ParentPortal />;
       case View.SCHOOL_ADMIN: return <SchoolAdmin />;
@@ -110,18 +104,13 @@ const App: React.FC = () => {
 
   if (authChecking) return <div className="h-screen w-full bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" size={48} /></div>;
 
-  // 1. Mandatory Landing Entry
   if (currentView === View.LANDING) {
-     return <LandingPage onGetStarted={handleGetStarted} />;
+     return <LandingPage onGetStarted={handleGetStartedFromLanding} />;
   }
 
-  // 2. Authentication Shield
   if (!isLoggedIn) return <Login onLogin={() => setIsLoggedIn(true)} />;
-
-  // 3. Identity Configuration
   if (!userRole) return <RoleSelection onSelect={handleRoleSelect} />;
 
-  // 4. Main App Shell
   return (
     <div className={`h-full min-h-screen flex flex-col md:flex-row ${isDarkMode ? 'dark bg-[#050505]' : 'bg-slate-50'}`}>
       <Sidebar 
@@ -137,7 +126,6 @@ const App: React.FC = () => {
             <LogOut size={20} />
           </button>
         </div>
-        
         <div className="p-8 pt-24 md:pt-32 animate-in fade-in duration-700 flex-grow overflow-x-hidden">
           {renderContent()}
         </div>
