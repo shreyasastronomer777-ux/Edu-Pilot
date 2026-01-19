@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RefreshCw, Brain, Plus, Minus, Volume2, VolumeX, Sparkles, Mic, MicOff, Wind, Loader2, Waves, Trees, AlertCircle, Key } from 'lucide-react';
+import { Play, Pause, RefreshCw, Brain, Plus, Minus, Volume2, VolumeX, Sparkles, Mic, MicOff, Wind, Loader2, Waves, Trees, AlertCircle, Key, Activity } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
 
 // Audio Helpers as per Guidelines
@@ -50,6 +50,7 @@ const FocusRoom: React.FC = () => {
   const [isAiConnected, setIsAiConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   // Audio/Live Refs
   const audioContextsRef = useRef<{ input: AudioContext; output: AudioContext } | null>(null);
@@ -57,6 +58,7 @@ const FocusRoom: React.FC = () => {
   const nextStartTimeRef = useRef(0);
   const sourcesRef = useRef(new Set<AudioBufferSourceNode>());
   const videoRef = useRef<HTMLVideoElement>(null);
+  const connectionTimeoutRef = useRef<number | null>(null);
   
   // Persistent Audio Context for SFX and Synth
   const masterAudioContextRef = useRef<AudioContext | null>(null);
@@ -173,6 +175,16 @@ const FocusRoom: React.FC = () => {
 
   const startLiveSession = async () => {
     setError(null);
+    setShowDiagnostics(false);
+    
+    // Safety Timeout
+    connectionTimeoutRef.current = window.setTimeout(() => {
+      if (!isAiConnected) {
+        setError("Neural link establishment taking too long. Check network or API configuration.");
+        setShowDiagnostics(true);
+      }
+    }, 10000);
+
     try {
       const apiKey = process.env.API_KEY;
       if (!apiKey) throw new Error("API Key configuration missing.");
@@ -189,6 +201,9 @@ const FocusRoom: React.FC = () => {
         callbacks: {
           onopen: () => {
             setIsAiConnected(true);
+            setError(null);
+            if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
+            
             const source = inputCtx.createMediaStreamSource(stream);
             const scriptProcessor = inputCtx.createScriptProcessor(4096, 1, 1);
             scriptProcessor.onaudioprocess = (e) => {
@@ -227,14 +242,18 @@ const FocusRoom: React.FC = () => {
           },
           onerror: (e: any) => {
             console.error('Live AI Error:', e);
+            if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
             const errMsg = e?.message || e?.error?.message || "Network link failure";
             setError(errMsg);
             setIsAiConnected(false);
-            if (errMsg.includes("Requested entity was not found")) {
-              setError("Session authentication expired. Please re-select API Key.");
+            if (errMsg.includes("Requested entity was not found") || errMsg.includes("404")) {
+              setError("Session authentication expired or invalid model path. Please re-select API Key.");
             }
           },
-          onclose: () => setIsAiConnected(false)
+          onclose: () => {
+            setIsAiConnected(false);
+            if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
+          }
         },
         config: {
           responseModalities: [Modality.AUDIO],
@@ -246,21 +265,24 @@ const FocusRoom: React.FC = () => {
       liveSessionRef.current = await sessionPromise;
     } catch (e: any) {
       console.error('Failed to init focus coach:', e);
+      if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
       setError(e.message || "Could not establish neural link.");
-      setIsActive(false);
+      setIsAiConnected(false);
     }
   };
 
   const handleApiKeySelection = async () => {
     if (window.aistudio) {
       await window.aistudio.openSelectKey();
-      // Assume success and retry
       setError(null);
-      toggleTimer(true);
+      setShowDiagnostics(false);
+      // Re-trigger session
+      if (isActive) startLiveSession();
     }
   };
 
   const stopLiveSession = () => {
+    if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
     if (liveSessionRef.current) {
       liveSessionRef.current.close();
       liveSessionRef.current = null;
@@ -277,6 +299,7 @@ const FocusRoom: React.FC = () => {
     const newActive = typeof forcedState === 'boolean' ? forcedState : !isActive;
     setIsActive(newActive);
     setError(null);
+    setShowDiagnostics(false);
     
     await ensureAudioContext();
 
@@ -300,6 +323,7 @@ const FocusRoom: React.FC = () => {
   const resetTimer = () => {
     setIsActive(false);
     setError(null);
+    setShowDiagnostics(false);
     stopLiveSession();
     toggleConcentrationPulse(false);
     setTimeLeft(sessionType === 'focus' ? duration * 60 : 5 * 60);
@@ -361,18 +385,24 @@ const FocusRoom: React.FC = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="absolute inset-x-10 top-24 z-30 p-5 bg-red-500/10 border border-red-500/20 rounded-3xl backdrop-blur-xl animate-in fade-in slide-in-from-top-4">
+            <div className="absolute inset-x-10 top-24 z-30 p-5 bg-black/80 border border-red-500/20 rounded-3xl backdrop-blur-xl animate-in fade-in slide-in-from-top-4">
               <div className="flex flex-col items-center text-center gap-4">
                 <AlertCircle className="text-red-500" size={24} />
                 <p className="text-[10px] font-black uppercase tracking-widest text-red-500 leading-relaxed">{error}</p>
-                {error.includes("API Key") && (
+                <div className="flex flex-col gap-2 w-full">
                   <button 
                     onClick={handleApiKeySelection}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-red-500 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-600 transition-colors shadow-lg"
                   >
-                    <Key size={12} /> Resolve Neural Link
+                    <Key size={12} /> Sync Neural Link
                   </button>
-                )}
+                  <button 
+                    onClick={() => { setError(null); setShowDiagnostics(false); }}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-white/10 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/20 transition-colors"
+                  >
+                    Dismiss & Ambient Only
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -422,7 +452,7 @@ const FocusRoom: React.FC = () => {
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 group-hover:text-white transition-colors">Cascading Flow</span>
            </div>
            <div onClick={() => toggleConcentrationPulse(true)} className="flex flex-col items-center gap-3 group cursor-pointer">
-              <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center transition-all hover:bg-white/10 shadow-xl backdrop-blur-xl">
+              <div className={`w-16 h-16 rounded-3xl border flex items-center justify-center transition-all shadow-xl backdrop-blur-xl ${concentrationSynthRef.current ? 'bg-indigo-500/20 border-indigo-500' : 'bg-white/5 border-white/10'}`}>
                  <Waves size={26} className="text-white" />
               </div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 group-hover:text-white transition-colors">Neural Pulse</span>
@@ -433,15 +463,21 @@ const FocusRoom: React.FC = () => {
 
       {/* Startup Sync Overlay */}
       {isActive && !isAiConnected && !error && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-3xl flex items-center justify-center animate-in fade-in duration-700 pointer-events-none">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-3xl flex items-center justify-center animate-in fade-in duration-700">
            <div className="flex flex-col items-center gap-8">
               <div className="relative">
                  <Loader2 className="animate-spin text-white opacity-20" size={80} strokeWidth={1} />
                  <Brain className="absolute inset-0 m-auto text-indigo-500 animate-pulse" size={32} />
               </div>
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-4">
                  <h4 className="text-lg font-black text-white uppercase tracking-[0.8em]">Initializing Focus</h4>
-                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Syncing Neural Coach Engine</p>
+                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Syncing Neural Coach & Ambient Engines</p>
+                 <button 
+                  onClick={handleApiKeySelection}
+                  className="px-6 py-3 mt-4 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 mx-auto pointer-events-auto"
+                 >
+                    <Activity size={14} /> Diagnostic Link
+                 </button>
               </div>
            </div>
         </div>
