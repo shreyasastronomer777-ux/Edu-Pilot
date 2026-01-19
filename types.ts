@@ -18,10 +18,14 @@ export enum View {
   DOUBT_SOLVER = 'DOUBT_SOLVER',
   AUDIO_BRIEFING = 'AUDIO_BRIEFING',
   QUICK_REVISION = 'QUICK_REVISION',
-  STUDY_QUEST = 'STUDY_QUEST'
+  STUDY_QUEST = 'STUDY_QUEST',
+  // New Ecosystem Views
+  PARENT_PORTAL = 'PARENT_PORTAL',
+  SCHOOL_ADMIN = 'SCHOOL_ADMIN',
+  MESSAGES = 'MESSAGES'
 }
 
-export type Role = 'teacher' | 'student';
+export type Role = 'teacher' | 'student' | 'parent' | 'admin';
 
 export interface QuizQuestion {
   question: string;
