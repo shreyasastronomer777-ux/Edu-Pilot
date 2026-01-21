@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Sparkles, BrainCircuit, ShieldCheck, GraduationCap, ArrowRight, Zap, Globe, Users, ChevronRight, Play, Lock, Code2, Layers, Cpu } from 'lucide-react';
+import { GraduationCap, Check, Wand2, PenTool, Brain, Moon, ArrowRight, ShieldCheck, Zap, Globe, Users, ChevronRight, LayoutDashboard, Timer } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -8,191 +8,225 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-indigo-500/30 overflow-x-hidden font-sans">
-      {/* Cinematic Background Mesh */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-25">
-        <div className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/20 blur-[140px] rounded-full animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-15%] w-[70%] h-[70%] bg-purple-600/15 blur-[160px] rounded-full animate-pulse delay-1000"></div>
-        <div className="absolute top-[30%] left-[20%] w-[30%] h-[30%] bg-blue-500/10 blur-[100px] rounded-full animate-bounce duration-[10s]"></div>
-      </div>
-
-      {/* Persistent Navigation */}
-      <nav className="relative z-50 px-6 md:px-12 py-10 flex items-center justify-between max-w-7xl mx-auto">
-        <div className="flex items-center gap-5 group cursor-pointer">
-          <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center p-2 shadow-[0_0_40px_rgba(255,255,255,0.1)] transform group-hover:rotate-12 group-hover:scale-110 transition-all duration-500">
-            <img src="https://iili.io/feG2UBt.md.png" alt="Logo" className="w-full h-full object-cover" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-2xl font-black tracking-tighter uppercase leading-none">SVGPT</span>
-            <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em] mt-2">Neural Engine v3.0</span>
-          </div>
-        </div>
+    <div className="bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
         
-        <div className="hidden lg:flex items-center gap-14">
-          {['Ecosystem', 'Security', 'Enterprise'].map((item) => (
-            <a key={item} href={`#${item.toLowerCase()}`} className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all hover:translate-y-[-2px]">{item}</a>
-          ))}
-        </div>
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        }
 
-        <button 
-          onClick={onGetStarted} 
-          className="group px-10 py-3.5 bg-white text-black rounded-2xl text-[11px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_15px_30px_-5px_rgba(255,255,255,0.2)] flex items-center gap-3"
-        >
-          Launch Portal <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-        </button>
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .focus-mode-glow {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+      `}</style>
+
+      {/* Navigation */}
+      <nav className="fixed w-full z-50 glass-nav">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-20 items-center">
+            <div className="flex items-center gap-3">
+              <div className="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-200">
+                <GraduationCap className="text-white" size={24} />
+              </div>
+              <span className="text-2xl font-black tracking-tighter text-slate-900 uppercase">SVGPT</span>
+            </div>
+            <div className="hidden md:flex space-x-10 font-bold text-[11px] uppercase tracking-widest text-slate-500">
+              <a href="#teachers" className="hover:text-indigo-600 transition-colors">For Teachers</a>
+              <a href="#students" className="hover:text-indigo-600 transition-colors">For Students</a>
+              <p className="text-indigo-500 font-black">By Shreyas Gunjal & Vaibhav Chiniwar</p>
+            </div>
+            <div>
+              <button 
+                onClick={onGetStarted}
+                className="bg-indigo-600 text-white px-8 py-3 rounded-full font-black text-[11px] uppercase tracking-widest hover:bg-indigo-700 transition shadow-xl shadow-indigo-100 active:scale-95"
+              >
+                Enter Nexus
+              </button>
+            </div>
+          </div>
+        </div>
       </nav>
 
-      {/* Hero Experience */}
-      <section className="relative z-10 pt-16 pb-40 px-6 md:px-12 max-w-7xl mx-auto text-center">
-        {/* Founders Spotlight - High Visibility */}
-        <div className="mb-20 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-          <div className="inline-flex items-center gap-4 px-6 py-2.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] mb-10 shadow-2xl">
-             <Code2 size={16} className="text-indigo-400" />
-             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Architected by Founders</span>
-          </div>
-          
-          <div className="flex flex-col md:flex-row items-center justify-center gap-10 md:gap-24">
-            <div className="group relative">
-               <div className="absolute -inset-4 bg-indigo-500/10 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-               <div className="relative flex flex-col items-center">
-                  <span className="text-3xl md:text-5xl font-black tracking-tighter text-white group-hover:text-indigo-400 transition-colors duration-500">SHREYAS GUNJAL</span>
-                  <div className="w-16 h-1.5 bg-indigo-600/30 rounded-full mt-4 group-hover:w-full transition-all duration-700 ease-expo"></div>
-               </div>
-            </div>
-            
-            <div className="text-slate-800 text-5xl font-thin hidden md:block select-none">&</div>
-            
-            <div className="group relative">
-               <div className="absolute -inset-4 bg-purple-500/10 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-               <div className="relative flex flex-col items-center">
-                  <span className="text-3xl md:text-5xl font-black tracking-tighter text-white group-hover:text-purple-400 transition-colors duration-500">VAIBHAV CHINIWAR</span>
-                  <div className="w-16 h-1.5 bg-purple-600/30 rounded-full mt-4 group-hover:w-full transition-all duration-700 ease-expo"></div>
-               </div>
-            </div>
-          </div>
+      {/* Hero Section */}
+      <header className="pt-48 pb-32 px-6 bg-white overflow-hidden relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full pointer-events-none opacity-20">
+          <div className="absolute top-20 left-0 w-72 h-72 bg-indigo-400 blur-[120px] rounded-full"></div>
+          <div className="absolute bottom-20 right-0 w-72 h-72 bg-purple-400 blur-[120px] rounded-full"></div>
         </div>
 
-        <div className="space-y-6 mb-16 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-200">
-           <h1 className="text-6xl md:text-[9.5rem] font-[1000] tracking-[-0.08em] leading-[0.8] mb-4">
-            SYNTHESIZING <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">EXCELLENCE.</span>
+        <div className="max-w-7xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-5 py-2 rounded-full text-[10px] font-black mb-8 uppercase tracking-[0.2em] border border-indigo-100">
+            <Zap size={14} /> Shreyas Gunjal & Vaibhav Chiniwar Present
+          </div>
+          <h1 className="text-6xl md:text-8xl font-[900] mb-8 tracking-tighter leading-[0.9] text-slate-900 uppercase">
+            One Platform for <br />
+            <span className="gradient-text">Teachers & Students</span>
           </h1>
-          <p className="text-lg md:text-2xl text-slate-400 font-medium max-w-2xl mx-auto leading-relaxed">
-            The next-generation, high-performance intelligence workspace. Engineering the future of global academic standards.
+          <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-14 leading-relaxed font-medium">
+            Streamline lesson planning, automate grading, and empower students with high-performance neural modules. Engineered by Shreyas Gunjal and Vaibhav Chiniwar.
           </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-10 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-300">
-           <button 
-             onClick={onGetStarted} 
-             className="group px-16 py-8 bg-white text-black rounded-[3rem] font-black uppercase tracking-widest text-xs flex items-center gap-5 hover:scale-105 active:scale-95 transition-all shadow-[0_25px_50px_-12px_rgba(255,255,255,0.3)] shadow-indigo-500/30"
-           >
-              Get Started <ChevronRight size={22} className="group-hover:translate-x-1 transition-transform" />
-           </button>
-           <button className="px-12 py-8 bg-white/5 border border-white/10 text-white rounded-[3rem] font-black uppercase tracking-widest text-xs flex items-center gap-5 hover:bg-white/10 transition-all group backdrop-blur-xl">
-              <Play size={20} fill="currentColor" className="group-hover:scale-110 transition-transform" /> Technical Overview
-           </button>
-        </div>
-      </section>
-
-      {/* Bento Grid - Feature Ecosystem */}
-      <section id="ecosystem" className="relative z-10 px-6 md:px-12 py-40 bg-white/[0.02] backdrop-blur-[120px] border-y border-white/5">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-24 text-center">
-            <div className="inline-flex items-center gap-3 px-5 py-2 bg-indigo-500/10 rounded-full border border-indigo-500/20 mb-6">
-               <Layers size={14} className="text-indigo-400" />
-               <span className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-300">Ecosystem Architecture</span>
-            </div>
-            <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-6">Role-Based Intelligence.</h2>
-            <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-xs">Four Pillars of Academic Modernization</p>
+          <div className="flex flex-col sm:flex-row justify-center gap-6">
+            <button 
+              onClick={onGetStarted}
+              className="bg-indigo-600 text-white px-12 py-5 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-2xl shadow-indigo-200 hover:scale-105 active:scale-95"
+            >
+              I'm a Teacher
+            </button>
+            <button 
+              onClick={onGetStarted}
+              className="bg-white border-2 border-slate-200 text-slate-700 px-12 py-5 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-50 transition-all hover:scale-105 active:scale-95"
+            >
+              I'm a Student
+            </button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { title: 'Educator', desc: 'Neural lesson architecture, rapid grading, and curriculum synchronization.', icon: GraduationCap, color: 'indigo' },
-              { title: 'Scholar', desc: 'Immersive focus environments, neural recall nodes, and gamified mastery.', icon: BrainCircuit, color: 'purple' },
-              { title: 'Parent', desc: 'Secure heartbeat monitoring and encrypted direct communication lines.', icon: ShieldCheck, color: 'emerald' },
-              { title: 'Institution', desc: 'Macro-analytics, governance tools, and secure access link management.', icon: Globe, color: 'pink' }
-            ].map((role, i) => (
-              <div key={i} className="p-12 rounded-[4rem] bg-black/40 border border-white/5 hover:border-white/20 transition-all duration-700 group cursor-pointer flex flex-col h-full hover:shadow-[0_0_50px_rgba(255,255,255,0.02)]">
-                <div className={`w-20 h-20 rounded-3xl bg-${role.color}-500/10 flex items-center justify-center text-${role.color}-500 mb-12 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner`}>
-                  <role.icon size={36} />
+        </div>
+      </header>
+
+      {/* Teacher Section */}
+      <section id="teachers" className="py-32 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-20 items-center">
+            <div className="staggered-fade-in">
+              <div className="text-indigo-600 font-black mb-4 uppercase tracking-[0.3em] text-xs">Empowering Educators</div>
+              <h2 className="text-5xl font-[900] mb-8 tracking-tighter leading-tight uppercase text-slate-900">Master Your Curriculum with <span className="text-indigo-600">Precision</span></h2>
+              <p className="text-lg text-slate-500 font-medium mb-12 leading-relaxed">Stop drowning in paperwork. Our teacher-first tools help you reclaim your time so you can focus on what matters: teaching.</p>
+              
+              <ul className="space-y-8">
+                <li className="flex items-start gap-6 group">
+                  <div className="bg-indigo-600/10 p-3 rounded-2xl text-indigo-600 transition-transform group-hover:scale-110"><Check size={24} strokeWidth={3} /></div>
+                  <div>
+                    <h4 className="font-black text-xl text-slate-900 uppercase tracking-tight">Neural Lesson Planner</h4>
+                    <p className="text-slate-500 font-medium mt-1">Generate full curriculum-aligned plans in seconds.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-6 group">
+                  <div className="bg-indigo-600/10 p-3 rounded-2xl text-indigo-600 transition-transform group-hover:scale-110"><Wand2 size={24} /></div>
+                  <div>
+                    <h4 className="font-black text-xl text-slate-900 uppercase tracking-tight">Instant Quiz Forge</h4>
+                    <p className="text-slate-500 font-medium mt-1">Transform any PDF or text into interactive quizzes instantly.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-6 group">
+                  <div className="bg-indigo-600/10 p-3 rounded-2xl text-indigo-600 transition-transform group-hover:scale-110"><ShieldCheck size={24} /></div>
+                  <div>
+                    <h4 className="font-black text-xl text-slate-900 uppercase tracking-tight">Smart Evaluator Pro</h4>
+                    <p className="text-slate-500 font-medium mt-1">High-rigor grading and feedback for faster turnarounds.</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            <div className="bg-indigo-100 rounded-[3rem] p-10 relative overflow-hidden shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10"></div>
+              <img src="https://images.unsplash.com/photo-1544717297-fa154daaf762?auto=format&fit=crop&q=80&w=800" alt="Teacher Dashboard" className="rounded-[2rem] shadow-2xl relative z-10 grayscale-[20%]" />
+              <div className="absolute bottom-12 right-12 bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-2xl flex items-center gap-4 border border-white z-20 animate-bounce duration-[3000ms]">
+                <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                  <Wand2 size={24} />
                 </div>
-                <h3 className="text-3xl font-black uppercase tracking-tight mb-6 group-hover:text-white transition-colors">{role.title}</h3>
-                <p className="text-base text-slate-500 font-medium leading-relaxed opacity-80 flex-1 group-hover:opacity-100 transition-opacity">{role.desc}</p>
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Neural Link</p>
+                  <p className="font-black text-slate-900 text-sm">Quiz Generated!</p>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* The Neural Link Section */}
-      <section id="security" className="relative z-10 px-6 md:px-12 py-48 max-w-7xl mx-auto overflow-hidden">
-         <div className="bg-gradient-to-br from-indigo-950/40 to-purple-950/40 rounded-[6rem] border border-white/10 p-12 md:p-28 flex flex-col lg:flex-row items-center gap-24 relative shadow-3xl">
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/20 blur-[150px] rounded-full -mr-80 -mt-80 opacity-60"></div>
-            
-            <div className="flex-1 relative z-10 text-center lg:text-left">
-               <h2 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-12 uppercase">
-                 The Neural <br /> Link Protocol.
-               </h2>
-               <p className="text-xl md:text-2xl text-slate-400 font-medium mb-14 leading-relaxed">
-                 Simplified institutional security. Schools generate encrypted codes for families, establishing a high-bandwidth sync for scholar performance tracking.
-               </p>
-               <div className="flex flex-wrap items-center gap-6 justify-center lg:justify-start">
-                  <div className="flex items-center gap-4 p-6 bg-black/80 rounded-[2.5rem] border border-white/10 shadow-3xl backdrop-blur-2xl">
-                    <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center font-mono font-black text-indigo-400 text-xl">SV</div>
-                    <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center font-mono font-black text-indigo-400 text-xl">77</div>
-                    <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center font-mono font-black text-indigo-400 text-xl">XX</div>
-                    <span className="px-6 text-[11px] font-black uppercase tracking-[0.4em] text-slate-500">Encrypted Key</span>
+      {/* Student Section */}
+      <section id="students" className="py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-20 items-center">
+            <div className="order-2 md:order-1 bg-[#050505] rounded-[3.5rem] p-12 relative focus-mode-glow overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-950 to-transparent opacity-50"></div>
+              <div className="relative z-10 bg-white/5 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
+                <div className="flex justify-between items-center mb-10">
+                  <div className="flex items-center gap-3">
+                    <Timer className="text-indigo-400" size={20} />
+                    <span className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.3em]">Focus Mode: ON</span>
                   </div>
-               </div>
+                  <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]"></div>
+                </div>
+                <div className="space-y-6">
+                  <div className="bg-white/5 p-6 rounded-2xl text-indigo-100 text-sm font-medium italic border border-white/5">
+                    "Hey Scholar! Ready to deconstruct this theory with the Neural Core?"
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-500 flex-shrink-0 flex items-center justify-center shadow-lg shadow-indigo-500/20"><Brain size={20} className="text-white" /></div>
+                    <div className="bg-white/5 p-4 rounded-2xl text-indigo-200 text-[11px] w-full border border-white/5 font-bold tracking-tight">
+                      Analyzing: Core concepts mapped for instant recall.
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-indigo-600/20 blur-[60px] rounded-full"></div>
             </div>
-
-            <div className="w-full lg:w-1/2 relative z-10">
-               <div className="aspect-square bg-white/[0.02] rounded-[5rem] border border-white/10 p-14 flex flex-col justify-center gap-12 shadow-3xl backdrop-blur-3xl">
-                  <div className="flex items-center gap-10 p-10 bg-white/5 rounded-[3rem] border border-white/5 transform hover:scale-105 transition-all duration-500 shadow-2xl">
-                     <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center shadow-inner"><Users size={32} /></div>
-                     <div>
-                        <p className="text-[11px] font-black uppercase text-emerald-400 tracking-widest mb-1">Scholar Heartbeat</p>
-                        <p className="text-2xl font-black tracking-tight">Handshake Verified</p>
-                     </div>
+            <div className="order-1 md:order-2">
+              <div className="text-purple-600 font-black mb-4 uppercase tracking-[0.3em] text-xs">Next-Gen Learning</div>
+              <h2 className="text-5xl font-[900] mb-8 tracking-tighter leading-tight uppercase text-slate-900">The Study Sanctuary for <span className="text-purple-600">Top Scholars</span></h2>
+              <p className="text-lg text-slate-500 font-medium mb-12 leading-relaxed">An intelligent companion engineered for academic excellence.</p>
+              
+              <ul className="space-y-8">
+                <li className="flex items-center gap-6 group">
+                  <div className="bg-purple-600/10 w-14 h-14 rounded-2xl flex items-center justify-center text-purple-600 transition-all group-hover:bg-purple-600 group-hover:text-white shadow-sm"><PenTool size={24} /></div>
+                  <div>
+                    <h4 className="font-black text-xl text-slate-900 uppercase tracking-tight">Smart Scribe</h4>
+                    <p className="text-slate-500 font-medium">Auto-generate structured notes from photos or text.</p>
                   </div>
-                  <div className="flex items-center gap-10 p-10 bg-white/5 rounded-[3rem] border border-white/5 transform hover:scale-105 transition-all duration-500 shadow-2xl">
-                     <div className="w-16 h-16 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center shadow-inner"><Cpu size={32} /></div>
-                     <div>
-                        <p className="text-[11px] font-black uppercase text-indigo-400 tracking-widest mb-1">Data Pipeline</p>
-                        <p className="text-2xl font-black tracking-tight">Active Tunneling</p>
-                     </div>
+                </li>
+                <li className="flex items-center gap-6 group">
+                  <div className="bg-purple-600/10 w-14 h-14 rounded-2xl flex items-center justify-center text-purple-600 transition-all group-hover:bg-purple-600 group-hover:text-white shadow-sm"><Brain size={24} /></div>
+                  <div>
+                    <h4 className="font-black text-xl text-slate-900 uppercase tracking-tight">24/7 Neural Tutor</h4>
+                    <p className="text-slate-500 font-medium">Ask questions in real-time without leaving your study session.</p>
                   </div>
-               </div>
+                </li>
+                <li className="flex items-center gap-6 group">
+                  <div className="bg-purple-600/10 w-14 h-14 rounded-2xl flex items-center justify-center text-purple-600 transition-all group-hover:bg-purple-600 group-hover:text-white shadow-sm"><Moon size={24} /></div>
+                  <div>
+                    <h4 className="font-black text-xl text-slate-900 uppercase tracking-tight">Focus Shield</h4>
+                    <p className="text-slate-500 font-medium">Distraction-free mode with an integrated neural timer.</p>
+                  </div>
+                </li>
+              </ul>
             </div>
-         </div>
+          </div>
+        </div>
       </section>
 
-      {/* Global Footer */}
-      <footer className="relative z-10 px-6 md:px-12 py-32 border-t border-white/5 bg-black">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-16 text-center md:text-left">
-          <div className="flex items-center gap-5">
-             <div className="w-14 h-14 bg-white rounded-2xl p-2.5 shadow-2xl"><img src="https://iili.io/feG2UBt.md.png" className="w-full h-full object-cover" /></div>
-             <div className="flex flex-col">
-                <span className="font-[1000] uppercase text-2xl tracking-tighter leading-none">SVGPT</span>
-                <span className="text-[8px] font-black uppercase tracking-[0.6em] text-slate-600 mt-2">The Standard.</span>
-             </div>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <p className="text-slate-400 text-base font-bold">© 2024 SVGPT Research & Development.</p>
-            <div className="flex items-center gap-3 mt-3">
-               <span className="text-indigo-500 text-[11px] font-black uppercase tracking-[0.4em]">Shreyas Gunjal</span>
-               <div className="w-1 h-1 bg-slate-800 rounded-full"></div>
-               <span className="text-purple-500 text-[11px] font-black uppercase tracking-[0.4em]">Vaibhav Chiniwar</span>
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-3 mb-10">
+            <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-900/40">
+              <GraduationCap size={24} />
             </div>
+            <span className="text-2xl font-black text-white uppercase tracking-tighter">SVGPT</span>
           </div>
-
-          <div className="flex gap-12">
-            {['Privacy', 'Terms', 'Archive'].map(t => (
-              <a key={t} href="#" className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-colors">{t}</a>
-            ))}
+          <p className="mb-6 text-lg font-medium max-w-md mx-auto">Empowering the next generation of global thinkers and academic leaders.</p>
+          <div className="mb-12">
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-indigo-500 mb-2">Lead Developers</p>
+            <p className="text-white font-bold tracking-widest text-lg">Shreyas Gunjal & Vaibhav Chiniwar</p>
+          </div>
+          <div className="text-[10px] font-black uppercase tracking-[0.4em] border-t border-slate-800 pt-12 text-slate-600">
+            © 2026 SVGPT Intelligence Systems. All rights reserved. <br /> Designed by Shreyas Gunjal & Vaibhav Chiniwar.
           </div>
         </div>
       </footer>

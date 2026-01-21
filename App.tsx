@@ -20,6 +20,8 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import RoleSelection from './components/RoleSelection';
 import SVChatbot from './components/SVChatbot';
+import ParentPortal from './components/ParentPortal';
+import SchoolAdmin from './components/SchoolAdmin';
 import { View, Role } from './types';
 import { LogOut, Search, X, Sparkles, BrainCircuit, Mic, Loader2 } from 'lucide-react';
 import { auth } from './firebaseConfig';
@@ -32,8 +34,6 @@ const App: React.FC = () => {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('sv-theme') === 'dark');
   const [userRole, setUserRole] = useState<Role | null>(() => localStorage.getItem('sv-role') as Role);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -42,15 +42,29 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user || localStorage.getItem('sv-demo-mode') === 'true') {
-        setIsLoggedIn(true);
-      } else {
-        setIsLoggedIn(false);
-      }
+    // Neural Resilience: Robust Auth Listener
+    try {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user || localStorage.getItem('sv-demo-mode') === 'true') {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+        setAuthChecking(false);
+      }, (error) => {
+        // If domain is unauthorized, switch to Demo Mode automatically to prevent white screen
+        if (error.message.includes('auth/unauthorized-domain')) {
+          console.warn("Firebase restricted domain. Activating Neural Demo Mode.");
+          if (localStorage.getItem('sv-demo-mode') === 'true') {
+            setIsLoggedIn(true);
+          }
+        }
+        setAuthChecking(false);
+      });
+      return unsubscribe;
+    } catch (e) {
       setAuthChecking(false);
-    });
-    return unsubscribe;
+    }
   }, []);
 
   const handleLogout = async () => {
@@ -65,19 +79,20 @@ const App: React.FC = () => {
   const handleRoleSelect = (role: Role) => {
     setUserRole(role);
     localStorage.setItem('sv-role', role);
-    setCurrentView(View.DASHBOARD);
+    setCurrentView(role === 'parent' ? View.PARENT_PORTAL : role === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
   };
 
   const handleGetStartedFromLanding = () => {
     if (isLoggedIn && userRole) {
-      setCurrentView(View.DASHBOARD);
+      setCurrentView(userRole === 'parent' ? View.PARENT_PORTAL : userRole === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
     } else {
+      // Prompt Login if not already active
       setCurrentView(View.DASHBOARD); 
     }
   };
 
   const renderContent = () => {
-    const backToRoot = () => setCurrentView(View.DASHBOARD);
+    const backToRoot = () => setCurrentView(userRole === 'parent' ? View.PARENT_PORTAL : userRole === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
     
     switch (currentView) {
       case View.LESSON_PLANNER: return <LessonPlanner onBack={backToRoot} />;
@@ -94,11 +109,22 @@ const App: React.FC = () => {
       case View.DOUBT_SOLVER: return <DoubtSolver onBack={backToRoot} />;
       case View.QUICK_REVISION: return <QuickRevision onBack={backToRoot} />;
       case View.SV_CHATBOT: return <SVChatbot onBack={backToRoot} userRole={userRole === 'teacher' ? 'teacher' : 'student'} />;
+      case View.PARENT_PORTAL: return <ParentPortal />;
+      case View.SCHOOL_ADMIN: return <SchoolAdmin />;
       default: return <Dashboard onChangeView={setCurrentView} userRole={userRole === 'teacher' ? 'teacher' : 'student'} />;
     }
   };
 
-  if (authChecking) return <div className="h-screen w-full bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" size={48} /></div>;
+  if (authChecking) {
+    return (
+      <div className="h-screen w-full bg-[#050505] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-6">
+          <Loader2 className="animate-spin text-indigo-500" size={48} />
+          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.4em]">Initializing Workspace</p>
+        </div>
+      </div>
+    );
+  }
 
   if (currentView === View.LANDING) {
      return <LandingPage onGetStarted={handleGetStartedFromLanding} />;
@@ -122,6 +148,7 @@ const App: React.FC = () => {
             <LogOut size={20} />
           </button>
         </div>
+        
         <div className="p-8 pt-24 md:pt-32 animate-in fade-in duration-700 flex-grow overflow-x-hidden">
           {renderContent()}
         </div>

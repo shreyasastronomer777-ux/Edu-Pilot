@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { View } from '../types';
 import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ShieldAlert, Layers, PenTool, BrainCircuit, ChevronRight, GraduationCap, Swords, Timer, Calculator, Mic, Camera, Zap, Headphones, BookOpenCheck, Trophy, Bot } from 'lucide-react';
@@ -32,7 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
       <header className="mb-20 flex flex-col md:flex-row md:items-end justify-between gap-12 staggered-fade-in">
         <div className="space-y-4">
            <div className="flex items-center gap-3">
-              <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-indigo-500/20">System Status: Active</span>
+              <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-indigo-500/20">Lead Devs: S. Gunjal & V. Chiniwar</span>
               {!isTeacher && (
                 <span className="px-3 py-1 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-yellow-500/20 flex items-center gap-1">
                    <Zap size={10} /> {xp} Mastery Points
@@ -90,7 +91,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
                     <Icon size={26} className={colorMap[tool.color].split(' ')[2]} />
                  </div>
                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-x-4 group-hover:translate-x-0 transition-transform">
-                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Launch Module</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Access Module</span>
                    <ChevronRight size={14} className="text-slate-400" />
                  </div>
               </div>
@@ -139,7 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
                     {isTeacher ? 'Curriculum Synthesis Complete' : 'Study Insight Synthesized'}
                  </p>
                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium opacity-70">
-                    {isTeacher ? 'Neural engine utilized for advanced concept mapping.' : 'New flashcard deck generated from recent biology notes.'}
+                    {isTeacher ? 'Neural engine utilized for advanced concept mapping.' : 'New flashcard deck generated from recent academic notes.'}
                  </p>
                </div>
                <div className="text-right flex flex-col items-end">

@@ -16,10 +16,13 @@ export enum View {
   STUDENT_QUIZ = 'STUDENT_QUIZ',
   FOCUS_ROOM = 'FOCUS_ROOM',
   DOUBT_SOLVER = 'DOUBT_SOLVER',
-  QUICK_REVISION = 'QUICK_REVISION'
+  QUICK_REVISION = 'QUICK_REVISION',
+  // Guardian and Admin Views
+  PARENT_PORTAL = 'PARENT_PORTAL',
+  SCHOOL_ADMIN = 'SCHOOL_ADMIN'
 }
 
-export type Role = 'teacher' | 'student';
+export type Role = 'teacher' | 'student' | 'parent' | 'admin';
 
 export interface QuizQuestion {
   question: string;

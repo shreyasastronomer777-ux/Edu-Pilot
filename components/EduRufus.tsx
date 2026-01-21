@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
 // Corrected import to match the exported members in services/geminiService.ts
 import { chatWithEduAssistant } from '../services/geminiService';
+import { Role } from '../types';
 
 const EduRufus: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +36,8 @@ const EduRufus: React.FC = () => {
       }));
 
       // Get user role from storage to provide context for the AI assistant
-      const userRole = localStorage.getItem('edupilot_role') as 'teacher' | 'student' | null;
+      // Consistent use of 'sv-role' across the application
+      const userRole = localStorage.getItem('sv-role') as Role | null;
 
       // Fixed: chatWithEduAssistant expects 3 arguments: message, history, and userRole
       const botResponse = await chatWithEduAssistant(userMsg, history, userRole);

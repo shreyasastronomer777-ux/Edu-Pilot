@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, User, Bot, Trash2, ArrowLeft, Loader2, Zap, BrainCircuit, Globe, MessageSquare, ChevronDown } from 'lucide-react';
 import { chatWithEduAssistant } from '../services/geminiService';
@@ -16,8 +17,8 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
 
   useEffect(() => {
     const initialMsg = userRole === 'teacher' 
-      ? "Neural Lab initialized. I am your specialized pedagogical co-pilot. How shall we refine your curriculum today?"
-      : "SV Neural Tutor active. I am here to help you deconstruct complex concepts and optimize your study flow. What is our objective?";
+      ? "Neural Lab initialized. I am your specialized pedagogical co-pilot engineered by Shreyas & Vaibhav. How shall we refine your curriculum today?"
+      : "SVGPT Neural Tutor active. I am here to help you deconstruct complex concepts and optimize your study flow. What is our objective?";
     setMessages([{ role: 'bot', text: initialMsg }]);
   }, [userRole]);
 
@@ -38,7 +39,6 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
     setIsLoading(true);
 
     try {
-      // Robust history cleaning for Gemini: Must alternate and start with user.
       const history = messages.map(m => ({
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
@@ -54,7 +54,7 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto h-[calc(100vh-6rem)] flex flex-col gap-6 animate-in fade-in duration-700">
+    <div className="max-w-6xl mx-auto h-[calc(100vh-6rem)] flex flex-col gap-6 animate-in fade-in duration-700 relative z-10">
       {/* Dynamic Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6">
         <div className="flex items-center gap-5">
@@ -66,12 +66,12 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
           </button>
           <div className="flex flex-col">
             <h2 className="text-3xl font-[900] tracking-tight text-slate-900 dark:text-white uppercase flex items-center gap-3">
-              SV AI <span className="text-indigo-600 dark:text-indigo-400">CHATBOT</span>
+              SVGPT <span className="text-indigo-600 dark:text-indigo-400">NEURAL CORE</span>
             </h2>
             <div className="flex items-center gap-2">
                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${userRole === 'teacher' ? 'bg-indigo-500' : 'bg-emerald-500'}`}></div>
                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                 {userRole === 'teacher' ? 'Pedagogical Synthesis Mode' : 'Conceptual Mastery Mode'}
+                 Lead Developers: Shreyas G. & Vaibhav C.
                </span>
             </div>
           </div>
@@ -81,7 +81,7 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
              onClick={() => setMessages([messages[0]])}
              className="px-6 py-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 dark:border-white/10 transition-all flex items-center gap-2 hover:bg-red-500/5"
            >
-             <Trash2 size={14} /> Clear Archive
+             <Trash2 size={14} /> Clear Session
            </button>
            <div className="px-6 py-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
              <Zap size={14} className="animate-pulse" /> Signal: Stable
@@ -154,10 +154,10 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
                <BrainCircuit size={16} /> Flash Engine
              </div>
              <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-               <Globe size={16} /> Global Index
+               <Globe size={16} /> Neural Link
              </div>
              <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-               <MessageSquare size={16} /> History Locked
+               <MessageSquare size={16} /> Encrypted Session
              </div>
           </div>
         </div>

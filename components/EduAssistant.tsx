@@ -1,6 +1,8 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageSquare, ChevronDown } from 'lucide-react';
 import { chatWithEduAssistant } from '../services/geminiService';
+import { Role } from '../types';
 
 const EduAssistant: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,10 +13,17 @@ const EduAssistant: React.FC = () => {
 
   useEffect(() => {
     // Key must match App.tsx: 'sv-role'
-    const role = localStorage.getItem('sv-role') as 'teacher' | 'student' | null;
-    const initialMsg = role === 'teacher' 
-      ? "Greetings, Professor. How may I assist in synthesizing instructional materials today with SVGPT?"
-      : "Welcome back, Scholar. Are we preparing for an examination or refining study insights with SVGPT?";
+    const role = localStorage.getItem('sv-role') as Role | null;
+    let initialMsg = "Welcome back, Scholar. Are we preparing for an examination or refining study insights with SVGPT?";
+    
+    if (role === 'teacher') {
+      initialMsg = "Greetings, Professor. How may I assist in synthesizing instructional materials today with SVGPT?";
+    } else if (role === 'parent') {
+      initialMsg = "Guardian Interface Active. How may I assist in analyzing student academic trajectories and performance today?";
+    } else if (role === 'admin') {
+      initialMsg = "Institutional Oversight Active. How can I assist in school governance and academic analytics today?";
+    }
+    
     setMessages([{ role: 'bot', text: initialMsg }]);
   }, [isOpen]);
 
@@ -34,7 +43,7 @@ const EduAssistant: React.FC = () => {
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
       }));
-      const userRole = localStorage.getItem('sv-role') as 'teacher' | 'student' | null;
+      const userRole = localStorage.getItem('sv-role') as Role | null;
       const botResponse = await chatWithEduAssistant(userMsg, history, userRole);
       setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
     } catch (error) {
