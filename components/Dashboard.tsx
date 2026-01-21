@@ -14,102 +14,103 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
   const [xp] = useState(() => Number(localStorage.getItem('svgpt_xp')) || 0);
 
   const tools = isTeacher ? [
-    { id: View.SV_CHATBOT, title: 'Neural Lab', desc: 'Pedagogical co-pilot for curriculum design and instructional strategy.', icon: Bot, color: 'indigo' },
-    { id: View.LESSON_PLANNER, title: 'Lesson Studio', desc: 'Craft standards-aligned plans with high-performance AI reasoning.', icon: FileText, color: 'blue' },
+    { id: View.SV_CHATBOT, title: 'Neural Lab', desc: 'Interact with the elite pedagogical co-pilot for curriculum design.', icon: Bot, color: 'indigo' },
+    { id: View.LESSON_PLANNER, title: 'Lesson Studio', desc: 'Craft high-performance curriculums with elite AI reasoning.', icon: FileText, color: 'blue' },
     { id: View.QUIZ_MAKER, title: 'Quiz Engine', desc: 'Generate sophisticated evaluations with instant explanatory depth.', icon: GraduationCap, color: 'emerald' },
     { id: View.VISUAL_STUDIO, title: 'Creative Suite', desc: 'Synthesize professional classroom imagery in ultra-high resolution.', icon: Sparkles, color: 'purple' },
-    { id: View.HOMEWORK_CHECKER, title: 'Evaluator Pro', desc: 'Precision grading and feedback tailored to academic standards.', icon: CheckSquare, color: 'orange' },
-    { id: View.ATTENDANCE, title: 'Registry', desc: 'High-speed student tracking and performance analytics.', icon: Users, color: 'pink' },
+    { id: View.HOMEWORK_CHECKER, title: 'Evaluation AI', desc: 'Precision grading and feedback tailored to academic standards.', icon: CheckSquare, color: 'orange' },
+    { id: View.ATTENDANCE, title: 'Registry', desc: 'High-speed student tracking and class management analytics.', icon: Users, color: 'pink' },
   ] : [
-    { id: View.QUICK_REVISION, title: 'Quick Revision', desc: 'Synthesize high-speed notes and core definitions from documents.', icon: BookOpenCheck, color: 'violet' },
-    { id: View.DOUBT_SOLVER, title: 'Neural Scanner', desc: 'Snap photos of homework for instant architectural AI resolution.', icon: Camera, color: 'indigo' },
-    { id: View.FOCUS_ROOM, title: 'Focus Room', desc: 'Deep work environment with custom Pomodoro neural triggers.', icon: Timer, color: 'teal' },
+    { id: View.QUICK_REVISION, title: 'Quick Revision', desc: 'Synthesize high-speed revision notes and core definitions from documents.', icon: BookOpenCheck, color: 'violet' },
+    { id: View.DOUBT_SOLVER, title: 'Neural Scanner', desc: 'Snap photos of homework and complex problems for instant AI resolution.', icon: Camera, color: 'indigo' },
+    { id: View.FOCUS_ROOM, title: 'Focus Room', desc: 'Deep work environment with custom Pomodoro durations.', icon: Timer, color: 'teal' },
   ];
 
   const filteredTools = tools.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="max-w-[1200px] mx-auto px-4 py-8 animate-in fade-in duration-1000">
-      <header className="mb-20 flex flex-col md:flex-row md:items-end justify-between gap-12">
-        <div className="space-y-6">
-           <div className="flex flex-wrap items-center gap-3">
-              <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-indigo-500/20 backdrop-blur-md">
-                Lead Devs: S. Gunjal & V. Chiniwar
-              </span>
+    <div className="max-w-[1200px] mx-auto px-4 py-8">
+      <header className="mb-20 flex flex-col md:flex-row md:items-end justify-between gap-12 staggered-fade-in">
+        <div className="space-y-4">
+           <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-indigo-500/20">Lead Devs: S. Gunjal & V. Chiniwar</span>
               {!isTeacher && (
-                <span className="px-4 py-1.5 bg-yellow-500/10 text-yellow-500 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-yellow-500/20 flex items-center gap-2">
-                   <Zap size={10} className="fill-current" /> {xp} Mastery Points
+                <span className="px-3 py-1 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-yellow-500/20 flex items-center gap-1">
+                   <Zap size={10} /> {xp} Mastery Points
                 </span>
               )}
            </div>
-          <h1 className="text-6xl md:text-7xl font-[900] text-white leading-[0.85] tracking-tighter uppercase">
-            Neural <br />
-            <span className="inline text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Workspace.</span>
+          <h1 className="text-5xl md:text-6xl font-[900] text-slate-900 dark:text-white leading-[0.9] tracking-tighter">
+            Elegance in <span className="inline text-transparent bg-clip-text premium-gradient">Education.</span>
           </h1>
-          <p className="text-slate-400 text-xl font-medium max-w-xl">
-            Welcome back, {isTeacher ? 'Professor' : 'Scholar'}. Accessing secured instructional modules...
+          <p className="text-slate-500 dark:text-slate-400 text-lg font-medium max-w-xl opacity-80">
+            Welcome back, {isTeacher ? 'Professor' : 'Scholar'}. Your refined toolkit is prepared for peak academic performance.
           </p>
         </div>
 
-        <div className="relative group w-full md:w-[350px]">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
+        <div className="relative group w-full md:w-[320px]">
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
           <input 
             type="text" 
-            placeholder="Search Synthesis Modules..."
+            placeholder="Search Modules..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-16 pr-6 py-6 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-2xl focus:ring-8 focus:ring-indigo-500/10 focus:border-indigo-500/50 outline-none transition-all font-bold text-sm text-white"
+            className="w-full pl-14 pr-6 py-5 bg-white/50 dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-sm"
           />
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-24 staggered-fade-in">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20 staggered-fade-in">
         {filteredTools.map((tool) => {
           const Icon = tool.icon || Sparkles;
           const colorMap: Record<string, string> = {
-            blue: 'border-blue-500/20 bg-blue-500/5 text-blue-400',
-            emerald: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400',
-            purple: 'border-purple-500/20 bg-purple-500/5 text-purple-400',
-            violet: 'border-violet-600/20 bg-violet-600/5 text-violet-400',
-            orange: 'border-orange-500/20 bg-orange-500/5 text-orange-400',
-            pink: 'border-pink-500/20 bg-pink-500/5 text-pink-400',
-            indigo: 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400',
-            teal: 'border-teal-500/20 bg-teal-500/5 text-teal-400',
+            blue: 'from-blue-500/20 to-indigo-500/20 text-blue-500 border-blue-500/10',
+            emerald: 'from-emerald-500/20 to-teal-500/20 text-emerald-500 border-emerald-500/10',
+            purple: 'from-purple-500/20 to-pink-500/20 text-purple-500 border-purple-500/10',
+            violet: 'from-violet-600/20 to-indigo-600/20 text-violet-600 border-violet-600/10',
+            orange: 'from-orange-500/20 to-red-500/20 text-orange-500 border-orange-500/10',
+            pink: 'from-pink-500/20 to-rose-500/20 text-pink-500 border-pink-500/10',
+            red: 'from-red-500/20 to-orange-500/20 text-red-500 border-red-500/10',
+            indigo: 'from-indigo-500/20 to-violet-500/20 text-indigo-500 border-indigo-500/10',
+            teal: 'from-teal-500/20 to-cyan-500/20 text-teal-500 border-teal-500/10',
+            sky: 'from-sky-500/20 to-blue-500/20 text-sky-500 border-sky-500/10',
+            rose: 'from-rose-500/20 to-pink-500/20 text-rose-500 border-rose-500/10',
+            yellow: 'from-yellow-500/20 to-orange-500/20 text-yellow-500 border-yellow-500/10',
           };
 
           return (
             <div 
               key={tool.id} 
-              className={`group relative p-10 rounded-[3.5rem] border transition-all duration-700 cursor-pointer flex flex-col h-full overflow-hidden ${colorMap[tool.color] || 'border-white/10 bg-white/5 text-white'}`} 
+              className="group relative bg-white/50 dark:bg-white/[0.03] backdrop-blur-3xl p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-2 transition-all duration-700 cursor-pointer flex flex-col h-full overflow-hidden" 
               onClick={() => onChangeView(tool.id)}
             >
-              <div className="absolute -inset-24 bg-current opacity-0 group-hover:opacity-[0.03] blur-3xl transition-opacity duration-1000 -z-10"></div>
+              <div className={`absolute -inset-24 bg-gradient-to-br ${colorMap[tool.color]} opacity-0 group-hover:opacity-40 blur-3xl transition-opacity duration-1000 -z-10`}></div>
               
-              <div className="flex items-center justify-between mb-10">
-                 <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center bg-black/40 border border-white/5 shadow-inner group-hover:scale-110 transition-transform duration-700">
-                    <Icon size={32} />
+              <div className="flex items-center justify-between mb-8">
+                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 shadow-inner group-hover:scale-110 transition-transform duration-700`}>
+                    <Icon size={26} className={colorMap[tool.color].split(' ')[2]} />
                  </div>
-                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-x-4 group-hover:translate-x-0 transition-transform">
-                   <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Initialize</span>
-                   <ChevronRight size={14} className="opacity-60" />
+                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-500 translate-x-4 group-hover:translate-x-0 transition-transform">
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Access Module</span>
+                   <ChevronRight size={14} className="text-slate-400" />
                  </div>
               </div>
 
-              <h3 className="text-3xl font-black mb-4 tracking-tighter uppercase leading-none">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3 tracking-tighter transition-colors group-hover:text-indigo-500">
                 {tool.title}
               </h3>
-              <p className="text-sm font-medium leading-relaxed flex-1 opacity-60 group-hover:opacity-100 transition-opacity">
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed flex-1 opacity-80 group-hover:opacity-100 transition-opacity">
                 {tool.desc}
               </p>
               
-              <div className="mt-10 pt-8 border-t border-white/5 flex items-center justify-between">
+              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
                 <div className="flex -space-x-2">
                    {[1,2,3].map(i => (
-                     <div key={i} className="w-7 h-7 rounded-full border-2 border-[#050505] bg-slate-800"></div>
+                     <div key={i} className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 bg-slate-200 dark:bg-slate-800"></div>
                    ))}
                 </div>
-                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/20 scale-0 group-hover:scale-100 transition-transform duration-500">
-                   <Zap size={16} />
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 dark:text-white/20 scale-0 group-hover:scale-100 transition-transform duration-500">
+                   <Sparkles size={14} />
                 </div>
               </div>
             </div>
@@ -117,34 +118,34 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
         })}
       </div>
 
-      <section className="mb-20 animate-in fade-in duration-1000 delay-500">
-        <div className="flex items-center justify-between mb-10 px-4">
-          <div className="flex items-center gap-4">
-             <div className="w-1.5 h-8 bg-indigo-500 rounded-full"></div>
-             <h2 className="text-3xl font-black tracking-tighter uppercase">Academic Sync</h2>
+      <section className="staggered-fade-in mb-20">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+             <div className="w-2 h-8 premium-gradient rounded-full"></div>
+             <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Academic Feed</h2>
           </div>
-          <button className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition-colors flex items-center gap-3 group">
-            Archives <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          <button className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-500 transition-colors flex items-center gap-2 group">
+            Personal Records <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
 
-        <div className="bg-white/5 backdrop-blur-3xl rounded-[4rem] border border-white/5 overflow-hidden shadow-2xl">
+        <div className="bg-white/50 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[3rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
           {[1, 2].map((_, i) => (
-             <div key={i} className="p-10 border-b border-white/5 last:border-0 flex items-center gap-10 hover:bg-white/[0.02] transition-all duration-500 group">
-               <div className="w-20 h-20 rounded-[2rem] bg-black/40 border border-white/5 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                 <Clock size={32} className="text-indigo-500" />
+             <div key={i} className={`p-8 border-b border-slate-100 dark:border-white/5 last:border-0 flex items-center gap-6 hover:bg-white/40 dark:hover:bg-white/5 transition-all duration-500 group`}>
+               <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-black/40 border border-slate-200 dark:border-white/10 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                 <Clock size={24} className="text-indigo-500" />
                </div>
                <div className="flex-1">
-                 <p className="text-xl font-black leading-none tracking-tight mb-2 uppercase">
-                    {isTeacher ? 'Lesson Synthesis Complete' : 'Study Archive Synchronized'}
+                 <p className="text-lg font-black text-slate-900 dark:text-white leading-none tracking-tight mb-1">
+                    {isTeacher ? 'Curriculum Synthesis Complete' : 'Study Insight Synthesized'}
                  </p>
-                 <p className="text-base text-slate-400 font-medium opacity-70">
-                    {isTeacher ? 'Neural core utilized for standard-aligned curriculum mapping.' : 'New mastery nodes generated from recent academic session.'}
+                 <p className="text-sm text-slate-500 dark:text-slate-400 font-medium opacity-70">
+                    {isTeacher ? 'Neural engine utilized for advanced concept mapping.' : 'New flashcard deck generated from recent academic notes.'}
                  </p>
                </div>
                <div className="text-right flex flex-col items-end">
-                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Verified Sync</span>
-                  <span className="text-xs font-bold text-slate-500">2h ago</span>
+                  <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-1">Sync: 100%</span>
+                  <span className="text-xs font-bold text-slate-400">2h ago</span>
                </div>
              </div>
           ))}

@@ -54,10 +54,6 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
   }
 };
 
-/**
- * Enhanced chat assistant with strict history normalization to prevent RPC 500 errors.
- * Ensures roles alternate strictly: user -> model -> user.
- */
 export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
   const ai = getAI();
   let roleInstruction = "";
@@ -74,25 +70,18 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
     roleInstruction = "Focus on general academic support and helpful information.";
   }
   
-  // Normalize history to satisfy strict alternating role requirement
   const normalizedHistory: { role: string; parts: { text: string }[] }[] = [];
   const validHistory = history.filter(m => m.parts && m.parts[0]?.text?.trim());
 
   for (const msg of validHistory) {
     const role = msg.role === 'bot' || msg.role === 'model' ? 'model' : 'user';
-    
-    // If the role is same as the previous, merge the parts to maintain alternation
     if (normalizedHistory.length > 0 && normalizedHistory[normalizedHistory.length - 1].role === role) {
-      normalizedHistory[normalizedHistory.length - 1].parts[0].text += `\n\n${msg.parts[0].text}`;
+      normalizedHistory[normalizedHistory.length - 1].parts[0].text += `\n${msg.parts[0].text}`;
     } else {
-      normalizedHistory.push({
-        role,
-        parts: [{ text: msg.parts[0].text }]
-      });
+      normalizedHistory.push({ role, parts: [{ text: msg.parts[0].text }] });
     }
   }
 
-  // Gemini models require the conversation to start with a 'user' message
   if (normalizedHistory.length > 0 && normalizedHistory[0].role === 'model') {
     normalizedHistory.shift();
   }
@@ -102,13 +91,13 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
       model: "gemini-3-flash-preview", 
       contents: [...normalizedHistory, { role: 'user', parts: [{ text: message }] }],
       config: {
-        systemInstruction: `You are the SVGPT Neural Assistant, an elite academic intelligence engineered by Shreyas Gunjal & Vaibhav Chiniwar. Provide high-rigor, concise assistance. ${roleInstruction}. Do not mention external entities like Google or Gemini. You are SVGPT.`,
+        systemInstruction: `You are the SVGPT Neural Assistant, an elite academic intelligence engineered by Shreyas Gunjal & Vaibhav Chiniwar. Provide high-rigor, concise assistance. ${roleInstruction}`,
         temperature: 0.7
       }
     });
     return response.text || "Neural link weak. Please attempt re-transmission.";
   } catch (error) {
-    console.error("Assistant Synthesis Failure (Likely malformed payload/RPC):", error);
+    console.error("Assistant Synthesis Failure:", error);
     throw error;
   }
 };
@@ -171,7 +160,7 @@ export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text:
       model: "gemini-3-pro-preview",
       contents: prompt,
       config: {
-        systemInstruction: "You are the SVGPT master curriculum engineer, created by Shreyas Gunjal and Vaibhav Chiniwar.",
+        systemInstruction: "You are the SVGPT master curriculum engineer.",
         thinkingConfig: { thinkingBudget: 8000 }
       },
     });
@@ -422,7 +411,7 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
   const scriptRes = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Architect a professional 1-minute audio script summarizing: ${content}`,
-    config: { systemInstruction: "You are a professional academic narrator within the SVGPT platform created by Shreyas and Vaibhav." }
+    config: { systemInstruction: "You are a professional academic narrator." }
   });
   const script = scriptRes.text || "Welcome to your neural briefing.";
   const ttsRes = await ai.models.generateContent({
