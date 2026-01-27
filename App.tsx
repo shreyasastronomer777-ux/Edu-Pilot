@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -15,21 +16,18 @@ import StudentQuiz from './components/StudentQuiz';
 import FocusRoom from './components/FocusRoom';
 import DoubtSolver from './components/DoubtSolver';
 import QuickRevision from './components/QuickRevision';
-import LandingPage from './components/LandingPage';
-import Login from './components/Login';
 import RoleSelection from './components/RoleSelection';
 import SVChatbot from './components/SVChatbot';
 import ParentPortal from './components/ParentPortal';
 import SchoolAdmin from './components/SchoolAdmin';
 import InstantLessonGenerator from './components/InstantLessonGenerator';
+import LandingPage from './components/LandingPage';
 import { View, Role } from './types';
 import { LogOut, Search, Loader2 } from 'lucide-react';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authChecking, setAuthChecking] = useState(true);
   const [currentView, setCurrentView] = useState<View>(View.LANDING);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('sv-theme') === 'dark');
   const [userRole, setUserRole] = useState<Role | null>(() => localStorage.getItem('sv-role') as Role);
@@ -40,25 +38,9 @@ const App: React.FC = () => {
     localStorage.setItem('sv-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user || localStorage.getItem('sv-demo-mode') === 'true') {
-        setIsLoggedIn(true);
-      } else {
-        setIsLoggedIn(false);
-      }
-      setAuthChecking(false);
-    });
-    return unsubscribe;
-  }, []);
-
   const handleLogout = async () => {
-    try { 
-      await signOut(auth); 
-    } catch (e) {}
     localStorage.removeItem('sv-role');
     localStorage.removeItem('sv-demo-mode');
-    setIsLoggedIn(false);
     setUserRole(null);
     setCurrentView(View.LANDING);
   };
@@ -69,13 +51,11 @@ const App: React.FC = () => {
     setCurrentView(role === 'parent' ? View.PARENT_PORTAL : role === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
   };
 
-  const handleGetStartedFromLanding = () => {
-    // If already logged in and role set, go to dashboard
-    if (isLoggedIn && userRole) {
+  const handleGetStarted = () => {
+    if (userRole) {
       setCurrentView(userRole === 'parent' ? View.PARENT_PORTAL : userRole === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
     } else {
-      // Trigger Login flow
-      setCurrentView(View.DASHBOARD); // This will fall through to Login if !isLoggedIn
+      setCurrentView(View.DASHBOARD); 
     }
   };
 
@@ -104,27 +84,13 @@ const App: React.FC = () => {
     }
   };
 
-  if (authChecking) {
-    return (
-      <div className="h-screen w-full bg-slate-50 dark:bg-[#050505] flex flex-col items-center justify-center gap-6">
-        <Loader2 className="animate-spin text-indigo-500" size={48} strokeWidth={1} />
-        <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">Synchronizing Neural Workspace</p>
-      </div>
-    );
-  }
-
-  // Handle Unauthenticated State
-  if (currentView !== View.LANDING && !isLoggedIn) {
-     return <Login onLogin={() => setIsLoggedIn(true)} />;
-  }
-
-  // Handle Unassigned Role
-  if (currentView !== View.LANDING && isLoggedIn && !userRole) {
-    return <RoleSelection onSelect={handleRoleSelect} />;
-  }
-
   if (currentView === View.LANDING) {
-     return <LandingPage onGetStarted={handleGetStartedFromLanding} />;
+    return <LandingPage onGetStarted={handleGetStarted} />;
+  }
+
+  // If no role is selected, prompt for it immediately after landing
+  if (!userRole) {
+    return <RoleSelection onSelect={handleRoleSelect} />;
   }
 
   return (
