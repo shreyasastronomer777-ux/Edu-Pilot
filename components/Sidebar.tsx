@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { View, Role } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot, BrainCircuit } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 
 interface SidebarProps {
@@ -21,6 +21,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
         return [
           { id: View.DASHBOARD, label: 'Control Center', icon: LayoutDashboard },
           { id: View.SV_CHATBOT, label: 'Neural Lab', icon: Bot },
+          { id: View.INSTANT_LESSON, label: 'Instant Synthesis', icon: BrainCircuit },
           { id: View.LESSON_PLANNER, label: 'Lesson Studio', icon: BookOpen },
           { id: View.QUIZ_MAKER, label: 'Quiz Engine', icon: GraduationCap },
           { id: View.VISUAL_STUDIO, label: 'Creative Suite', icon: ImageIcon },

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, User, Bot, Trash2, ArrowLeft, Loader2, Zap, BrainCircuit, Globe, MessageSquare, ChevronDown } from 'lucide-react';
 import { chatWithEduAssistant } from '../services/geminiService';
@@ -10,17 +9,29 @@ interface SVChatbotProps {
 }
 
 const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
-  const [messages, setMessages] = useState<{role: 'user' | 'bot', text: string}[]>([]);
+  const [messages, setMessages] = useState<{role: 'user' | 'bot', text: string}[]>(() => {
+    const saved = localStorage.getItem(`svgpt_chat_history_${userRole}`);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const initialMsg = userRole === 'teacher' 
-      ? "Neural Lab initialized. I am your specialized pedagogical co-pilot engineered by Shreyas & Vaibhav. How shall we refine your curriculum today?"
-      : "SVGPT Neural Tutor active. I am here to help you deconstruct complex concepts and optimize your study flow. What is our objective?";
-    setMessages([{ role: 'bot', text: initialMsg }]);
+    if (messages.length === 0) {
+      const initialMsg = userRole === 'teacher' 
+        ? "Neural Lab initialized. I am your specialized pedagogical co-pilot engineered by Shreyas & Vaibhav. How shall we refine your curriculum today?"
+        : "SVGPT Neural Tutor active. I am here to help you deconstruct complex concepts and optimize your study flow. What is our objective?";
+      setMessages([{ role: 'bot', text: initialMsg }]);
+    }
   }, [userRole]);
+
+  // Persist history
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(`svgpt_chat_history_${userRole}`, JSON.stringify(messages));
+    }
+  }, [messages, userRole]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -35,11 +46,12 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
     if (!input.trim() || isLoading) return;
     const userMsg = input.trim();
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    const newMessages = [...messages, { role: 'user', text: userMsg }];
+    setMessages(newMessages as any);
     setIsLoading(true);
 
     try {
-      const history = messages.map(m => ({
+      const history = newMessages.map(m => ({
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
       }));
@@ -53,9 +65,16 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
     }
   };
 
+  const clearHistory = () => {
+    if (confirm("Permanently purge this neural session?")) {
+      const initialMsg = messages[0];
+      setMessages([initialMsg]);
+      localStorage.removeItem(`svgpt_chat_history_${userRole}`);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto h-[calc(100vh-6rem)] flex flex-col gap-6 animate-in fade-in duration-700 relative z-10">
-      {/* Dynamic Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6">
         <div className="flex items-center gap-5">
           <button 
@@ -71,28 +90,25 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
             <div className="flex items-center gap-2">
                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${userRole === 'teacher' ? 'bg-indigo-500' : 'bg-emerald-500'}`}></div>
                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                 Lead Developers: Shreyas G. & Vaibhav C.
+                 Session Continuity Enabled
                </span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
            <button 
-             onClick={() => setMessages([messages[0]])}
+             onClick={clearHistory}
              className="px-6 py-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 dark:border-white/10 transition-all flex items-center gap-2 hover:bg-red-500/5"
            >
-             <Trash2 size={14} /> Clear Session
+             <Trash2 size={14} /> Reset Lab
            </button>
            <div className="px-6 py-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-             <Zap size={14} className="animate-pulse" /> Signal: Stable
+             <Zap size={14} className="animate-pulse" /> Encrypted Node
            </div>
         </div>
       </div>
 
-      {/* Main Experience Panel */}
       <div className="flex-1 bg-white dark:bg-[#0B1221] backdrop-blur-[100px] rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-2xl flex flex-col overflow-hidden transition-all duration-500">
-        
-        {/* Workspace Area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 md:p-16 space-y-12 custom-scrollbar">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-4 duration-700 ease-out`}>
@@ -130,15 +146,14 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
           )}
         </div>
 
-        {/* Console Input */}
-        <div className="p-10 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/40">
+        <div className="p-10 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
           <div className="max-w-4xl mx-auto relative group">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder={userRole === 'teacher' ? "Architect a lesson flow, evaluate criteria, or query pedagogy..." : "Deconstruct a theory, request a study guide, or clarify a concept..."}
+              placeholder={userRole === 'teacher' ? "Continue architectural planning..." : "Continue concept deconstruction..."}
               className="w-full pl-10 pr-24 py-7 bg-white dark:bg-[#050505] border border-slate-200 dark:border-white/10 rounded-[3rem] shadow-2xl outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-bold text-sm md:text-lg placeholder:text-slate-300 dark:placeholder:text-slate-700"
             />
             <button 
@@ -148,17 +163,6 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
             >
               <Send size={28} />
             </button>
-          </div>
-          <div className="mt-6 flex items-center justify-center gap-10 opacity-30">
-             <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-               <BrainCircuit size={16} /> Flash Engine
-             </div>
-             <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-               <Globe size={16} /> Neural Link
-             </div>
-             <div className="flex items-center gap-2.5 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-               <MessageSquare size={16} /> Encrypted Session
-             </div>
           </div>
         </div>
       </div>

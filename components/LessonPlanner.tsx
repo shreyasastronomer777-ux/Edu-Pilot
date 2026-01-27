@@ -1,8 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { LessonPlanConfig, SlideDeck, Quiz, BrainBreak } from '../types';
 import { streamLessonPlan, generateSlidesFromLesson, generateQuizFromSource, generateBrainBreak, generateVisualAid } from '../services/geminiService';
-import { Send, Loader2, Download, Copy, FileText, ChevronDown, Printer, Wand2, ArrowLeft, Search, Save, Trash2, History, Sparkles, Sliders, GraduationCap, Presentation, Gamepad2, X, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
+import { Send, Loader2, Download, Copy, FileText, ChevronDown, Printer, Wand2, ArrowLeft, Search, Save, Trash2, History, Sparkles, Sliders, GraduationCap, Presentation, Gamepad2, X, ChevronLeft, ChevronRight, Zap, LayoutTemplate } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface SavedPlan {
@@ -16,10 +15,44 @@ interface LessonPlannerProps {
   onBack?: () => void;
 }
 
+const TEMPLATES = [
+  { 
+    id: 'inquiry', 
+    name: 'Inquiry-Based', 
+    focus: 'Student Discovery & Questioning', 
+    desc: 'Focuses on investigation and problem-solving.' 
+  },
+  { 
+    id: 'lecture', 
+    name: 'Lecture-Style', 
+    focus: 'Teacher-Led Direct Instruction', 
+    desc: 'Structured knowledge transfer and note-taking.' 
+  },
+  { 
+    id: 'flipped', 
+    name: 'Flipped Classroom', 
+    focus: 'Active Application & Group Work', 
+    desc: 'Pre-class study followed by in-depth practice.' 
+  },
+  { 
+    id: 'socratic', 
+    name: 'Socratic Seminar', 
+    focus: 'Critical Dialogue & Debate', 
+    desc: 'Discussion-based exploration of complex texts.' 
+  },
+  { 
+    id: 'project', 
+    name: 'Project-Based', 
+    focus: 'Real-world Application & Creation', 
+    desc: 'Learning through the design of a tangible output.' 
+  }
+];
+
 const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   
   // Multi-modal state
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -45,6 +78,17 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
   useEffect(() => {
     localStorage.setItem('svgpt_lesson_plans', JSON.stringify(savedPlans));
   }, [savedPlans]);
+
+  const applyTemplate = (templateId: string) => {
+    const template = TEMPLATES.find(t => t.id === templateId);
+    if (template) {
+      setConfig(prev => ({
+        ...prev,
+        focus: template.focus
+      }));
+      setSelectedTemplate(templateId);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!config.topic) return;
@@ -173,6 +217,21 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
             </h2>
             
             <div className="space-y-5">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Pedagogical Template</label>
+                <div className="relative">
+                  <LayoutTemplate className="absolute left-3 top-1/2 -translate-y-1/2 text-indigo-500/50" size={16} />
+                  <select 
+                    value={selectedTemplate}
+                    onChange={(e) => applyTemplate(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-indigo-50/30 dark:bg-indigo-900/10 text-slate-900 dark:text-white font-bold text-xs outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  >
+                    <option value="">Manual Synthesis</option>
+                    {TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Primary Topic</label>
                 <input 

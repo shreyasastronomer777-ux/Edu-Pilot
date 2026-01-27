@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
-import { Mail, Lock, Loader2, AlertCircle, User, ArrowRight, ShieldCheck, Chrome, WifiOff } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, User, ArrowRight, ShieldCheck, Chrome, WifiOff, GraduationCap, ServerCrash, Key, Info } from 'lucide-react';
 import { auth, googleProvider } from '../firebaseConfig';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInAnonymously, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
 
 interface LoginProps {
   onLogin: () => void;
@@ -46,10 +45,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       await signInWithPopup(auth, googleProvider);
       onLogin();
     } catch (err: any) {
-      console.error("Google Auth Error:", err);
-      if (err.code !== 'auth/popup-closed-by-user') {
-        handleAuthError(err);
-      }
+      console.error("Auth Handshake Failed:", err);
+      handleAuthError(err);
     } finally {
       setLoading(false);
     }
@@ -57,142 +54,175 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   const handleDemoAccess = () => {
     setLoading(true);
+    // Persist a flag to bypass Firebase checks in App.tsx
     localStorage.setItem('sv-demo-mode', 'true');
-    // Ensure we clear any previous login state that might be stuck
+    // Set a dummy user name if none exists
+    if (!localStorage.getItem('sv-user-name')) {
+      localStorage.setItem('sv-user-name', 'Guest Scholar');
+    }
     setTimeout(() => {
       onLogin();
       setLoading(false);
-    }, 500);
+    }, 800);
   };
 
   const handleAuthError = (err: any) => {
-    if (err.code === 'auth/unauthorized-domain') {
+    const errorCode = err.code || '';
+    const errorMessage = err.message || '';
+
+    if (errorCode === 'auth/unauthorized-domain' || errorMessage.includes('unauthorized-domain')) {
       setError({ 
         code: 'domain', 
-        message: "This domain isn't authorized in Firebase. Use Demo Mode to bypass authentication." 
+        message: "Neural Link Restricted: This domain is not authorized in Firebase settings. Use Neural Bypass to continue." 
       });
-    } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-      setError({ code: err.code, message: "Invalid credentials. Please verify your details." });
+    } else if (errorCode === 'auth/popup-closed-by-user') {
+      return;
+    } else if (errorCode === 'auth/invalid-credential' || errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password') {
+      setError({ code: errorCode, message: "Credential mismatch. Verify identity markers." });
     } else {
-      setError({ code: 'unknown', message: err.message || "An unexpected neural link error occurred." });
+      setError({ code: 'unknown', message: errorMessage || "An unexpected neural handshake error occurred." });
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#050505] flex items-center justify-center p-6">
-      <div className="max-w-md w-full animate-in fade-in zoom-in-95 duration-700">
-        <div className="bg-white/80 dark:bg-white/[0.02] backdrop-blur-[40px] rounded-[3rem] shadow-2xl border border-slate-200/50 dark:border-white/10 overflow-hidden">
-          <div className="p-10">
-            <div className="flex justify-center mb-8">
-              <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center shadow-lg overflow-hidden border border-slate-200 dark:border-white/10">
-                <img src="https://iili.io/feG2UBt.md.png" alt="SVGPT Logo" className="w-full h-full object-cover" />
-              </div>
+    <div className="min-h-screen bg-[#6366F1] flex items-center justify-center p-0 md:p-10 font-sans">
+      <div className="max-w-6xl w-full bg-white rounded-none md:rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] overflow-hidden flex flex-col md:flex-row min-h-[650px]">
+        
+        {/* Left Pane: Branding & Graphics */}
+        <div className="w-full md:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#6366F1] via-[#A855F7] to-[#F43F5E] p-12 md:p-20 flex flex-col justify-center text-white">
+          {/* Abstract Shapes (Ref Image Style) */}
+          <div className="absolute top-20 right-[-10%] w-64 h-64 bg-white/10 blur-[80px] rounded-full pointer-events-none"></div>
+          <div className="absolute bottom-10 left-[-5%] w-32 h-12 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full rotate-[-45deg] opacity-60"></div>
+          <div className="absolute bottom-20 left-[15%] w-48 h-12 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full rotate-[-45deg] opacity-80"></div>
+          <div className="absolute bottom-40 left-[35%] w-40 h-10 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full rotate-[-45deg] opacity-40 shadow-2xl"></div>
+          <div className="absolute bottom-[10%] left-[50%] w-24 h-8 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full rotate-[-45deg] opacity-50"></div>
+
+          <div className="relative z-10">
+            <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-10 backdrop-blur-md">
+              <GraduationCap size={40} />
             </div>
-            
-            <h2 className="text-3xl font-black text-center text-slate-900 dark:text-white mb-2 tracking-tighter uppercase">
-              {isSignUp ? 'New Identity' : 'Nexus Access'}
-            </h2>
-            <p className="text-center text-slate-500 dark:text-slate-400 mb-10 text-[9px] font-black uppercase tracking-[0.3em] opacity-70">
-              Professional Academic Intelligence
+            <h1 className="text-5xl md:text-6xl font-black mb-6 tracking-tighter leading-none uppercase">
+              Welcome to <br /> SVGPT
+            </h1>
+            <p className="text-indigo-50 text-lg md:text-xl font-medium max-w-sm leading-relaxed opacity-90">
+              The intelligent academic operating system for the next generation of scholars and educators.
             </p>
+          </div>
+        </div>
 
-            <div className="space-y-4 mb-8">
-              <button
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/10 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm disabled:opacity-50"
-              >
-                {loading ? <Loader2 className="animate-spin" size={16} /> : <Chrome size={16} className="text-indigo-500" />}
-                Sign in with Google
-              </button>
-              
-              <div className="relative flex items-center justify-center">
-                <div className="w-full border-t border-slate-100 dark:border-white/5"></div>
-                <span className="absolute px-4 bg-white dark:bg-[#0B1221] text-[8px] font-black text-slate-400 uppercase tracking-widest">or use email</span>
-              </div>
-            </div>
+        {/* Right Pane: Login Console */}
+        <div className="w-full md:w-1/2 bg-white flex flex-col items-center justify-center p-12 md:p-20">
+          <div className="w-full max-w-sm">
+            <h2 className="text-center text-sm font-black text-slate-400 uppercase tracking-[0.4em] mb-12">
+              {isSignUp ? 'Initialize Profile' : 'User Login'}
+            </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {isSignUp && (
-                <div className="relative group animate-in slide-in-from-top-2">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-                    <User size={14} />
-                  </div>
+                <div className="relative">
+                  <User className="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-500/50" size={18} />
                   <input
                     type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                    className="block w-full pl-12 pr-5 py-4 border border-slate-200 dark:border-white/10 rounded-2xl bg-slate-50/50 dark:bg-black/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-xs"
+                    className="w-full pl-14 pr-6 py-4 bg-indigo-50/50 border-none rounded-full text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-300"
                     placeholder="Full Academic Name"
                   />
                 </div>
               )}
 
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-                  <Mail size={14} />
-                </div>
+              <div className="relative">
+                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-500/50" size={18} />
                 <input
                   type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-12 pr-5 py-4 border border-slate-200 dark:border-white/10 rounded-2xl bg-slate-50/50 dark:bg-black/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-xs"
-                  placeholder="Academic Email"
+                  className="w-full pl-14 pr-6 py-4 bg-indigo-50/50 border-none rounded-full text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-300"
+                  placeholder="Email Address"
                 />
               </div>
 
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
-                  <Lock size={14} />
-                </div>
+              <div className="relative">
+                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-500/50" size={18} />
                 <input
                   type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-12 pr-5 py-4 border border-slate-200 dark:border-white/10 rounded-2xl bg-slate-50/50 dark:bg-black/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-xs"
-                  placeholder="Security Key"
+                  className="w-full pl-14 pr-6 py-4 bg-indigo-50/50 border-none rounded-full text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all placeholder:text-slate-300"
+                  placeholder="Password"
                 />
+              </div>
+
+              <div className="flex items-center justify-between px-2">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="w-4 h-4 rounded border-2 border-indigo-500/20 flex items-center justify-center transition-all group-hover:border-indigo-500 overflow-hidden">
+                    <input type="checkbox" className="hidden peer" defaultChecked />
+                    <div className="w-2.5 h-2.5 bg-indigo-500 rounded-[2px] opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                  </div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Remember Me</span>
+                </label>
+                <button type="button" className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-500 transition-colors">Forgot Password?</button>
               </div>
 
               {error && (
-                <div className="p-4 bg-red-500/5 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-bold flex flex-col gap-3 animate-in fade-in">
-                  <div className="flex gap-2.5">
-                    <AlertCircle size={14} className="shrink-0" />
-                    <p>{error.message}</p>
+                <div className={`p-5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 border ${error.code === 'domain' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-red-50 border-red-100 text-red-500'}`}>
+                  <div className="flex items-start gap-3">
+                    <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                    <span>{error.message}</span>
                   </div>
-                  {(error.code === 'domain' || error.code === 'auth/unauthorized-domain') && (
+                  {(error.code === 'domain' || error.code === 'unknown') && (
                     <button 
-                      type="button" onClick={handleDemoAccess}
-                      className="w-full flex items-center justify-between px-4 py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 rounded-xl transition-all group/err"
+                      type="button" 
+                      onClick={handleDemoAccess} 
+                      className="w-full py-3 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
-                      <span className="flex items-center gap-2"><ShieldCheck size={12} /> Bypass to Demo Mode</span>
-                      <ArrowRight size={12} className="group-hover/err:translate-x-1 transition-transform" />
+                      <ShieldCheck size={14} /> Initialize Neural Bypass
                     </button>
                   )}
                 </div>
               )}
 
-              <div className="flex flex-col gap-3">
-                <button
-                  type="submit" disabled={loading}
-                  className="w-full flex items-center justify-center py-4.5 px-6 rounded-2xl text-white bg-slate-900 dark:bg-white dark:text-slate-900 hover:scale-[1.02] active:scale-[0.98] font-black uppercase tracking-widest text-[10px] transition-all disabled:opacity-50 shadow-xl"
-                >
-                  {loading ? <Loader2 className="animate-spin" size={18} /> : (isSignUp ? 'Initialize Profile' : 'Authenticate Nexus')}
-                </button>
-                
-                <button
-                  type="button" onClick={handleDemoAccess}
-                  className="w-full py-3.5 rounded-2xl border border-slate-200 dark:border-white/10 text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 font-black uppercase tracking-widest text-[9px] transition-all"
-                >
-                  Local Demo Mode
-                </button>
-              </div>
+              <button
+                type="submit" disabled={loading}
+                className="w-full py-4 premium-gradient text-white rounded-full font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : (isSignUp ? 'Sign Up' : 'Login')}
+              </button>
             </form>
 
-            <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5 text-center">
-              <button 
-                onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
-                className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-400 transition-colors"
-              >
-                {isSignUp ? 'Returning User? Sign In' : 'New to Nexus? Initialize Here'}
-              </button>
+            <div className="mt-12 space-y-6">
+              <div className="relative flex items-center justify-center">
+                <div className="w-full border-t border-slate-100"></div>
+                <span className="absolute px-4 bg-white text-[9px] font-black text-slate-300 uppercase tracking-widest">Secondary Methods</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  onClick={handleGoogleSignIn}
+                  className="flex items-center justify-center gap-3 py-3 rounded-full border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
+                >
+                  <Chrome size={14} /> Google
+                </button>
+                <button 
+                  onClick={handleDemoAccess}
+                  className="flex items-center justify-center gap-3 py-3 rounded-full border border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-50 transition-colors"
+                >
+                  <WifiOff size={14} /> Demo Mode
+                </button>
+              </div>
+
+              <div className="text-center pt-4">
+                <button 
+                  onClick={() => { setIsSignUp(!isSignUp); setError(null); }}
+                  className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em] hover:opacity-70 transition-opacity"
+                >
+                  {isSignUp ? 'Existing Identity? Sign In' : 'New to SVGPT? Create Profile'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* Footer Branding */}
+      <div className="fixed bottom-10 text-center w-full hidden md:block">
+        <p className="text-[10px] font-black text-indigo-200/50 uppercase tracking-[0.6em]">
+          Powered by SVGPT Intelligence Core
+        </p>
       </div>
     </div>
   );

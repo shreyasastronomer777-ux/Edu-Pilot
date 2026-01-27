@@ -242,9 +242,31 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className="animate-in fade-in duration-700">
                    <ReactMarkdown 
                      components={{
-                       h2: ({node, ...props}) => <h2 className="text-lg font-black uppercase tracking-tight text-indigo-500 border-b border-indigo-500/10 pb-2 mb-6" {...props} />,
-                       strong: ({node, ...props}) => <strong className="font-black text-slate-900 dark:text-white bg-yellow-500/10 px-1 rounded" {...props} />,
-                       li: ({node, ...props}) => <li className="text-sm font-medium mb-2" {...props} />
+                       h1: ({node, ...props}) => <h1 className="text-2xl font-black tracking-tighter uppercase text-slate-900 dark:text-white border-b-2 border-indigo-500/10 pb-4 mb-8" {...props} />,
+                       h2: ({node, ...props}) => <h2 className="text-lg font-black uppercase tracking-tight text-indigo-500 mt-10 mb-6 flex items-center gap-2" {...props} />,
+                       h3: ({node, ...props}) => <h3 className="text-base font-black text-slate-800 dark:text-slate-100 mt-8 mb-4 uppercase" {...props} />,
+                       p: ({node, ...props}) => <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 leading-relaxed mb-6" {...props} />,
+                       ul: ({node, ...props}) => <ul className="space-y-4 mb-8 list-none pl-2" {...props} />,
+                       ol: ({node, ...props}) => <ol className="space-y-4 mb-8 list-decimal pl-8 text-slate-700 dark:text-slate-300 font-bold" {...props} />,
+                       li: ({node, ...props}) => (
+                         <li className="flex items-start gap-3 group animate-in slide-in-from-left-2 duration-300">
+                           <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2.5 flex-shrink-0 group-hover:scale-125 group-hover:shadow-[0_0_8px_rgba(99,102,241,0.6)] transition-all"></div>
+                           <span className="text-sm md:text-base font-medium text-slate-700 dark:text-slate-200" {...props} />
+                         </li>
+                       ),
+                       code: ({node, ...props}) => <code className="bg-slate-100 dark:bg-black/40 px-2 py-0.5 rounded-md font-mono text-indigo-600 dark:text-indigo-400 font-bold border border-slate-200 dark:border-white/5" {...props} />,
+                       pre: ({node, ...props}) => (
+                         <pre className="bg-[#0D1117] text-slate-200 p-8 rounded-3xl overflow-x-auto my-10 border border-white/10 font-mono text-xs leading-[1.8] shadow-2xl relative" {...props}>
+                            <div className="absolute top-4 left-6 flex gap-1.5">
+                               <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                               <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50"></div>
+                               <div className="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                            </div>
+                            {props.children}
+                         </pre>
+                       ),
+                       strong: ({node, ...props}) => <strong className="font-black text-slate-900 dark:text-white bg-indigo-500/10 px-1.5 py-0.5 rounded-md" {...props} />,
+                       blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10 p-6 rounded-r-3xl my-8 italic text-slate-700 dark:text-slate-300" {...props} />,
                      }}
                    >
                      {result}
@@ -253,7 +275,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               ) : (
                 <div className="h-full flex flex-col items-center justify-center opacity-20">
                    {mode === 'solve' ? <BrainCircuit size={80} /> : <BookOpenCheck size={80} />}
-                   <p className="text-[10px] font-black uppercase tracking-widest mt-6">Awaiting Neural Data Input</p>
+                   <p className="text-[10px] font-black uppercase tracking-widest mt-6 text-center">Awaiting Neural Data Input.<br/>Upload an asset to begin synthesis.</p>
                 </div>
               )}
            </div>
