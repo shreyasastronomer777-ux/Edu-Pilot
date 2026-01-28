@@ -3,116 +3,97 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 
 /**
- * Powered by SVGPT AI
+ * SVGPT AI Engine - Powered by Google Gemini Flash
  */
 
 const getAI = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("AI is offline: Please check your API key.");
+    throw new Error("AI Key missing. Please check your settings.");
   }
   return new GoogleGenAI({ apiKey });
 };
 
-// Error resilient wrapper for content generation
+// Robust wrapper to handle AI requests safely
 const generateWithResilience = async (params: any) => {
   const ai = getAI();
   try {
     const response = await ai.models.generateContent(params);
-    if (!response.text) throw new Error("No response from AI.");
+    if (!response.text) throw new Error("The AI didn't give an answer. Try again.");
     return response;
   } catch (error: any) {
     console.error("AI Error:", error);
-    if (error.message?.includes("500") || error.message?.includes("recall")) {
-      throw new Error("AI was interrupted. Please try again with less text.");
-    }
-    throw error;
+    throw new Error("Something went wrong with the AI. Please try a shorter message.");
   }
 };
 
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: [
-      { inlineData: { mimeType, data: cleanBase64 } },
-      { text: "Look at this image or file. Give a simple, step-by-step answer. Use clear words. If there is math, explain it simply. Use headings and lists so it is easy to read." }
-    ],
+    model: "gemini-flash-latest",
+    contents: [{
+      parts: [
+        { inlineData: { mimeType, data: cleanBase64 } },
+        { text: "Look at this file and explain the answer in simple words. Use step-by-step points." }
+      ]
+    }],
     config: { 
-      systemInstruction: "You are a helpful AI teacher. Give clear and simple answers. Use simple English so everyone can understand. Use Markdown for formatting."
+      systemInstruction: "You are a kind teacher. Explain things simply so a child can understand. Use bold text for important words."
     }
   });
-  return response.text || "I could not find an answer.";
+  return response.text || "I couldn't find an answer.";
 };
 
 export const generateRevisionInsights = async (base64Data: string, mimeType: string): Promise<string> => {
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: [
-      { inlineData: { mimeType, data: cleanBase64 } },
-      { text: "Find the most important parts: Words to know, Main ideas, and a Summary. Use simple bullet points and bold titles." }
-    ],
+    model: "gemini-flash-latest",
+    contents: [{
+      parts: [
+        { inlineData: { mimeType, data: cleanBase64 } },
+        { text: "Read this and give me the main points. Use a simple list and simple words." }
+      ]
+    }],
     config: { 
-      systemInstruction: "You are an AI that makes notes easy to read. Use simple words and lists."
+      systemInstruction: "You make long notes short and easy to read. Use simple English."
     }
   });
-  return response.text || "I could not read the file.";
+  return response.text || "I couldn't read the file.";
 };
 
 export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
-  let roleInstruction = "";
-  if (userRole === 'teacher') {
-    roleInstruction = "You are talking to a teacher. Help them make lesson plans and give them ideas for the classroom. Use simple words.";
-  } else if (userRole === 'student') {
-    roleInstruction = "You are talking to a student. Help them study and explain things simply. Give them tips to learn better.";
-  } else {
-    roleInstruction = "Be a helpful assistant. Use simple English.";
-  }
-
-  const normalizedHistory: { role: string; parts: { text: string }[] }[] = [];
-  const validHistory = history.filter(m => m.parts && m.parts[0]?.text?.trim());
-
-  for (const msg of validHistory) {
-    const role = msg.role === 'bot' || msg.role === 'model' ? 'model' : 'user';
-    if (normalizedHistory.length > 0 && normalizedHistory[normalizedHistory.length - 1].role === role) {
-      normalizedHistory[normalizedHistory.length - 1].parts[0].text += `\n\n${msg.parts[0].text}`;
-    } else {
-      normalizedHistory.push({ role, parts: [{ text: msg.parts[0].text }] });
-    }
-  }
-
-  if (normalizedHistory.length > 0 && normalizedHistory[0].role === 'model') {
-    normalizedHistory.shift();
-  }
+  const normalizedHistory = history.map(m => ({
+    role: m.role === 'bot' || m.role === 'model' ? 'model' : 'user',
+    parts: [{ text: m.parts?.[0]?.text || m.text || "" }]
+  })).filter(m => m.parts[0].text);
 
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview", 
+    model: "gemini-flash-latest", 
     contents: [...normalizedHistory, { role: 'user', parts: [{ text: message }] }],
     config: {
-      systemInstruction: `You are the SVGPT AI Assistant. ${roleInstruction} Be friendly, smart, and use very simple words. Format your answer nicely with Markdown.`,
+      systemInstruction: "You are a helpful AI friend. Use very simple words. If the user is a teacher, help them with school work. If they are a student, help them study. Always be nice and clear.",
       temperature: 0.7
     }
   });
-  return response.text || "I am having trouble connecting.";
+  return response.text || "I am having trouble talking right now.";
 };
 
 export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text: string) => void) => {
   const ai = getAI();
-  const prompt = `Make a simple lesson plan for ${config.gradeLevel} ${config.subject} about: ${config.topic}. Focus on ${config.focus}. Use simple words that are easy to follow.`;
+  const prompt = `Create a simple lesson plan for ${config.gradeLevel} students. Subject: ${config.subject}. Topic: ${config.topic}. Use simple words and a clear plan.`;
   try {
     const response = await ai.models.generateContentStream({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
+      model: "gemini-flash-latest",
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
-        systemInstruction: "You are a master teacher. Create a clear and simple lesson plan for a class. Use headings and bullet points.",
+        systemInstruction: "You are a great teacher. Create clear, simple lesson plans with easy steps.",
       },
     });
     for await (const chunk of response) {
       if (chunk.text) onChunk(chunk.text);
     }
   } catch (error) {
-    console.error("Lesson Error:", error);
+    console.error("Stream Error:", error);
     throw error;
   }
 };
@@ -138,21 +119,21 @@ const quizSchema = {
   required: ["title", "questions"]
 };
 
-export const generateQuizFromSource = async (source: any, count: number = 10): Promise<Quiz> => {
-  const contents: any[] = [];
-  if (source.type === 'text') {
-    contents.push({ text: `Make a simple ${count}-question quiz based on this text: ${source.data}` });
-  } else if (source.type === 'file') {
+export const generateQuizFromSource = async (source: any, count: number = 5): Promise<Quiz> => {
+  let parts: any[] = [];
+  if (source.type === 'file') {
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
-    contents.push({ text: `Make a simple ${count}-question quiz from this file.` });
-    contents.push({ inlineData: { data: cleanData, mimeType: source.mimeType } });
+    parts = [
+      { inlineData: { data: cleanData, mimeType: source.mimeType } },
+      { text: `Make a simple quiz with ${count} questions based on this file. Use very simple words.` }
+    ];
   } else {
-    contents.push({ text: `Make a simple ${count}-question quiz about: ${source.data}` });
+    parts = [{ text: `Make a simple quiz with ${count} questions about: ${source.data}. Use very simple English.` }];
   }
 
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents,
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
   return JSON.parse(response.text!) as Quiz;
@@ -160,8 +141,8 @@ export const generateQuizFromSource = async (source: any, count: number = 10): P
 
 export const generateQuiz = async (topic: string, role: string, count: number = 5): Promise<Quiz> => {
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: `Make a simple ${count}-question quiz for a ${role} on the topic: ${topic}`,
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Make a simple ${count}-question quiz for a ${role} on the topic: ${topic}. Use easy words.` }] }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
   return JSON.parse(response.text!) as Quiz;
@@ -169,132 +150,132 @@ export const generateQuiz = async (topic: string, role: string, count: number = 
 
 export const checkHomework = async (assignment: string, studentWork: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: `Check this student work. Assignment: ${assignment}\n\nStudent Work: ${studentWork}. Explain what they did well and how they can improve using very simple words.`,
-    config: { systemInstruction: "You are a kind teacher checking homework. Be encouraging and use simple language." }
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Check this work. Plan: ${assignment}\n\nWork: ${studentWork}. Tell them what they did well and how to fix mistakes using simple words.` }] }],
+    config: { systemInstruction: "You are a kind teacher. Be helpful and use very easy sentences." }
   });
-  return response.text || "I could not check the work.";
-};
-
-export const gradeAnswerSheet = async (
-  studentAsset: { dataUri: string, mimeType: string },
-  assignment: string,
-  answerKeyAsset?: { dataUri: string, mimeType: string }
-): Promise<string> => {
-  const cleanStudent = studentAsset.dataUri.includes(',') ? studentAsset.dataUri.split(',')[1] : studentAsset.dataUri;
-  const parts: any[] = [
-    { inlineData: { data: cleanStudent, mimeType: studentAsset.mimeType } },
-    { text: `Grade this student answer sheet. Assignment details: ${assignment}` }
-  ];
-  
-  if (answerKeyAsset) {
-    const cleanKey = answerKeyAsset.dataUri.includes(',') ? answerKeyAsset.dataUri.split(',')[1] : answerKeyAsset.dataUri;
-    parts.push({ inlineData: { data: cleanKey, mimeType: answerKeyAsset.mimeType } });
-    parts.push({ text: "Use this answer key to grade it correctly." });
-  }
-
-  const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: parts,
-    config: { systemInstruction: "You are a teacher grading a test. Give a score and simple feedback." }
-  });
-  return response.text || "I could not grade the sheet.";
+  return response.text || "I couldn't check it.";
 };
 
 export const summarizeText = async (text: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: `Summarize this text in simple words: ${text}`,
-    config: { systemInstruction: "Make this text easy to understand. Pick the main points." }
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Make this text short and easy to read: ${text}` }] }],
+    config: { systemInstruction: "Use simple words. Make it clear." }
   });
-  return response.text || "I could not summarize it.";
-};
-
-export const summarizeAudioLecture = async (base64Audio: string, mimeType: string): Promise<string> => {
-  const cleanAudio = base64Audio.includes(',') ? base64Audio.split(',')[1] : base64Audio;
-  const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: [
-      { inlineData: { data: cleanAudio, mimeType } },
-      { text: "Write down the main ideas from this audio. Use simple words and bullet points." }
-    ],
-    config: { systemInstruction: "You help students by taking simple notes from audio recordings." }
-  });
-  return response.text || "I could not hear the audio clearly.";
+  return response.text || "I couldn't summarize it.";
 };
 
 export const generateVisualAid = async (prompt: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-2.5-flash-image",
-    contents: [{ text: `A simple, clear educational drawing of: ${prompt}` }],
+    contents: [{ role: 'user', parts: [{ text: `A clear, simple drawing for kids showing: ${prompt}` }] }],
     config: { imageConfig: { aspectRatio: "1:1" } }
   });
   const part = response.candidates?.[0]?.content?.parts.find((p: any) => p.inlineData);
   if (part?.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-  throw new Error("I could not create the image.");
-};
-
-const flashcardSchema = {
-  type: Type.ARRAY,
-  items: {
-    type: Type.OBJECT,
-    properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
-    required: ["front", "back"]
-  }
+  throw new Error("Couldn't make the image.");
 };
 
 export const convertNotesToFlashcards = async (notes: string): Promise<{front: string, back: string}[]> => {
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: `Turn these notes into simple flashcards with a question on the front and answer on the back:\n\n${notes}`,
-    config: { responseMimeType: "application/json", responseSchema: flashcardSchema }
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Turn these notes into simple flashcards with a question and an answer: ${notes}` }] }],
+    config: { 
+      responseMimeType: "application/json", 
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
+          required: ["front", "back"]
+        }
+      } 
+    }
   });
   return JSON.parse(response.text!) as {front: string, back: string}[];
 };
 
-export const convertAssetToFlashcards = async (base64Data: string, mimeType: string): Promise<{front: string, back: string}[]> => {
-  const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'url', data: string, mimeType?: string }): Promise<{ plan: string, slides: SlideDeck, summary: string }> => {
+  let parts: any[] = [];
+  if (source.type === 'file') {
+    const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
+    parts = [
+      { inlineData: { data: cleanData, mimeType: source.mimeType } },
+      { text: "Create a simple lesson plan, slide topics, and a short summary from this file. Use easy words." }
+    ];
+  } else {
+    parts = [{ text: `Create a simple lesson plan, slide topics, and a short summary from this link: ${source.data}. Use easy words.` }];
+  }
+
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: [
-      { inlineData: { mimeType, data: cleanBase64 } },
-      { text: "Turn this file into simple study flashcards." }
-    ],
-    config: { responseMimeType: "application/json", responseSchema: flashcardSchema }
-  });
-  return JSON.parse(response.text!) as {front: string, back: string}[];
-};
-
-const slideSchema = {
-  type: Type.OBJECT,
-  properties: {
-    title: { type: Type.STRING },
-    slides: {
-      type: Type.ARRAY,
-      items: {
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts }],
+    config: { 
+      responseMimeType: "application/json", 
+      responseSchema: {
         type: Type.OBJECT,
         properties: {
-          title: { type: Type.STRING },
-          content: { type: Type.ARRAY, items: { type: Type.STRING } },
-          visualPrompt: { type: Type.STRING }
+          plan: { type: Type.STRING },
+          summary: { type: Type.STRING },
+          slides: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              slides: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    title: { type: Type.STRING },
+                    content: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    visualPrompt: { type: Type.STRING }
+                  },
+                  required: ["title", "content", "visualPrompt"]
+                }
+              }
+            },
+            required: ["title", "slides"]
+          }
         },
-        required: ["title", "content", "visualPrompt"]
+        required: ["plan", "slides", "summary"]
       }
     }
-  },
-  required: ["title", "slides"]
+  });
+
+  return JSON.parse(response.text!) as { plan: string, slides: SlideDeck, summary: string };
 };
 
 export const generateSlidesFromLesson = async (lessonContent: string): Promise<SlideDeck> => {
+  const schema = {
+    type: Type.OBJECT,
+    properties: {
+      title: { type: Type.STRING },
+      slides: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            content: { type: Type.ARRAY, items: { type: Type.STRING } },
+            visualPrompt: { type: Type.STRING }
+          },
+          required: ["title", "content", "visualPrompt"]
+        }
+      }
+    },
+    required: ["title", "slides"]
+  };
+
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: `Turn this lesson into a simple presentation with 6 slides: ${lessonContent}`,
-    config: { responseMimeType: "application/json", responseSchema: slideSchema }
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Based on this lesson content, create a structured slide deck. For each slide, provide a visual prompt for an image generator: ${lessonContent}` }] }],
+    config: { responseMimeType: "application/json", responseSchema: schema }
   });
   return JSON.parse(response.text!) as SlideDeck;
 };
 
-export const generateBrainBreak = async (lessonContent: string): Promise<BrainBreak> => {
+export const generateBrainBreak = async (context: string): Promise<BrainBreak> => {
   const schema = {
     type: Type.OBJECT,
     properties: {
@@ -305,56 +286,112 @@ export const generateBrainBreak = async (lessonContent: string): Promise<BrainBr
     },
     required: ["activityName", "duration", "instructions", "pedagogicalBenefit"]
   };
+
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: `Give a simple 2-minute activity for students to take a break during this lesson: ${lessonContent}`,
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Suggest a quick "brain break" activity related to this topic for a classroom: ${context}` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
   return JSON.parse(response.text!) as BrainBreak;
 };
 
+export const gradeAnswerSheet = async (studentAsset: { dataUri: string, mimeType: string }, criteria: string, answerKey?: { dataUri: string, mimeType: string }): Promise<string> => {
+  const studentData = studentAsset.dataUri.includes(',') ? studentAsset.dataUri.split(',')[1] : studentAsset.dataUri;
+  const parts: any[] = [
+    { inlineData: { data: studentData, mimeType: studentAsset.mimeType } },
+    { text: `Grade this student answer sheet based on these criteria: ${criteria}. Provide feedback and a score.` }
+  ];
+
+  if (answerKey) {
+    const keyData = answerKey.dataUri.includes(',') ? answerKey.dataUri.split(',')[1] : answerKey.dataUri;
+    parts.push({ inlineData: { data: keyData, mimeType: answerKey.mimeType } });
+    parts.push({ text: "Use this provided answer key for reference." });
+  }
+
+  const response = await generateWithResilience({
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts }],
+    config: { systemInstruction: "You are an expert examiner. Provide precise and encouraging feedback." }
+  });
+  return response.text!;
+};
+
 export const checkPlagiarism = async (text: string): Promise<{ analysis: string, sources: {uri: string, title: string}[] }> => {
-  const ai = getAI();
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Check if this text was copied from the internet. Explain simply: ${text}`,
-    config: {
-      tools: [{googleSearch: {}}],
+  const response = await generateWithResilience({
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Check this text for potential plagiarism and provide an analysis: ${text}` }] }],
+    config: { 
+      tools: [{ googleSearch: {} }]
     }
   });
-  
-  const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks?.map((chunk: any) => ({
-    uri: chunk.web?.uri || "",
-    title: chunk.web?.title || "Online Source"
-  })).filter((s: any) => s.uri) || [];
 
-  return {
-    analysis: response.text || "Everything looks original.",
-    sources
-  };
+  const analysis = response.text || "No analysis available.";
+  const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+  const sources = groundingChunks
+    .filter((chunk: any) => chunk.web)
+    .map((chunk: any) => ({
+      uri: chunk.web.uri,
+      title: chunk.web.title
+    }));
+
+  return { analysis, sources };
 };
 
 export const compareAssignments = async (textA: string, textB: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: `Check if these two students copied from each other. Give a simple report.\n\nStudent A: ${textA}\n\nStudent B: ${textB}`,
-    config: { systemInstruction: "You check for copying between students. Explain the similarities simply." }
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Compare these two student submissions for similarity and potential collusion:\n\nStudent A: ${textA}\n\nStudent B: ${textB}` }] }],
+    config: { systemInstruction: "Analyze the writing style, structure, and content overlap between two students." }
   });
-  return response.text || "I could not compare them.";
+  return response.text!;
+};
+
+export const convertAssetToFlashcards = async (base64Data: string, mimeType: string): Promise<{front: string, back: string}[]> => {
+  const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+  const response = await generateWithResilience({
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [
+      { inlineData: { data: cleanData, mimeType } },
+      { text: "Turn the content of this file into simple flashcards with a question and an answer." }
+    ] }],
+    config: { 
+      responseMimeType: "application/json", 
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
+          required: ["front", "back"]
+        }
+      } 
+    }
+  });
+  return JSON.parse(response.text!) as {front: string, back: string}[];
+};
+
+export const summarizeAudioLecture = async (base64Audio: string, mimeType: string): Promise<string> => {
+  const cleanData = base64Audio.includes(',') ? base64Audio.split(',')[1] : base64Audio;
+  const response = await generateWithResilience({
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [
+      { inlineData: { data: cleanData, mimeType } },
+      { text: "Listen to this audio lecture and provide detailed, structured notes and a summary using simple language." }
+    ] }],
+  });
+  return response.text!;
 };
 
 export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
-  const ai = getAI();
-  const scriptResponse = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Write a simple 1-minute script to explain this content like a friendly news reporter: ${content}`,
-    config: { systemInstruction: "You write simple, friendly scripts for audio." }
+  const scriptResponse = await generateWithResilience({
+    model: "gemini-flash-latest",
+    contents: [{ role: 'user', parts: [{ text: `Convert these notes into a natural, engaging briefing script suitable for audio playback: ${content}` }] }],
   });
-  const script = scriptResponse.text || "I could not write the script.";
+  const script = scriptResponse.text!;
 
+  const ai = getAI();
   const audioResponse = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Read this script clearly: ${script}` }] }],
+    contents: [{ parts: [{ text: script }] }],
     config: {
       responseModalities: [Modality.AUDIO],
       speechConfig: {
@@ -367,39 +404,4 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
 
   const audioBase64 = audioResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "";
   return { audioBase64, script };
-};
-
-export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'url', data: string, mimeType?: string }): Promise<{ plan: string, slides: SlideDeck, summary: string }> => {
-  const ai = getAI();
-  const contents: any[] = [];
-  
-  if (source.type === 'file') {
-    const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
-    contents.push({ inlineData: { data: cleanData, mimeType: source.mimeType } });
-    contents.push({ text: "Create a simple 40-minute lesson plan, a 6-slide structure, and a short summary from this file. Use simple words." });
-  } else {
-    contents.push({ text: `Create a simple 40-minute lesson plan, a 6-slide structure, and a short summary from this link: ${source.data}. Use simple words.` });
-  }
-
-  const combinedSchema = {
-    type: Type.OBJECT,
-    properties: {
-      plan: { type: Type.STRING, description: "Simple Markdown lesson plan." },
-      summary: { type: Type.STRING, description: "Short summary." },
-      slides: slideSchema
-    },
-    required: ["plan", "slides", "summary"]
-  };
-
-  const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents,
-    config: { 
-      responseMimeType: "application/json", 
-      responseSchema: combinedSchema,
-      tools: source.type === 'url' ? [{ googleSearch: {} }] : undefined
-    }
-  });
-
-  return JSON.parse(response.text!) as { plan: string, slides: SlideDeck, summary: string };
 };

@@ -17,13 +17,13 @@ import FocusRoom from './components/FocusRoom';
 import DoubtSolver from './components/DoubtSolver';
 import QuickRevision from './components/QuickRevision';
 import LandingPage from './components/LandingPage';
-import Login from './components/Login';
 import RoleSelection from './components/RoleSelection';
 import SVChatbot from './components/SVChatbot';
 import ParentPortal from './components/ParentPortal';
 import SchoolAdmin from './components/SchoolAdmin';
+import InstantLessonGenerator from './components/InstantLessonGenerator';
 import { View, Role } from './types';
-import { LogOut, Search, X, Sparkles, BrainCircuit, Mic, Loader2 } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
@@ -31,11 +31,8 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
   const [currentView, setCurrentView] = useState<View>(View.LANDING);
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('sv-theme') === 'dark');
   const [userRole, setUserRole] = useState<Role | null>(() => localStorage.getItem('sv-role') as Role);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -45,7 +42,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user || localStorage.getItem('sv-demo-mode') === 'true') {
+      const isDemo = localStorage.getItem('sv-demo-mode') === 'true';
+      if (user || isDemo) {
         setIsLoggedIn(true);
       } else {
         setIsLoggedIn(false);
@@ -59,6 +57,7 @@ const App: React.FC = () => {
     try { await signOut(auth); } catch (e) {}
     localStorage.removeItem('sv-role');
     localStorage.removeItem('sv-demo-mode');
+    localStorage.removeItem('sv-user-name');
     setIsLoggedIn(false);
     setUserRole(null);
     setCurrentView(View.LANDING);
@@ -70,10 +69,11 @@ const App: React.FC = () => {
     setCurrentView(role === 'parent' ? View.PARENT_PORTAL : role === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
   };
 
-  const handleGetStartedFromLanding = () => {
-    if (isLoggedIn && userRole) {
+  const handleGetStarted = () => {
+    const isDemo = localStorage.getItem('sv-demo-mode') === 'true';
+    if ((auth.currentUser || isDemo) && userRole) {
       setCurrentView(userRole === 'parent' ? View.PARENT_PORTAL : userRole === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
-    } else {
+    } else if (auth.currentUser || isDemo) {
       setCurrentView(View.DASHBOARD); 
     }
   };
@@ -96,20 +96,28 @@ const App: React.FC = () => {
       case View.DOUBT_SOLVER: return <DoubtSolver onBack={backToRoot} />;
       case View.QUICK_REVISION: return <QuickRevision onBack={backToRoot} />;
       case View.SV_CHATBOT: return <SVChatbot onBack={backToRoot} userRole={userRole === 'teacher' ? 'teacher' : 'student'} />;
+      case View.INSTANT_LESSON: return <InstantLessonGenerator onBack={backToRoot} />;
       case View.PARENT_PORTAL: return <ParentPortal />;
       case View.SCHOOL_ADMIN: return <SchoolAdmin />;
       default: return <Dashboard onChangeView={setCurrentView} userRole={userRole === 'teacher' ? 'teacher' : 'student'} />;
     }
   };
 
-  if (authChecking) return <div className="h-screen w-full bg-black flex items-center justify-center"><Loader2 className="animate-spin text-white" size={48} /></div>;
-
-  if (currentView === View.LANDING) {
-     return <LandingPage onGetStarted={handleGetStartedFromLanding} />;
+  if (authChecking) {
+    return <div className="h-screen w-full bg-[#050505] flex items-center justify-center"><Loader2 className="animate-spin text-white" size={48} /></div>;
   }
 
-  if (!isLoggedIn) return <Login onLogin={() => setIsLoggedIn(true)} />;
-  if (!userRole) return <RoleSelection onSelect={handleRoleSelect} />;
+  if (currentView === View.LANDING && !isLoggedIn) {
+    return <LandingPage onGetStarted={handleGetStarted} />;
+  }
+
+  if (!isLoggedIn) {
+    return <LandingPage onGetStarted={handleGetStarted} />;
+  }
+
+  if (!userRole) {
+    return <RoleSelection onSelect={handleRoleSelect} />;
+  }
 
   return (
     <div className={`h-full min-h-screen flex flex-col md:flex-row ${isDarkMode ? 'dark bg-[#050505]' : 'bg-slate-50'}`}>
@@ -119,13 +127,11 @@ const App: React.FC = () => {
       />
       <main className="flex-1 flex flex-col md:ml-72 relative min-h-screen">
         <div className="hidden md:flex fixed top-8 right-12 gap-3 z-50 p-2 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-md border border-white/5">
-          <button onClick={() => setIsCommandPaletteOpen(true)} className="flex items-center gap-3 px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-2xl transition-transform hover:scale-105 active:scale-95">
-            <Search size={14} /> Spotlight
-          </button>
-          <button onClick={handleLogout} className="p-3 text-slate-400 hover:text-red-500 transition-colors bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+          <button onClick={handleLogout} className="p-3 text-slate-400 hover:text-red-500 transition-all bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm active:scale-90">
             <LogOut size={20} />
           </button>
         </div>
+        
         <div className="p-8 pt-24 md:pt-32 animate-in fade-in duration-700 flex-grow overflow-x-hidden">
           {renderContent()}
         </div>

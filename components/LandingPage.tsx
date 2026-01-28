@@ -22,10 +22,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       await signInWithPopup(auth, googleProvider);
       onGetStarted();
     } catch (err: any) {
-      setError("Google sign-in did not work. Please try again.");
+      console.error("Google Auth Error:", err);
+      if (err.code === 'auth/unauthorized-domain') {
+        setError("Domain not authorized for Google Login. Please use 'Guest Mode' below.");
+      } else {
+        setError("Google sign-in did not work. Please try again or use Guest Mode.");
+      }
     } finally {
       setIsLoggingIn(false);
     }
+  };
+
+  const handleGuestAccess = () => {
+    localStorage.setItem('sv-demo-mode', 'true');
+    localStorage.setItem('sv-user-name', 'Guest Explorer');
+    onGetStarted();
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -41,7 +52,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       }
       onGetStarted();
     } catch (err: any) {
-      setError("Login failed. Check your email and password.");
+      console.error("Email Auth Error:", err);
+      setError("Login failed. Please check your credentials and try again.");
     } finally {
       setIsLoggingIn(false);
     }
@@ -94,13 +106,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
           </div>
           
           <div className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
-            <a href="#features" className="hover:text-indigo-600 transition-colors">What we do</a>
+            <a href="#features" className="hover:text-indigo-600 transition-colors">Our Tools</a>
             <a href="#how-it-works" className="hover:text-indigo-600 transition-colors">How it works</a>
           </div>
 
           <div className="flex items-center gap-4">
             <button onClick={() => setAuthView('login')} className="text-sm font-bold text-slate-700 hover:text-indigo-600">Sign In</button>
-            <button onClick={() => setAuthView('signup')} className="btn-primary text-white px-6 py-2.5 rounded-full text-sm font-bold">Sign Up Free</button>
+            <button onClick={() => setAuthView('signup')} className="btn-primary text-white px-6 py-2.5 rounded-full text-sm font-bold">Try for Free</button>
           </div>
         </div>
       </nav>
@@ -110,16 +122,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
           {/* HERO SECTION */}
           <section className="hero-gradient pt-40 pb-24 px-6">
             <div className="max-w-7xl mx-auto text-center">
-              <span className="inline-block py-1 px-4 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-widest mb-6">Simple AI Help for Students & Teachers</span>
+              <span className="inline-block py-1 px-4 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-widest mb-6">Easy AI Help</span>
               <h1 className="text-5xl md:text-7xl font-bold font-outfit text-slate-900 mb-8 leading-[1.1]">
-                LEARN FASTER. <br/><span className="text-indigo-600">TEACH BETTER.</span>
+                LEARN FAST. <br/><span className="text-indigo-600">TEACH WELL.</span>
               </h1>
               <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
-                Spend less time on paperwork and more time on learning. Create plans, quizzes, and notes in seconds. Simple, easy, and smart.
+                Our simple tools help you create lesson plans, quizzes, and notes in just one click. Save time and focus on what matters.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button onClick={() => setAuthView('signup')} className="btn-primary text-white px-8 py-4 rounded-xl font-bold w-full sm:w-auto shadow-lg shadow-indigo-200">Start Now - It's Free</button>
-                <button className="bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-xl font-bold w-full sm:w-auto hover:bg-slate-50 transition-all">How it works</button>
+                <button onClick={() => setAuthView('signup')} className="btn-primary text-white px-8 py-4 rounded-xl font-bold w-full sm:w-auto shadow-lg shadow-indigo-200">Start Today</button>
+                <button onClick={handleGuestAccess} className="bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-xl font-bold w-full sm:w-auto hover:bg-slate-50 transition-all">Use as Guest</button>
               </div>
             </div>
           </section>
@@ -129,24 +141,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
                 <div className="p-8 bg-indigo-50/50 rounded-3xl border border-indigo-100">
                     <div className="w-12 h-12 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-md"><i className="fas fa-magic"></i></div>
-                    <h3 className="text-xl font-bold mb-3 font-outfit">Instant Plans</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">Make full teaching plans in seconds. Just type a topic and let our AI do the work.</p>
+                    <h3 className="text-xl font-bold mb-3 font-outfit">Quick Plans</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed">Make a full teaching plan in seconds. Just type your topic and let AI do the work.</p>
                 </div>
                 <div className="p-8 bg-emerald-50/50 rounded-3xl border border-emerald-100">
                     <div className="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-md"><i className="fas fa-check"></i></div>
-                    <h3 className="text-xl font-bold mb-3 font-outfit">Easy Quizzes</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">Create quizzes from any text or file. Test what you know in just one click.</p>
+                    <h3 className="text-xl font-bold mb-3 font-outfit">Simple Quizzes</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed">Turn any text into a fun quiz. Test yourself or your students immediately.</p>
                 </div>
                 <div className="p-8 bg-orange-50/50 rounded-3xl border border-orange-100">
                     <div className="w-12 h-12 bg-orange-600 text-white rounded-2xl flex items-center justify-center mb-6 shadow-md"><i className="fas fa-question"></i></div>
-                    <h3 className="text-xl font-bold mb-3 font-outfit">Help with Doubts</h3>
-                    <p className="text-slate-600 text-sm leading-relaxed">Stuck on a question? Take a picture and get a clear explanation right away.</p>
+                    <h3 className="text-xl font-bold mb-3 font-outfit">Easy Answers</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed">Got a hard question? Take a photo and get a clear explanation right away.</p>
                 </div>
             </div>
           </section>
         </main>
       ) : (
-        /* AUTH SECTION (LOGIN & SIGNUP) */
+        /* AUTH SECTION */
         <main className="fade-in min-h-screen flex items-center justify-center px-6 py-24 bg-slate-50 flex-1">
           <div className="max-w-md w-full">
             <div className="text-center mb-10">
@@ -154,10 +166,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                 <i className="fas fa-user text-2xl"></i>
               </div>
               <h2 className="text-3xl font-outfit font-bold text-slate-900 mb-2">
-                {authView === 'login' ? 'Welcome Back!' : 'Join SVGPT Today'}
+                {authView === 'login' ? 'Welcome Back!' : 'Join SVGPT'}
               </h2>
               <p className="text-slate-500 font-medium">
-                {authView === 'login' ? 'Sign in to use your AI tools' : 'Start your journey to easier learning'}
+                {authView === 'login' ? 'Please sign in to continue' : 'Create your free account today'}
               </p>
             </div>
 
@@ -166,38 +178,44 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                 {authView === 'signup' && (
                   <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Your Name</label>
-                    <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Enter your full name" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-medium" />
+                    <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Full Name" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-medium" />
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Email Address</label>
-                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="name@example.com" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-medium" />
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Email</label>
+                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-medium" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Password</label>
-                  <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-medium" />
+                  <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-medium" />
                 </div>
 
                 {error && <p className="text-xs text-red-500 font-bold text-center py-1">{error}</p>}
 
                 <button type="submit" disabled={isLoggingIn} className="w-full btn-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 mt-2">
-                  {isLoggingIn ? <i className="fas fa-spinner fa-spin"></i> : <span>{authView === 'login' ? 'Sign In' : 'Create My Account'}</span>}
+                  {isLoggingIn ? <i className="fas fa-spinner fa-spin"></i> : <span>{authView === 'login' ? 'Sign In' : 'Join Now'}</span>}
                 </button>
               </form>
 
               <div className="relative flex items-center justify-center my-8">
                 <div className="w-full border-t border-slate-100"></div>
-                <span className="absolute bg-white px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Or use social</span>
+                <span className="absolute bg-white px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Or try this</span>
               </div>
 
-              <button onClick={handleGoogleAuth} disabled={isLoggingIn} className="w-full py-4 rounded-xl border border-slate-200 hover:bg-slate-50 font-bold text-slate-700 flex items-center justify-center gap-3 transition-all shadow-sm">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
-                <span>Continue with Google</span>
-              </button>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={handleGoogleAuth} disabled={isLoggingIn} className="py-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 font-bold text-slate-700 flex items-center justify-center gap-2 transition-all shadow-sm text-sm">
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google" />
+                  Google
+                </button>
+                <button onClick={handleGuestAccess} className="py-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 font-bold text-slate-700 flex items-center justify-center gap-2 transition-all shadow-sm text-sm">
+                  <i className="fas fa-user-secret opacity-40"></i>
+                  Guest Mode
+                </button>
+              </div>
 
               <div className="mt-8 pt-6 border-t border-slate-100 text-center">
                 <p className="text-sm text-slate-500 font-medium">
-                  {authView === 'login' ? "Don't have an account yet?" : "Already have an account?"}
+                  {authView === 'login' ? "New here?" : "Already joined?"}
                   <button 
                     onClick={() => {setAuthView(authView === 'login' ? 'signup' : 'login'); setError(null);}}
                     className="text-indigo-600 font-bold hover:underline ml-2"
@@ -222,10 +240,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-xs"><i className="fas fa-brain"></i></div>
             <span className="font-outfit font-bold text-xl text-slate-900">SVGPT<span className="text-indigo-600">AI</span></span>
           </div>
-          <p className="text-slate-400 text-sm font-medium">© 2026 SVGPT AI. Smart and simple tools.</p>
+          <p className="text-slate-400 text-sm font-medium">© 2026 SVGPT AI. Simple tools for everyone.</p>
           <div className="flex gap-6 text-slate-400">
-            <a href="#" className="hover:text-indigo-600"><i className="fab fa-twitter"></i></a>
-            <a href="#" className="hover:text-indigo-600"><i className="fab fa-google"></i></a>
+            <a href="#" className="hover:text-indigo-600 transition-colors"><i className="fab fa-twitter"></i></a>
+            <a href="#" className="hover:text-indigo-600 transition-colors"><i className="fab fa-google"></i></a>
           </div>
         </div>
       </footer>
