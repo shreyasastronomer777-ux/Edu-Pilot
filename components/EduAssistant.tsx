@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageSquare, ChevronDown, Trash2, Bot, Sparkles } from 'lucide-react';
 import { chatWithEduAssistant } from '../services/geminiService';
@@ -20,7 +21,7 @@ const EduAssistant: React.FC = () => {
       let initialMsg = "Welcome back, Scholar. Are we preparing for an examination or refining study insights with SVGPT? I'm here to simplify complex topics for you.";
       
       if (role === 'teacher') {
-        initialMsg = "Greetings, Professor. How may I assist in synthesizing high-rigor instructional materials or providing lesson planning tips today? I can also suggest creative assessment strategies.";
+        initialMsg = "Greetings, Professor. How may I assist in synthesizing high-rigor instructional materials or providing lesson planning tips today?";
       } else if (role === 'parent') {
         initialMsg = "Guardian Interface Active. How may I assist in analyzing student academic trajectories and performance today?";
       } else if (role === 'admin') {
@@ -43,22 +44,29 @@ const EduAssistant: React.FC = () => {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+    
     const userMsg = input.trim();
     setInput('');
-    const newMessages = [...messages, { role: 'user', text: userMsg }];
-    setMessages(newMessages as any);
+    
+    // 1. Prepare history for AI (BEFORE adding the new message to state)
+    // This ensures alternating roles [user, model, user, model]
+    const historyForAI = messages.map(m => ({
+      role: m.role === 'bot' ? 'model' : 'user',
+      parts: [{ text: m.text }]
+    }));
+
+    // 2. Add user message to local state for UI
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
 
     try {
-      const history = newMessages.map(m => ({
-        role: m.role === 'bot' ? 'model' : 'user',
-        parts: [{ text: m.text }]
-      }));
       const userRole = localStorage.getItem('sv-role') as Role | null;
-      const botResponse = await chatWithEduAssistant(userMsg, history, userRole);
+      // 3. Pass history + the new message to the service
+      const botResponse = await chatWithEduAssistant(userMsg, historyForAI, userRole);
       setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'bot', text: "Neural link interrupted. Please try again." }]);
+    } catch (error: any) {
+      console.error("Assistant Error:", error);
+      setMessages(prev => [...prev, { role: 'bot', text: `Neural link interrupted: ${error.message || "Please attempt re-transmission."}` }]);
     } finally {
       setIsLoading(false);
     }

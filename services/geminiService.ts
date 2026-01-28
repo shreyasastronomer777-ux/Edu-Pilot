@@ -23,6 +23,11 @@ const generateWithResilience = async (params: any) => {
     return response;
   } catch (error: any) {
     console.error("AI Error:", error);
+    // Provide a cleaner error message to the UI
+    const msg = error.message?.toLowerCase() || "";
+    if (msg.includes("400") || msg.includes("invalid")) {
+       throw new Error("Neural synchronization error. Please reset the chat and try again.");
+    }
     throw new Error(error.message || "Something went wrong with the AI.");
   }
 };
@@ -62,23 +67,34 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
 };
 
 /**
- * Enhanced chat handler to ensure strictly alternating User/Model roles
+ * Enhanced chat handler to ensure strictly alternating User/Model roles starting with User.
  */
 export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
-  // Normalize history and ensure no consecutive roles
-  const normalizedContents = history.map(m => ({
+  // 1. Normalize roles and parts
+  let normalized = history.map(m => ({
     role: m.role === 'bot' || m.role === 'model' ? 'model' : 'user',
-    parts: [{ text: m.parts?.[0]?.text || m.text || "" }]
-  })).filter(m => m.parts[0].text);
+    parts: [{ text: (m.parts?.[0]?.text || m.text || "").trim() }]
+  })).filter(m => m.parts[0].text !== "");
 
-  // If the last message in history is from 'user', we shouldn't add another 'user' part.
-  // However, the standard implementation usually has the component pass everything *before* the current message.
-  // We'll add the current message to the array.
-  const finalContents = [...normalizedContents];
-  
-  // Safety check: if last role is 'user', remove it to replace with the fresh prompt message
+  // 2. Gemini requires the first message to be from 'user'. 
+  // If history starts with a bot greeting, remove it from context.
+  while (normalized.length > 0 && normalized[0].role === 'model') {
+    normalized.shift();
+  }
+
+  // 3. Prevent consecutive roles (e.g. User followed by User)
+  const finalContents: any[] = [];
+  for (const turn of normalized) {
+    if (finalContents.length === 0 || finalContents[finalContents.length - 1].role !== turn.role) {
+      finalContents.push(turn);
+    }
+  }
+
+  // 4. If last role is already 'user', we shouldn't push the new message turn 
+  // as its own entry. Instead, we either replace it or pop it.
+  // Standard logic: The 'message' parameter is the NEW turn.
   if (finalContents.length > 0 && finalContents[finalContents.length - 1].role === 'user') {
-    finalContents.pop();
+    finalContents.pop(); 
   }
   
   finalContents.push({ role: 'user', parts: [{ text: message }] });
@@ -87,7 +103,7 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
     model: "gemini-flash-latest", 
     contents: finalContents,
     config: {
-      systemInstruction: `You are a helpful AI academic co-pilot for a ${userRole || 'student'}. Use simple, clear English. Always be encouraging and provide step-by-step reasoning for complex topics.`,
+      systemInstruction: `You are SVGPT, a helpful AI academic co-pilot for a ${userRole || 'student'}. Use simple, clear English. Always be encouraging and provide step-by-step reasoning for complex topics. Created by Shreyas & Vaibhav.`,
       temperature: 0.7
     }
   });
@@ -321,7 +337,7 @@ export const gradeAnswerSheet = async (studentAsset: { dataUri: string, mimeType
   if (answerKey) {
     const keyData = answerKey.dataUri.includes(',') ? answerKey.dataUri.split(',')[1] : answerKey.dataUri;
     parts.push({ inlineData: { data: keyData, mimeType: answerKey.mimeType } });
-    parts.push({ text: "Use this answer key for reference." });
+    parts.push({ text: "Use this provided answer key for reference." });
   }
 
   const response = await generateWithResilience({
