@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, User, Bot, Trash2, ArrowLeft, Loader2, Zap, BrainCircuit, Globe, MessageSquare, ChevronDown } from 'lucide-react';
 import { chatWithEduAssistant } from '../services/geminiService';
@@ -44,22 +45,27 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
+    
     const userMsg = input.trim();
     setInput('');
-    const newMessages = [...messages, { role: 'user', text: userMsg }];
-    setMessages(newMessages as any);
+    
+    // Add user message to UI immediately
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
 
     try {
-      const history = newMessages.map(m => ({
+      // Pass the CURRENT messages state (before the new message we just added) as history
+      // This ensures strictly alternating roles: (history) + current message
+      const historyForAI = messages.map(m => ({
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
       }));
       
-      const botResponse = await chatWithEduAssistant(userMsg, history, userRole);
+      const botResponse = await chatWithEduAssistant(userMsg, historyForAI, userRole);
       setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'bot', text: "Neural link interrupted. Please attempt re-transmission." }]);
+    } catch (error: any) {
+      console.error("Chat error:", error);
+      setMessages(prev => [...prev, { role: 'bot', text: `Neural link interrupted: ${error.message || "Please attempt re-transmission."}` }]);
     } finally {
       setIsLoading(false);
     }
