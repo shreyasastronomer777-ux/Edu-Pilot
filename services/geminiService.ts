@@ -9,27 +9,73 @@ import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 const getAI = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("AI Key missing. Please check your settings.");
+    throw new Error("AI Key missing. Please check your environment settings.");
   }
   return new GoogleGenAI({ apiKey });
 };
 
-// Robust wrapper to handle AI requests safely
 const generateWithResilience = async (params: any) => {
   const ai = getAI();
   try {
     const response = await ai.models.generateContent(params);
-    if (!response.text) throw new Error("The AI didn't give an answer. Try again.");
+    if (!response.text) throw new Error("The AI returned an empty response. Please try again.");
     return response;
   } catch (error: any) {
     console.error("AI Error:", error);
-    // Provide a cleaner error message to the UI
     const msg = error.message?.toLowerCase() || "";
     if (msg.includes("400") || msg.includes("invalid")) {
-       throw new Error("Neural synchronization error. Please reset the chat and try again.");
+       throw new Error("Neural synchronization error. Please clear this chat session.");
     }
-    throw new Error(error.message || "Something went wrong with the AI.");
+    throw new Error(error.message || "Something went wrong with the AI link.");
   }
+};
+
+/**
+ * Sanitizes history to meet Gemini 1.5 requirements:
+ * 1. Must start with 'user'
+ * 2. Roles must strictly alternate [user, model, user, model...]
+ */
+const sanitizeHistory = (history: any[]) => {
+  let sanitized = history.map(m => ({
+    role: m.role === 'bot' || m.role === 'model' ? 'model' : 'user',
+    parts: [{ text: (m.parts?.[0]?.text || m.text || "").trim() }]
+  })).filter(m => m.parts[0].text !== "");
+
+  // 1. Ensure starts with 'user'
+  while (sanitized.length > 0 && sanitized[0].role !== 'user') {
+    sanitized.shift();
+  }
+
+  // 2. Ensure strictly alternating
+  const final: any[] = [];
+  for (const turn of sanitized) {
+    if (final.length === 0 || final[final.length - 1].role !== turn.role) {
+      final.push(turn);
+    }
+  }
+  return final;
+};
+
+export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
+  const context = sanitizeHistory(history);
+  
+  // If the last role in context is 'user', we shouldn't add another user turn.
+  // Instead, we replace it with the latest message or pop it.
+  if (context.length > 0 && context[context.length - 1].role === 'user') {
+    context.pop();
+  }
+  
+  context.push({ role: 'user', parts: [{ text: message }] });
+
+  const response = await generateWithResilience({
+    model: "gemini-flash-latest", 
+    contents: context,
+    config: {
+      systemInstruction: `You are SVGPT, a high-performance AI co-pilot for a ${userRole || 'student'}. Be concise, academic, and supportive. Use Markdown for clarity.`,
+      temperature: 0.7
+    }
+  });
+  return response.text || "I am currently recalibrating. Please try again.";
 };
 
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
@@ -39,14 +85,14 @@ export const solveDoubt = async (base64Data: string, mimeType: string): Promise<
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
-        { text: "Look at this file and explain the answer in simple words. Use step-by-step points." }
+        { text: "Analyze this image and explain the concepts shown. Use step-by-step logic." }
       ]
     }],
     config: { 
-      systemInstruction: "You are a kind teacher. Explain things simply so a child can understand. Use bold text for important words."
+      systemInstruction: "You are a specialized academic tutor. Explain complex visuals with extreme clarity."
     }
   });
-  return response.text || "I couldn't find an answer.";
+  return response.text || "Analysis failed.";
 };
 
 export const generateRevisionInsights = async (base64Data: string, mimeType: string): Promise<string> => {
@@ -56,69 +102,25 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
-        { text: "Read this and give me the main points. Use a simple list and simple words." }
+        { text: "Summarize this document into bulleted revision notes." }
       ]
     }],
     config: { 
-      systemInstruction: "You make long notes short and easy to read. Use simple English."
+      systemInstruction: "Extract high-impact definitions and formulas for student revision."
     }
   });
-  return response.text || "I couldn't read the file.";
-};
-
-/**
- * Enhanced chat handler to ensure strictly alternating User/Model roles starting with User.
- */
-export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
-  // 1. Normalize roles and parts
-  let normalized = history.map(m => ({
-    role: m.role === 'bot' || m.role === 'model' ? 'model' : 'user',
-    parts: [{ text: (m.parts?.[0]?.text || m.text || "").trim() }]
-  })).filter(m => m.parts[0].text !== "");
-
-  // 2. Gemini requires the first message to be from 'user'. 
-  // If history starts with a bot greeting, remove it from context.
-  while (normalized.length > 0 && normalized[0].role === 'model') {
-    normalized.shift();
-  }
-
-  // 3. Prevent consecutive roles (e.g. User followed by User)
-  const finalContents: any[] = [];
-  for (const turn of normalized) {
-    if (finalContents.length === 0 || finalContents[finalContents.length - 1].role !== turn.role) {
-      finalContents.push(turn);
-    }
-  }
-
-  // 4. If last role is already 'user', we shouldn't push the new message turn 
-  // as its own entry. Instead, we either replace it or pop it.
-  // Standard logic: The 'message' parameter is the NEW turn.
-  if (finalContents.length > 0 && finalContents[finalContents.length - 1].role === 'user') {
-    finalContents.pop(); 
-  }
-  
-  finalContents.push({ role: 'user', parts: [{ text: message }] });
-
-  const response = await generateWithResilience({
-    model: "gemini-flash-latest", 
-    contents: finalContents,
-    config: {
-      systemInstruction: `You are SVGPT, a helpful AI academic co-pilot for a ${userRole || 'student'}. Use simple, clear English. Always be encouraging and provide step-by-step reasoning for complex topics. Created by Shreyas & Vaibhav.`,
-      temperature: 0.7
-    }
-  });
-  return response.text || "I am having trouble communicating right now.";
+  return response.text || "Summarization failed.";
 };
 
 export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text: string) => void) => {
   const ai = getAI();
-  const prompt = `Create a simple lesson plan for ${config.gradeLevel} students. Subject: ${config.subject}. Topic: ${config.topic}. Use simple words and a clear plan. Focus: ${config.focus}. Standard: ${config.standard}.`;
+  const prompt = `Synthesize a lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}.`;
   try {
     const response = await ai.models.generateContentStream({
       model: "gemini-flash-latest",
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
-        systemInstruction: "You are a master teacher architect. Synthesize clear, high-rigor but easy-to-understand lesson plans.",
+        systemInstruction: "You are a master teacher. Synthesize structured, standard-aligned lesson plans.",
       },
     });
     for await (const chunk of response) {
@@ -157,10 +159,10 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
     parts = [
       { inlineData: { data: cleanData, mimeType: source.mimeType } },
-      { text: `Make a simple quiz with ${count} questions based on this file. Use very simple words.` }
+      { text: `Synthesize an assessment with ${count} questions based on this asset.` }
     ];
   } else {
-    parts = [{ text: `Make a simple quiz with ${count} questions about: ${source.data}. Use very simple English.` }];
+    parts = [{ text: `Synthesize an assessment with ${count} questions on: ${source.data}.` }];
   }
 
   const response = await generateWithResilience({
@@ -174,7 +176,7 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
 export const generateQuiz = async (topic: string, role: string, count: number = 5): Promise<Quiz> => {
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Make a simple ${count}-question quiz for a ${role} on the topic: ${topic}. Use easy words.` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Create a practice quiz for a ${role} on the topic: ${topic}.` }] }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
   return JSON.parse(response.text!) as Quiz;
@@ -183,36 +185,36 @@ export const generateQuiz = async (topic: string, role: string, count: number = 
 export const checkHomework = async (assignment: string, studentWork: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Check this work against the following criteria: ${assignment}\n\nWork: ${studentWork}. Provide encouraging feedback and specific corrections.` }] }],
-    config: { systemInstruction: "You are a kind, professional teacher. Provide clear corrections and emphasize strengths." }
+    contents: [{ role: 'user', parts: [{ text: `Evaluate this work. Criteria: ${assignment}\n\nSubmission: ${studentWork}` }] }],
+    config: { systemInstruction: "Provide professional academic feedback and grading." }
   });
-  return response.text || "I couldn't complete the evaluation.";
+  return response.text || "Grading failed.";
 };
 
 export const summarizeText = async (text: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Summarize this text into its core takeaways: ${text}` }] }],
-    config: { systemInstruction: "Use simple, accessible English. Focus on utility." }
+    contents: [{ role: 'user', parts: [{ text: `Summarize this text: ${text}` }] }],
+    config: { systemInstruction: "Be clear and concise. Use Markdown." }
   });
-  return response.text || "I couldn't summarize it.";
+  return response.text || "Summarization failed.";
 };
 
 export const generateVisualAid = async (prompt: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-2.5-flash-image",
-    contents: [{ role: 'user', parts: [{ text: `A clear, simple academic drawing for students showing: ${prompt}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Academic illustration showing: ${prompt}` }] }],
     config: { imageConfig: { aspectRatio: "1:1" } }
   });
   const part = response.candidates?.[0]?.content?.parts.find((p: any) => p.inlineData);
   if (part?.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-  throw new Error("Visual synthesis failed.");
+  throw new Error("Visual generation failed.");
 };
 
 export const convertNotesToFlashcards = async (notes: string): Promise<{front: string, back: string}[]> => {
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Turn these notes into simple flashcards (Question/Answer): ${notes}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Synthesize flashcards from these notes: ${notes}` }] }],
     config: { 
       responseMimeType: "application/json", 
       responseSchema: {
@@ -234,10 +236,10 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
     parts = [
       { inlineData: { data: cleanData, mimeType: source.mimeType } },
-      { text: "Synthesize a full lesson plan, slide outlines, and a brief summary from this asset." }
+      { text: "Synthesize a full lesson plan, slides, and summary from this document." }
     ];
   } else {
-    parts = [{ text: `Synthesize a full lesson plan, slide outlines, and a brief summary from this link: ${source.data}` }];
+    parts = [{ text: `Synthesize a full lesson plan, slides, and summary from this link: ${source.data}` }];
   }
 
   const response = await generateWithResilience({
@@ -301,7 +303,7 @@ export const generateSlidesFromLesson = async (lessonContent: string): Promise<S
 
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Generate a slide deck structure based on: ${lessonContent}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Synthesize a slide deck for this content: ${lessonContent}` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
   return JSON.parse(response.text!) as SlideDeck;
@@ -321,7 +323,7 @@ export const generateBrainBreak = async (context: string): Promise<BrainBreak> =
 
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Suggest a classroom brain break for the topic: ${context}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Suggest a classroom brain break activity based on: ${context}` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
   return JSON.parse(response.text!) as BrainBreak;
@@ -331,19 +333,19 @@ export const gradeAnswerSheet = async (studentAsset: { dataUri: string, mimeType
   const studentData = studentAsset.dataUri.includes(',') ? studentAsset.dataUri.split(',')[1] : studentAsset.dataUri;
   const parts: any[] = [
     { inlineData: { data: studentData, mimeType: studentAsset.mimeType } },
-    { text: `Grade this student asset against criteria: ${criteria}` }
+    { text: `Grade this student submission based on: ${criteria}` }
   ];
 
   if (answerKey) {
     const keyData = answerKey.dataUri.includes(',') ? answerKey.dataUri.split(',')[1] : answerKey.dataUri;
     parts.push({ inlineData: { data: keyData, mimeType: answerKey.mimeType } });
-    parts.push({ text: "Use this provided answer key for reference." });
+    parts.push({ text: "Reference this key." });
   }
 
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
     contents: [{ role: 'user', parts }],
-    config: { systemInstruction: "You are an expert academic evaluator. Provide precise feedback." }
+    config: { systemInstruction: "Provide detailed academic grading." }
   });
   return response.text!;
 };
@@ -351,11 +353,11 @@ export const gradeAnswerSheet = async (studentAsset: { dataUri: string, mimeType
 export const checkPlagiarism = async (text: string): Promise<{ analysis: string, sources: {uri: string, title: string}[] }> => {
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Perform an internet search to check if this text is plagiarized: ${text}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Analyze for plagiarism: ${text}` }] }],
     config: { tools: [{ googleSearch: {} }] }
   });
 
-  const analysis = response.text || "Plagiarism analysis failed.";
+  const analysis = response.text || "Analysis complete.";
   const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
   const sources = groundingChunks
     .filter((chunk: any) => chunk.web)
@@ -370,8 +372,8 @@ export const checkPlagiarism = async (text: string): Promise<{ analysis: string,
 export const compareAssignments = async (textA: string, textB: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Compare these two submissions for unusual similarities:\n\nStudent A: ${textA}\n\nStudent B: ${textB}` }] }],
-    config: { systemInstruction: "Analyze similarities and potential collusion between two student works." }
+    contents: [{ role: 'user', parts: [{ text: `Compare Student A and B for collusion:\n\nA: ${textA}\n\nB: ${textB}` }] }],
+    config: { systemInstruction: "Analyze similarities between two academic submissions." }
   });
   return response.text!;
 };
@@ -405,7 +407,7 @@ export const summarizeAudioLecture = async (base64Audio: string, mimeType: strin
     model: "gemini-flash-latest",
     contents: [{ role: 'user', parts: [
       { inlineData: { data: cleanData, mimeType } },
-      { text: "Analyze this audio lecture and provide detailed notes and a summary." }
+      { text: "Synthesize structured notes from this audio recording." }
     ] }],
   });
   return response.text!;
@@ -414,7 +416,7 @@ export const summarizeAudioLecture = async (base64Audio: string, mimeType: strin
 export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
   const scriptResponse = await generateWithResilience({
     model: "gemini-flash-latest",
-    contents: [{ role: 'user', parts: [{ text: `Convert these notes into a podcast-style briefing script: ${content}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Synthesize an engaging audio script for this content: ${content}` }] }],
   });
   const script = scriptResponse.text!;
 

@@ -2,41 +2,42 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageSquare, ChevronDown, Trash2, Bot, Sparkles } from 'lucide-react';
 import { chatWithEduAssistant } from '../services/geminiService';
+import { auth } from '../firebaseConfig';
 import { Role } from '../types';
 import ReactMarkdown from 'react-markdown';
 
 const EduAssistant: React.FC = () => {
+  const userId = auth.currentUser?.uid || 'guest';
+  const storageKey = `svgpt_assistant_${userId}`;
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{role: 'user' | 'bot', text: string}[]>(() => {
-    const saved = localStorage.getItem('svgpt_assistant_history');
+    const saved = localStorage.getItem(storageKey);
     return saved ? JSON.parse(saved) : [];
   });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Initialize greeting if session is new
   useEffect(() => {
     if (messages.length === 0 && isOpen) {
       const role = localStorage.getItem('sv-role') as Role | null;
-      let initialMsg = "Welcome back, Scholar. Are we preparing for an examination or refining study insights with SVGPT? I'm here to simplify complex topics for you.";
+      let initialMsg = "Welcome back, Scholar. How may I assist in deconstructing complex academic nodes today?";
       
       if (role === 'teacher') {
-        initialMsg = "Greetings, Professor. How may I assist in synthesizing high-rigor instructional materials or providing lesson planning tips today?";
-      } else if (role === 'parent') {
-        initialMsg = "Guardian Interface Active. How may I assist in analyzing student academic trajectories and performance today?";
-      } else if (role === 'admin') {
-        initialMsg = "Institutional Oversight Active. How can I assist in school governance and academic analytics today?";
+        initialMsg = "Greetings, Professor. Are we synthesizing instructional assets or conducting neural evaluations today?";
       }
       setMessages([{ role: 'bot', text: initialMsg }]);
     }
   }, [isOpen, messages.length]);
 
-  // Persist messages
+  // Persist messages scoped to current user
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem('svgpt_assistant_history', JSON.stringify(messages));
+      localStorage.setItem(storageKey, JSON.stringify(messages));
     }
-  }, [messages]);
+  }, [messages, storageKey]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -48,34 +49,31 @@ const EduAssistant: React.FC = () => {
     const userMsg = input.trim();
     setInput('');
     
-    // 1. Prepare history for AI (BEFORE adding the new message to state)
-    // This ensures alternating roles [user, model, user, model]
+    // Prepare history context
     const historyForAI = messages.map(m => ({
       role: m.role === 'bot' ? 'model' : 'user',
       parts: [{ text: m.text }]
     }));
 
-    // 2. Add user message to local state for UI
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsLoading(true);
 
     try {
       const userRole = localStorage.getItem('sv-role') as Role | null;
-      // 3. Pass history + the new message to the service
       const botResponse = await chatWithEduAssistant(userMsg, historyForAI, userRole);
       setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
     } catch (error: any) {
       console.error("Assistant Error:", error);
-      setMessages(prev => [...prev, { role: 'bot', text: `Neural link interrupted: ${error.message || "Please attempt re-transmission."}` }]);
+      setMessages(prev => [...prev, { role: 'bot', text: `Connection restricted: ${error.message || "Attempt re-sync."}` }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const resetAssistant = () => {
-    if (confirm("Reset assistant session history?")) {
+    if (confirm("Permanently purge localized assistant history?")) {
       setMessages([]);
-      localStorage.removeItem('svgpt_assistant_history');
+      localStorage.removeItem(storageKey);
     }
   };
 
@@ -96,10 +94,10 @@ const EduAssistant: React.FC = () => {
               <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 p-1.5 bg-white dark:bg-slate-800">
                 <img src="https://iili.io/feG2UBt.md.png" alt="SVGPT" className="w-full h-full object-cover" />
               </div>
-              <span className="font-black text-slate-900 dark:text-white uppercase text-sm tracking-tighter">SVGPT Assistant</span>
+              <span className="font-black text-slate-900 dark:text-white uppercase text-sm tracking-tighter">Isolated Node</span>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={resetAssistant} className="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-xl transition-all" title="Reset History">
+              <button onClick={resetAssistant} className="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-xl transition-all">
                 <Trash2 size={16} />
               </button>
               <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all">
@@ -137,7 +135,7 @@ const EduAssistant: React.FC = () => {
                 type="text" value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Message assistant..."
+                placeholder="Secure message..."
                 className="flex-1 bg-transparent px-3 text-xs font-bold outline-none dark:text-white"
               />
               <button onClick={handleSend} disabled={!input.trim() || isLoading} className="w-10 h-10 premium-gradient text-white rounded-xl flex items-center justify-center disabled:opacity-50 transition-all hover:scale-105 active:scale-95">

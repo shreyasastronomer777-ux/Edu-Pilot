@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, User, Bot, Trash2, ArrowLeft, Loader2, Zap, BrainCircuit, Globe, MessageSquare, ChevronDown } from 'lucide-react';
 import { chatWithEduAssistant } from '../services/geminiService';
+import { auth } from '../firebaseConfig';
 import ReactMarkdown from 'react-markdown';
 
 interface SVChatbotProps {
@@ -10,29 +11,33 @@ interface SVChatbotProps {
 }
 
 const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
+  const userId = auth.currentUser?.uid || 'guest';
+  const storageKey = `svgpt_chat_${userId}_${userRole}`;
+
   const [messages, setMessages] = useState<{role: 'user' | 'bot', text: string}[]>(() => {
-    const saved = localStorage.getItem(`svgpt_chat_history_${userRole}`);
+    const saved = localStorage.getItem(storageKey);
     return saved ? JSON.parse(saved) : [];
   });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Initialize greeting if empty
   useEffect(() => {
     if (messages.length === 0) {
       const initialMsg = userRole === 'teacher' 
-        ? "Neural Lab initialized. I am your specialized pedagogical co-pilot engineered by Shreyas & Vaibhav. How shall we refine your curriculum today?"
-        : "SVGPT Neural Tutor active. I am here to help you deconstruct complex concepts and optimize your study flow. What is our objective?";
+        ? "Neural Lab initialized. I am your specialized pedagogical co-pilot. How shall we refine your curriculum today?"
+        : "SVGPT Neural Tutor active. I am here to optimize your study flow. What concept shall we deconstruct?";
       setMessages([{ role: 'bot', text: initialMsg }]);
     }
-  }, [userRole]);
+  }, [userRole, messages.length]);
 
-  // Persist history
+  // Persist history based on unique user
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem(`svgpt_chat_history_${userRole}`, JSON.stringify(messages));
+      localStorage.setItem(storageKey, JSON.stringify(messages));
     }
-  }, [messages, userRole]);
+  }, [messages, storageKey]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -49,13 +54,14 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
     const userMsg = input.trim();
     setInput('');
     
-    // Add user message to UI immediately
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    // Add user message to UI
+    const updatedMessages = [...messages, { role: 'user' as const, text: userMsg }];
+    setMessages(updatedMessages);
     setIsLoading(true);
 
     try {
-      // Pass the CURRENT messages state (before the new message we just added) as history
-      // This ensures strictly alternating roles: (history) + current message
+      // Map history for AI, EXCLUDING the newly added message 
+      // (geminiService.ts handles adding the newest turn to the context correctly)
       const historyForAI = messages.map(m => ({
         role: m.role === 'bot' ? 'model' : 'user',
         parts: [{ text: m.text }]
@@ -65,17 +71,16 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
       setMessages(prev => [...prev, { role: 'bot', text: botResponse }]);
     } catch (error: any) {
       console.error("Chat error:", error);
-      setMessages(prev => [...prev, { role: 'bot', text: `Neural link interrupted: ${error.message || "Please attempt re-transmission."}` }]);
+      setMessages(prev => [...prev, { role: 'bot', text: `Neural link interrupted: ${error.message || "Recalibration required."}` }]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const clearHistory = () => {
-    if (confirm("Permanently purge this neural session?")) {
-      const initialMsg = messages[0];
-      setMessages([initialMsg]);
-      localStorage.removeItem(`svgpt_chat_history_${userRole}`);
+    if (confirm("Permanently purge this isolated neural session?")) {
+      localStorage.removeItem(storageKey);
+      setMessages([]);
     }
   };
 
@@ -96,7 +101,7 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
             <div className="flex items-center gap-2">
                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${userRole === 'teacher' ? 'bg-indigo-500' : 'bg-emerald-500'}`}></div>
                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                 Session Continuity Enabled
+                 Isolated Session Tunneling
                </span>
             </div>
           </div>
@@ -106,15 +111,15 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
              onClick={clearHistory}
              className="px-6 py-3 bg-slate-50 dark:bg-white/5 text-slate-400 hover:text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 dark:border-white/10 transition-all flex items-center gap-2 hover:bg-red-500/5"
            >
-             <Trash2 size={14} /> Reset Lab
+             <Trash2 size={14} /> Purge Session
            </button>
            <div className="px-6 py-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
-             <Zap size={14} className="animate-pulse" /> Encrypted Node
+             <Zap size={14} className="animate-pulse" /> {userId === 'guest' ? 'Guest Access' : 'Verified Node'}
            </div>
         </div>
       </div>
 
-      <div className="flex-1 bg-white dark:bg-[#0B1221] backdrop-blur-[100px] rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-2xl flex flex-col overflow-hidden transition-all duration-500">
+      <div className="flex-1 bg-white dark:bg-[#0B1221] backdrop-blur-[100px] rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-2xl flex flex-col overflow-hidden">
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-10 md:p-16 space-y-12 custom-scrollbar">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-4 duration-700 ease-out`}>
@@ -159,7 +164,7 @@ const SVChatbot: React.FC<SVChatbotProps> = ({ onBack, userRole }) => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder={userRole === 'teacher' ? "Continue architectural planning..." : "Continue concept deconstruction..."}
+              placeholder="Continue academic deconstruction..."
               className="w-full pl-10 pr-24 py-7 bg-white dark:bg-[#050505] border border-slate-200 dark:border-white/10 rounded-[3rem] shadow-2xl outline-none focus:ring-8 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all font-bold text-sm md:text-lg placeholder:text-slate-300 dark:placeholder:text-slate-700"
             />
             <button 
