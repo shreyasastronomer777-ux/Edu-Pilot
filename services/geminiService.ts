@@ -1,15 +1,15 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 
 /**
- * Lead Developers: Shreyas Gunjal & Vaibhav Chiniwar
- * Powered by SVGPT Neural Core (Gemini 3 Flash & Pro)
+ * Powered by SVGPT AI
  */
 
 const getAI = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("Neural Link Offline: API_KEY environment variable is not defined.");
+    throw new Error("AI is offline: Please check your API key.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -19,12 +19,12 @@ const generateWithResilience = async (params: any) => {
   const ai = getAI();
   try {
     const response = await ai.models.generateContent(params);
-    if (!response.text) throw new Error("Null response from Neural Core.");
+    if (!response.text) throw new Error("No response from AI.");
     return response;
   } catch (error: any) {
-    console.error("Neural Core Request Failure:", error);
+    console.error("AI Error:", error);
     if (error.message?.includes("500") || error.message?.includes("recall")) {
-      throw new Error("Neural synthesis interrupted. Please try a shorter prompt or reset the session.");
+      throw new Error("AI was interrupted. Please try again with less text.");
     }
     throw error;
   }
@@ -33,16 +33,16 @@ const generateWithResilience = async (params: any) => {
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [
       { inlineData: { mimeType, data: cleanBase64 } },
-      { text: "Analyze this material. Provide a step-by-step resolution with high academic rigor. Use Markdown. Ensure all mathematical formulas use clear notation and code blocks are used for technical excerpts. Organize with clear headings and bulleted lists." }
+      { text: "Look at this image or file. Give a simple, step-by-step answer. Use clear words. If there is math, explain it simply. Use headings and lists so it is easy to read." }
     ],
     config: { 
-      systemInstruction: "You are the SVGPT Neural Solver. Focus on absolute clarity and pedagogical precision. Engineered by Shreyas Gunjal and Vaibhav Chiniwar. Render output in beautiful, highly readable Markdown. Use code blocks for any technical or mathematical segments."
+      systemInstruction: "You are a helpful AI teacher. Give clear and simple answers. Use simple English so everyone can understand. Use Markdown for formatting."
     }
   });
-  return response.text || "Synthesis failed.";
+  return response.text || "I could not find an answer.";
 };
 
 export const generateRevisionInsights = async (base64Data: string, mimeType: string): Promise<string> => {
@@ -51,25 +51,23 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
     model: "gemini-3-flash-preview",
     contents: [
       { inlineData: { mimeType, data: cleanBase64 } },
-      { text: "Extract core academic nodes: Definitions, Key Points, and Synthesis Summary. Use highly structured Markdown with bold headers and clean lists." }
+      { text: "Find the most important parts: Words to know, Main ideas, and a Summary. Use simple bullet points and bold titles." }
     ],
     config: { 
-      systemInstruction: "You are the SVGPT Revision Engine. Your objective is density and clarity. Use bullet points extensively for readability."
+      systemInstruction: "You are an AI that makes notes easy to read. Use simple words and lists."
     }
   });
-  return response.text || "Neural analysis failed.";
+  return response.text || "I could not read the file.";
 };
 
 export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
   let roleInstruction = "";
   if (userRole === 'teacher') {
-    roleInstruction = "User: EDUCATOR. Your objective: Provide advanced pedagogical consulting. Focus on curriculum design, instructional strategy, and specific lesson planning tips. When asked for help, offer specific teaching methodologies (e.g., active learning, scaffolding) and creative classroom activity ideas.";
+    roleInstruction = "You are talking to a teacher. Help them make lesson plans and give them ideas for the classroom. Use simple words.";
   } else if (userRole === 'student') {
-    roleInstruction = "User: SCHOLAR. Your objective: Act as an elite academic tutor. Focus on concept deconstruction, active recall, and study optimization. Break down complex topics into simple mental models and provide mnemonic devices or study tips to help the user master the material.";
-  } else if (userRole === 'parent') {
-    roleInstruction = "User: PARENT. Objective: Progress monitoring and student support strategies.";
-  } else if (userRole === 'admin') {
-    roleInstruction = "User: ADMIN. Objective: Institutional policy and school analytics.";
+    roleInstruction = "You are talking to a student. Help them study and explain things simply. Give them tips to learn better.";
+  } else {
+    roleInstruction = "Be a helpful assistant. Use simple English.";
   }
 
   const normalizedHistory: { role: string; parts: { text: string }[] }[] = [];
@@ -92,29 +90,29 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
     model: "gemini-3-flash-preview", 
     contents: [...normalizedHistory, { role: 'user', parts: [{ text: message }] }],
     config: {
-      systemInstruction: `You are the SVGPT Neural Assistant, an elite academic AI engineered by Shreyas Gunjal & Vaibhav Chiniwar. ${roleInstruction}. Maintain a professional, supportive, and highly intelligent tone. Response must be high-rigor and formatted in clean Markdown. Always tailor your advice specifically to the user's role as a ${userRole || 'Scholar'}.`,
+      systemInstruction: `You are the SVGPT AI Assistant. ${roleInstruction} Be friendly, smart, and use very simple words. Format your answer nicely with Markdown.`,
       temperature: 0.7
     }
   });
-  return response.text || "Neural link weak.";
+  return response.text || "I am having trouble connecting.";
 };
 
 export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text: string) => void) => {
   const ai = getAI();
-  const prompt = `Synthesize a high-rigor ${config.gradeLevel} ${config.subject} plan on: ${config.topic}. Use SVGPT Standard Architecture. Focus on ${config.focus}. Alignment: ${config.standard}. Level: ${config.proficiencyLevel}.`;
+  const prompt = `Make a simple lesson plan for ${config.gradeLevel} ${config.subject} about: ${config.topic}. Focus on ${config.focus}. Use simple words that are easy to follow.`;
   try {
     const response = await ai.models.generateContentStream({
-      model: "gemini-3-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        systemInstruction: "You are the SVGPT master curriculum engineer, created by Shreyas Gunjal and Vaibhav Chiniwar. Produce highly structured pedagogical blueprints.",
+        systemInstruction: "You are a master teacher. Create a clear and simple lesson plan for a class. Use headings and bullet points.",
       },
     });
     for await (const chunk of response) {
       if (chunk.text) onChunk(chunk.text);
     }
   } catch (error) {
-    console.error("Lesson Streaming Failure:", error);
+    console.error("Lesson Error:", error);
     throw error;
   }
 };
@@ -143,13 +141,13 @@ const quizSchema = {
 export const generateQuizFromSource = async (source: any, count: number = 10): Promise<Quiz> => {
   const contents: any[] = [];
   if (source.type === 'text') {
-    contents.push({ text: `Generate a sophisticated ${count}-question quiz from: ${source.data}` });
+    contents.push({ text: `Make a simple ${count}-question quiz based on this text: ${source.data}` });
   } else if (source.type === 'file') {
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
-    contents.push({ text: `Generate a sophisticated ${count}-question quiz from this academic asset.` });
+    contents.push({ text: `Make a simple ${count}-question quiz from this file.` });
     contents.push({ inlineData: { data: cleanData, mimeType: source.mimeType } });
   } else {
-    contents.push({ text: `Generate a sophisticated ${count}-question quiz from this topic: ${source.data}` });
+    contents.push({ text: `Make a simple ${count}-question quiz about: ${source.data}` });
   }
 
   const response = await generateWithResilience({
@@ -163,7 +161,7 @@ export const generateQuizFromSource = async (source: any, count: number = 10): P
 export const generateQuiz = async (topic: string, role: string, count: number = 5): Promise<Quiz> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: `Generate a sophisticated ${count}-question quiz for a ${role} on the topic: ${topic}`,
+    contents: `Make a simple ${count}-question quiz for a ${role} on the topic: ${topic}`,
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
   return JSON.parse(response.text!) as Quiz;
@@ -171,11 +169,11 @@ export const generateQuiz = async (topic: string, role: string, count: number = 
 
 export const checkHomework = async (assignment: string, studentWork: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
-    contents: `Conduct a rigorous evaluation. Alignment Criteria: ${assignment}\n\nStudent Submission: ${studentWork}`,
-    config: { systemInstruction: "Evaluator AI Mode. High-performance feedback loop activated. Provide detailed pedagogical feedback." }
+    model: "gemini-3-flash-preview",
+    contents: `Check this student work. Assignment: ${assignment}\n\nStudent Work: ${studentWork}. Explain what they did well and how they can improve using very simple words.`,
+    config: { systemInstruction: "You are a kind teacher checking homework. Be encouraging and use simple language." }
   });
-  return response.text || "Analysis failed.";
+  return response.text || "I could not check the work.";
 };
 
 export const gradeAnswerSheet = async (
@@ -186,30 +184,30 @@ export const gradeAnswerSheet = async (
   const cleanStudent = studentAsset.dataUri.includes(',') ? studentAsset.dataUri.split(',')[1] : studentAsset.dataUri;
   const parts: any[] = [
     { inlineData: { data: cleanStudent, mimeType: studentAsset.mimeType } },
-    { text: `Evaluate this student answer sheet. Criteria: ${assignment}` }
+    { text: `Grade this student answer sheet. Assignment details: ${assignment}` }
   ];
   
   if (answerKeyAsset) {
     const cleanKey = answerKeyAsset.dataUri.includes(',') ? answerKeyAsset.dataUri.split(',')[1] : answerKeyAsset.dataUri;
     parts.push({ inlineData: { data: cleanKey, mimeType: answerKeyAsset.mimeType } });
-    parts.push({ text: "Use the provided reference key for comparison." });
+    parts.push({ text: "Use this answer key to grade it correctly." });
   }
 
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: parts,
-    config: { systemInstruction: "Evaluator AI Mode. Perform OCR and rigorous grading alignment." }
+    config: { systemInstruction: "You are a teacher grading a test. Give a score and simple feedback." }
   });
-  return response.text || "Grading analysis failed.";
+  return response.text || "I could not grade the sheet.";
 };
 
 export const summarizeText = async (text: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: `Synthesize a high-density academic summary: ${text}`,
-    config: { systemInstruction: "Master Summarizer Mode. Extract core nodes of knowledge." }
+    contents: `Summarize this text in simple words: ${text}`,
+    config: { systemInstruction: "Make this text easy to understand. Pick the main points." }
   });
-  return response.text || "Summarization failed.";
+  return response.text || "I could not summarize it.";
 };
 
 export const summarizeAudioLecture = async (base64Audio: string, mimeType: string): Promise<string> => {
@@ -218,22 +216,22 @@ export const summarizeAudioLecture = async (base64Audio: string, mimeType: strin
     model: "gemini-3-flash-preview",
     contents: [
       { inlineData: { data: cleanAudio, mimeType } },
-      { text: "Transcribe and synthesize high-density academic notes from this lecture recording. Use structured Markdown." }
+      { text: "Write down the main ideas from this audio. Use simple words and bullet points." }
     ],
-    config: { systemInstruction: "Neural Scribe Mode. Transcribe and summarize audio assets with academic rigor." }
+    config: { systemInstruction: "You help students by taking simple notes from audio recordings." }
   });
-  return response.text || "Audio synthesis failed.";
+  return response.text || "I could not hear the audio clearly.";
 };
 
 export const generateVisualAid = async (prompt: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-2.5-flash-image",
-    contents: [{ text: `Professional educational diagram, clear labels, academic style, ultra-high resolution: ${prompt}` }],
+    contents: [{ text: `A simple, clear educational drawing of: ${prompt}` }],
     config: { imageConfig: { aspectRatio: "1:1" } }
   });
   const part = response.candidates?.[0]?.content?.parts.find((p: any) => p.inlineData);
   if (part?.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-  throw new Error("Neural Rendering Buffer Empty.");
+  throw new Error("I could not create the image.");
 };
 
 const flashcardSchema = {
@@ -248,7 +246,7 @@ const flashcardSchema = {
 export const convertNotesToFlashcards = async (notes: string): Promise<{front: string, back: string}[]> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: `Transform these academic notes into high-impact flashcards for active recall:\n\n${notes}`,
+    contents: `Turn these notes into simple flashcards with a question on the front and answer on the back:\n\n${notes}`,
     config: { responseMimeType: "application/json", responseSchema: flashcardSchema }
   });
   return JSON.parse(response.text!) as {front: string, back: string}[];
@@ -260,7 +258,7 @@ export const convertAssetToFlashcards = async (base64Data: string, mimeType: str
     model: "gemini-3-flash-preview",
     contents: [
       { inlineData: { mimeType, data: cleanBase64 } },
-      { text: "Synthesize active recall flashcards from this academic asset." }
+      { text: "Turn this file into simple study flashcards." }
     ],
     config: { responseMimeType: "application/json", responseSchema: flashcardSchema }
   });
@@ -290,7 +288,7 @@ const slideSchema = {
 export const generateSlidesFromLesson = async (lessonContent: string): Promise<SlideDeck> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: `Convert this lesson plan into a structured slide deck presentation: ${lessonContent}`,
+    contents: `Turn this lesson into a simple presentation with 6 slides: ${lessonContent}`,
     config: { responseMimeType: "application/json", responseSchema: slideSchema }
   });
   return JSON.parse(response.text!) as SlideDeck;
@@ -309,7 +307,7 @@ export const generateBrainBreak = async (lessonContent: string): Promise<BrainBr
   };
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: `Generate a contextually relevant brain break activity for this lesson: ${lessonContent}`,
+    contents: `Give a simple 2-minute activity for students to take a break during this lesson: ${lessonContent}`,
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
   return JSON.parse(response.text!) as BrainBreak;
@@ -319,7 +317,7 @@ export const checkPlagiarism = async (text: string): Promise<{ analysis: string,
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Critically analyze this text for potential plagiarism or lack of original thought. Check against online sources and provide a detailed report: ${text}`,
+    contents: `Check if this text was copied from the internet. Explain simply: ${text}`,
     config: {
       tools: [{googleSearch: {}}],
     }
@@ -331,32 +329,32 @@ export const checkPlagiarism = async (text: string): Promise<{ analysis: string,
   })).filter((s: any) => s.uri) || [];
 
   return {
-    analysis: response.text || "Neural integrity check completed. No external markers identified.",
+    analysis: response.text || "Everything looks original.",
     sources
   };
 };
 
 export const compareAssignments = async (textA: string, textB: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
-    contents: `Compare these two student submissions for similarity, potential collusion, or shared structural templates. Provide a detailed comparative report.\n\nStudent A: ${textA}\n\nStudent B: ${textB}`,
-    config: { systemInstruction: "Guard Rail AI Mode. Peer comparison and collusion detection." }
+    model: "gemini-3-flash-preview",
+    contents: `Check if these two students copied from each other. Give a simple report.\n\nStudent A: ${textA}\n\nStudent B: ${textB}`,
+    config: { systemInstruction: "You check for copying between students. Explain the similarities simply." }
   });
-  return response.text || "Comparison failed.";
+  return response.text || "I could not compare them.";
 };
 
 export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
   const ai = getAI();
   const scriptResponse = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Transform this academic content into an engaging, conversational 2-minute audio briefing script: ${content}`,
-    config: { systemInstruction: "You are a professional academic broadcaster. Create clear, concise briefing scripts." }
+    contents: `Write a simple 1-minute script to explain this content like a friendly news reporter: ${content}`,
+    config: { systemInstruction: "You write simple, friendly scripts for audio." }
   });
-  const script = scriptResponse.text || "Briefing synthesis failed.";
+  const script = scriptResponse.text || "I could not write the script.";
 
   const audioResponse = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: `Read this academic briefing clearly and professionally: ${script}` }] }],
+    contents: [{ parts: [{ text: `Read this script clearly: ${script}` }] }],
     config: {
       responseModalities: [Modality.AUDIO],
       speechConfig: {
@@ -371,10 +369,6 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
   return { audioBase64, script };
 };
 
-/**
- * NEW: Instant Lesson Generator Synthesis
- * Synthesizes a full lesson plan, slide deck structure, and summary from a single source.
- */
 export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'url', data: string, mimeType?: string }): Promise<{ plan: string, slides: SlideDeck, summary: string }> => {
   const ai = getAI();
   const contents: any[] = [];
@@ -382,23 +376,23 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
   if (source.type === 'file') {
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
     contents.push({ inlineData: { data: cleanData, mimeType: source.mimeType } });
-    contents.push({ text: "Perform a deep academic synthesis of this document. Generate: 1. A detailed 40-minute lesson plan. 2. A 6-slide deck structure. 3. A 200-word concise summary." });
+    contents.push({ text: "Create a simple 40-minute lesson plan, a 6-slide structure, and a short summary from this file. Use simple words." });
   } else {
-    contents.push({ text: `Perform a deep academic synthesis of the content at this link: ${source.data}. Generate: 1. A detailed 40-minute lesson plan. 2. A 6-slide deck structure. 3. A 200-word concise summary.` });
+    contents.push({ text: `Create a simple 40-minute lesson plan, a 6-slide structure, and a short summary from this link: ${source.data}. Use simple words.` });
   }
 
   const combinedSchema = {
     type: Type.OBJECT,
     properties: {
-      plan: { type: Type.STRING, description: "Detailed Markdown lesson plan." },
-      summary: { type: Type.STRING, description: "200-word concise summary." },
+      plan: { type: Type.STRING, description: "Simple Markdown lesson plan." },
+      summary: { type: Type.STRING, description: "Short summary." },
       slides: slideSchema
     },
     required: ["plan", "slides", "summary"]
   };
 
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents,
     config: { 
       responseMimeType: "application/json", 

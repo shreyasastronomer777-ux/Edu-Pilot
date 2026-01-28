@@ -1,5 +1,6 @@
+
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, BookOpenCheck, Save, Trash2 } from 'lucide-react';
+import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, BookOpenCheck, Save, Trash2, AlertCircle } from 'lucide-react';
 import { solveDoubt, generateRevisionInsights } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
 
@@ -11,13 +12,22 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [mimeType, setMimeType] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [pointsAwarded, setPointsAwarded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = (file: File) => {
+    setError(null);
     if (file) {
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        setError("Invalid format. Please upload a PDF, JPG, or PNG document.");
+        setAsset(null);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         setAsset(event.target?.result as string);
@@ -55,6 +65,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const processAnalysis = async () => {
     if (!asset) return;
     setLoading(true);
+    setError(null);
     try {
       let output;
       if (mode === 'solve') {
@@ -70,7 +81,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       setPointsAwarded(true);
       
     } catch (e) {
-      alert("Neural synthesis failed. Ensure the asset is clear and academic in nature.");
+      setError("Neural synthesis failed. Ensure the asset is clear and academic in nature.");
     } finally {
       setLoading(false);
     }
@@ -96,6 +107,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     setAsset(null);
     setMimeType('');
     setResult(null);
+    setError(null);
     setPointsAwarded(false);
     setIsSaved(false);
   };
@@ -114,14 +126,14 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
          
          <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
             <button 
-              onClick={() => { setMode('solve'); setResult(null); }}
+              onClick={() => { setMode('solve'); setResult(null); setError(null); }}
               className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${mode === 'solve' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xl' : 'text-slate-500 hover:text-slate-800'}`}
             >
               <BrainCircuit size={14} /> Instant Solver
             </button>
             <button 
-              onClick={() => { setMode('revision'); setResult(null); }}
-              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${mode === 'revision' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-600'}`}
+              onClick={() => { setMode('revision'); setResult(null); setError(null); }}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${mode === 'revision' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-100'}`}
             >
               <BookOpenCheck size={14} /> Quick Revision
             </button>
@@ -162,7 +174,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <span className={`text-xs font-black uppercase tracking-[0.2em] px-8 text-center transition-colors ${isDragging ? 'text-indigo-600' : 'text-slate-400'}`}>
                   {isDragging ? 'Drop Asset to Synthesize' : 'Capture Photo or Drag & Drop Document (Image/PDF)'}
                 </span>
-                <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleUpload} />
+                <input ref={fileInputRef} type="file" accept=".pdf,image/jpeg,image/png" className="hidden" onChange={handleUpload} />
              </div>
            ) : (
              <div className="w-full flex flex-col items-center">
@@ -200,6 +212,13 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   </button>
                 </div>
              </div>
+           )}
+
+           {error && (
+              <div className="mt-8 flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl w-full animate-in slide-in-from-bottom-2">
+                 <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
+                 <p className="text-xs font-bold text-red-600 dark:text-red-400">{error}</p>
+              </div>
            )}
         </div>
 

@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { BookOpenCheck, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, Zap, Save, Trash2, FileText, CheckCircle2 } from 'lucide-react';
+import { BookOpenCheck, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, Zap, Save, Trash2, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { generateRevisionInsights } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
 
@@ -9,11 +9,20 @@ const QuickRevision: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [mimeType, setMimeType] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = (file: File) => {
+    setError(null);
     if (file) {
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        setError("Unsupported file format. Please upload a PDF, JPG, or PNG asset.");
+        setAsset(null);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         setAsset(event.target?.result as string);
@@ -33,6 +42,7 @@ const QuickRevision: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const startSynthesis = async () => {
     if (!asset) return;
     setLoading(true);
+    setError(null);
     try {
       const output = await generateRevisionInsights(asset, mimeType);
       setResult(output);
@@ -40,7 +50,7 @@ const QuickRevision: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       const currentPoints = Number(localStorage.getItem('svgpt_xp')) || 0;
       localStorage.setItem('svgpt_xp', (currentPoints + 25).toString());
     } catch (e) {
-      alert("Neural synthesis failed. Ensure document clarity.");
+      setError("Neural synthesis failed. Ensure document clarity.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +94,7 @@ const QuickRevision: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           <div className="flex-1 space-y-4 text-center md:text-left">
             <div className="inline-block px-8 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl shadow-xl shadow-indigo-500/20 mb-4 transform hover:scale-105 transition-transform cursor-default">
               <h2 className="text-white font-black text-2xl md:text-3xl tracking-tighter flex items-center gap-4">
-                <BookOpenCheck size={28} /> QUICK REVISION
+                < BookOpenCheck size={28} /> QUICK REVISION
               </h2>
             </div>
             <p className="text-slate-500 dark:text-slate-400 font-medium text-lg leading-relaxed max-w-xl">
@@ -100,7 +110,7 @@ const QuickRevision: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               >
                 <Upload size={32} className="text-slate-300 group-hover:text-violet-500 transition-colors" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Load Snapshot/PDF</span>
-                <input ref={fileInputRef} type="file" className="hidden" accept="image/*,application/pdf" onChange={handleUpload} />
+                <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,image/jpeg,image/png" onChange={handleUpload} />
               </div>
             ) : (
               <div className="space-y-4">
@@ -125,6 +135,12 @@ const QuickRevision: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   {loading ? <Loader2 className="animate-spin" size={18} /> : <Wand2 size={18} />}
                   Synthesize Autopsy
                 </button>
+              </div>
+            )}
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl animate-in slide-in-from-top-2">
+                 <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
+                 <p className="text-xs font-bold text-red-600 dark:text-red-400">{error}</p>
               </div>
             )}
           </div>

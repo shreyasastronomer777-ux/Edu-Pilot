@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { FileUp, Link as LinkIcon, Loader2, Sparkles, Wand2, ArrowLeft, Presentation, FileText, Layout, CheckCircle2, Download, Copy, X, BrainCircuit, Globe, Zap, Upload, History, Trash2 } from 'lucide-react';
+import { FileUp, Link as LinkIcon, Loader2, Sparkles, Wand2, ArrowLeft, Presentation, FileText, Layout, CheckCircle2, Download, Copy, X, BrainCircuit, Globe, Zap, Upload, History, Trash2, AlertCircle } from 'lucide-react';
 import { synthesizeInstantLessonAssets } from '../services/geminiService';
 import { SlideDeck } from '../types';
 import ReactMarkdown from 'react-markdown';
@@ -22,6 +23,7 @@ const InstantLessonGenerator: React.FC<InstantLessonGeneratorProps> = ({ onBack 
   const [url, setUrl] = useState('');
   const [fileData, setFileData] = useState<{ data: string, type: string, name: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<SynthesisResult | null>(null);
   const [activeResultTab, setActiveResultTab] = useState<'plan' | 'slides' | 'summary'>('plan');
   const [history, setHistory] = useState<SynthesisResult[]>(() => {
@@ -37,7 +39,16 @@ const InstantLessonGenerator: React.FC<InstantLessonGeneratorProps> = ({ onBack 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    setError(null);
+    
     if (file) {
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        setError("Invalid file format. Please upload a PDF, JPG, or PNG academic asset.");
+        setFileData(null);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         setFileData({ data: event.target?.result as string, type: file.type, name: file.name });
@@ -50,6 +61,7 @@ const InstantLessonGenerator: React.FC<InstantLessonGeneratorProps> = ({ onBack 
     if ((sourceType === 'url' && !url) || (sourceType === 'file' && !fileData)) return;
     setLoading(true);
     setResults(null);
+    setError(null);
     try {
       const output = await synthesizeInstantLessonAssets({
         type: sourceType,
@@ -66,7 +78,7 @@ const InstantLessonGenerator: React.FC<InstantLessonGeneratorProps> = ({ onBack 
       setHistory([finalResult, ...history]);
       setActiveResultTab('plan');
     } catch (error) {
-      alert("Neural synthesis failed. Please verify re-transmission.");
+      setError("Neural synthesis failed. Please verify re-transmission.");
     } finally {
       setLoading(false);
     }
@@ -93,19 +105,27 @@ const InstantLessonGenerator: React.FC<InstantLessonGeneratorProps> = ({ onBack 
             <div className="grid grid-cols-1 gap-12 items-center">
               <div className="bg-white dark:bg-[#0B1221] p-10 rounded-[4rem] border border-slate-200 dark:border-white/10 shadow-3xl flex flex-col gap-8">
                 <div className="flex p-1.5 bg-slate-100 dark:bg-white/5 rounded-[2rem] border border-slate-200 dark:border-white/10 w-fit mx-auto">
-                  <button onClick={() => setSourceType('file')} className={`px-12 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${sourceType === 'file' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-xl' : 'text-slate-400'}`}>Document</button>
-                  <button onClick={() => setSourceType('url')} className={`px-12 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${sourceType === 'url' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-xl' : 'text-slate-400'}`}>Digital Link</button>
+                  <button onClick={() => {setSourceType('file'); setError(null);}} className={`px-12 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${sourceType === 'file' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-xl' : 'text-slate-400'}`}>Document</button>
+                  <button onClick={() => {setSourceType('url'); setError(null);}} className={`px-12 py-3.5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${sourceType === 'url' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-xl' : 'text-slate-400'}`}>Digital Link</button>
                 </div>
                 {sourceType === 'file' ? (
                   <div onClick={() => fileInputRef.current?.click()} className="w-full aspect-video border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all">
                     {fileData ? <FileText size={64} className="text-indigo-500 animate-pulse" /> : <Upload size={48} className="text-slate-200 mb-4" />}
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{fileData ? fileData.name : 'Deploy Instructional Asset'}</span>
-                    <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
+                    <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,image/jpeg,image/png" onChange={handleFileChange} />
                   </div>
                 ) : (
                   <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://youtube.com/..." className="w-full px-10 py-7 rounded-[2.5rem] bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white font-bold outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all" />
                 )}
-                <button onClick={handleSynthesize} disabled={loading} className="w-full py-6 premium-gradient text-white rounded-[2.5rem] font-black uppercase tracking-widest text-sm flex items-center justify-center gap-4 shadow-2xl active:scale-95 disabled:opacity-50">Initialize Synthesis</button>
+
+                {error && (
+                   <div className="flex items-center gap-3 p-5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl animate-in slide-in-from-top-2">
+                      <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
+                      <p className="text-sm font-bold text-red-600 dark:text-red-400">{error}</p>
+                   </div>
+                )}
+
+                <button onClick={handleSynthesize} disabled={loading || (sourceType === 'file' ? !fileData : !url)} className="w-full py-6 premium-gradient text-white rounded-[2.5rem] font-black uppercase tracking-widest text-sm flex items-center justify-center gap-4 shadow-2xl active:scale-95 disabled:opacity-50">Initialize Synthesis</button>
               </div>
             </div>
           ) : loading ? (

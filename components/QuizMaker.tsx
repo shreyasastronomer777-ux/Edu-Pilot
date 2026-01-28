@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { generateQuizFromSource } from '../services/geminiService';
 import { Quiz } from '../types';
-import { HelpCircle, Loader2, Play, Download, Printer, CheckCircle2, ArrowLeft, Youtube, FileUp, Type, Wand2, History, Trash2, Activity } from 'lucide-react';
+import { HelpCircle, Loader2, Play, Download, Printer, CheckCircle2, ArrowLeft, Youtube, FileUp, Type, Wand2, History, Trash2, Activity, AlertCircle } from 'lucide-react';
 
 interface QuizMakerProps {
   onBack?: () => void;
@@ -13,6 +14,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
   const [fileData, setFileData] = useState<{data: string, type: string} | null>(null);
   const [loading, setLoading] = useState(false);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Quiz[]>(() => {
     const saved = localStorage.getItem('svgpt_quiz_history');
     return saved ? JSON.parse(saved) : [];
@@ -24,7 +26,16 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    setError(null);
+    
     if (file) {
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+      if (!allowedTypes.includes(file.type)) {
+        setError("Unsupported file format. Please upload a PDF, JPG, or PNG asset.");
+        setFileData(null);
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         setFileData({ data: event.target?.result as string, type: file.type });
@@ -36,6 +47,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
   const handleGenerate = async () => {
     setLoading(true);
     setQuiz(null);
+    setError(null);
     try {
       const result = await generateQuizFromSource({
         type: sourceType,
@@ -45,7 +57,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
       setQuiz(result);
       setHistory([result, ...history]);
     } catch (e) {
-      alert("Multimodal synthesis failed. Ensure link or document is valid.");
+      setError("Multimodal synthesis failed. Ensure link or document is valid.");
     } finally {
       setLoading(false);
     }
@@ -104,10 +116,18 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
                  <label className="w-full border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all">
                     <FileUp size={40} className="text-slate-300 mb-4" />
                     <span className="text-xs font-black uppercase tracking-widest text-slate-500">{fileData ? 'Asset Staged' : 'Deploy Document'}</span>
-                    <input type="file" className="hidden" onChange={handleFileChange} />
+                    <input type="file" className="hidden" accept=".pdf,image/jpeg,image/png" onChange={handleFileChange} />
                  </label>
                )}
-               <button onClick={handleGenerate} disabled={loading} className="w-full py-5 premium-gradient text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lg active:scale-95 disabled:opacity-50">
+
+               {error && (
+                 <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl animate-in slide-in-from-top-2">
+                    <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
+                    <p className="text-xs font-bold text-red-600 dark:text-red-400">{error}</p>
+                 </div>
+               )}
+
+               <button onClick={handleGenerate} disabled={loading || (sourceType === 'file' ? !fileData : !inputValue)} className="w-full py-5 premium-gradient text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lg active:scale-95 disabled:opacity-50">
                 {loading ? <Loader2 className="animate-spin" size={20} /> : <Play size={20} />}
                 Synthesize 10-Question Assessment
               </button>

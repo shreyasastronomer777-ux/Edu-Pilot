@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { View, Role } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot, BrainCircuit } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot, BrainCircuit, Sparkles, MessageSquare } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 
 interface SidebarProps {
@@ -19,22 +19,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
     switch (userRole) {
       case 'teacher':
         return [
-          { id: View.DASHBOARD, label: 'Control Center', icon: LayoutDashboard },
-          { id: View.SV_CHATBOT, label: 'Neural Lab', icon: Bot },
-          { id: View.INSTANT_LESSON, label: 'Instant Synthesis', icon: BrainCircuit },
-          { id: View.LESSON_PLANNER, label: 'Lesson Studio', icon: BookOpen },
-          { id: View.QUIZ_MAKER, label: 'Quiz Engine', icon: GraduationCap },
-          { id: View.VISUAL_STUDIO, label: 'Creative Suite', icon: ImageIcon },
-          { id: View.HOMEWORK_CHECKER, label: 'Evaluator AI', icon: CheckSquare },
-          { id: View.ATTENDANCE, label: 'Registry', icon: Users },
+          { id: View.DASHBOARD, label: 'Main Menu', icon: LayoutDashboard },
+          { id: View.SV_CHATBOT, label: 'Chat Help', icon: MessageSquare },
+          { id: View.INSTANT_LESSON, label: 'Fast Planner', icon: Sparkles },
+          { id: View.LESSON_PLANNER, label: 'Make Lessons', icon: BookOpen },
+          { id: View.QUIZ_MAKER, label: 'Make Quizzes', icon: GraduationCap },
+          { id: View.VISUAL_STUDIO, label: 'Make Images', icon: ImageIcon },
+          { id: View.HOMEWORK_CHECKER, label: 'Check Work', icon: CheckSquare },
+          { id: View.ATTENDANCE, label: 'Student List', icon: Users },
         ];
       case 'student':
         return [
-          { id: View.DASHBOARD, label: 'Scholar Hub', icon: LayoutDashboard },
-          { id: View.FOCUS_ROOM, label: 'Focus Mode', icon: Timer },
-          { id: View.DOUBT_SOLVER, label: 'Neural Scanner', icon: Mic },
-          { id: View.FLASHCARDS, label: 'Recall Node', icon: Layers },
-          { id: View.STUDY_NOTES, label: 'Knowledge Archive', icon: PenTool },
+          { id: View.DASHBOARD, label: 'My Study', icon: LayoutDashboard },
+          { id: View.FOCUS_ROOM, label: 'Focus Time', icon: Timer },
+          { id: View.DOUBT_SOLVER, label: 'Find Answers', icon: Mic },
+          { id: View.FLASHCARDS, label: 'Flashcards', icon: Layers },
+          { id: View.STUDY_NOTES, label: 'Study Notes', icon: PenTool },
         ];
       default:
         return [];
@@ -52,13 +52,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
           </div>
           <div className="flex flex-col">
             <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">SVGPT</span>
-            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-2">Professional Suite</span>
+            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-2">AI Assistant</span>
           </div>
         </div>
       </div>
       
       <nav className="flex-1 px-5 space-y-1.5 overflow-y-auto custom-scrollbar">
-        <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em] px-5 mb-6 mt-4">Workspace Modules</div>
+        <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em] px-5 mb-6 mt-4">All Tools</div>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
            >
              <span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                {isDarkMode ? <Moon size={14} className="text-indigo-400" /> : <Sun size={14} className="text-yellow-500" />}
-               {isDarkMode ? 'Midnight' : 'Daylight'}
+               {isDarkMode ? 'Dark' : 'Light'}
              </span>
              <div className={`w-9 h-4.5 rounded-full p-0.5 transition-colors ${isDarkMode ? 'bg-indigo-600' : 'bg-slate-300'}`}>
                 <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-sm transform transition-transform duration-500 ${isDarkMode ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -101,10 +101,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
            </div>
            <div className="flex flex-col overflow-hidden">
               <span className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tighter truncate leading-none">
-                {user?.displayName || 'User'}
+                {user?.displayName || 'Hello User'}
               </span>
               <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold truncate capitalize mt-1 tracking-widest">
-                {userRole} Portal
+                {userRole} Mode
               </span>
            </div>
         </div>
