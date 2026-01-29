@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { View, Role } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot, BrainCircuit, Sparkles, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot, BrainCircuit, Sparkles, MessageSquare, Layout, FileDown, Compass, FileQuestion } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 
 interface SidebarProps {
@@ -23,16 +23,19 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
           { id: View.SV_CHATBOT, label: 'Chat Help', icon: MessageSquare },
           { id: View.INSTANT_LESSON, label: 'Fast Planner', icon: Sparkles },
           { id: View.LESSON_PLANNER, label: 'Make Lessons', icon: BookOpen },
+          { id: View.PATHFINDER_MAKER, label: 'Pathfinder', icon: Compass },
+          { id: View.WORKSHEET_GENERATOR, label: 'Worksheets', icon: FileDown },
           { id: View.QUIZ_MAKER, label: 'Make Quizzes', icon: GraduationCap },
           { id: View.VISUAL_STUDIO, label: 'Make Images', icon: ImageIcon },
           { id: View.HOMEWORK_CHECKER, label: 'Check Work', icon: CheckSquare },
-          { id: View.ATTENDANCE, label: 'Student List', icon: Users },
         ];
       case 'student':
         return [
           { id: View.DASHBOARD, label: 'My Study', icon: LayoutDashboard },
+          { id: View.EXAM_PREP, label: 'Exam Prep', icon: FileQuestion },
           { id: View.FOCUS_ROOM, label: 'Focus Time', icon: Timer },
           { id: View.DOUBT_SOLVER, label: 'Find Answers', icon: Mic },
+          { id: View.SVG_STUDY_CARD, label: 'SVG Blueprint', icon: Layout },
           { id: View.FLASHCARDS, label: 'Flashcards', icon: Layers },
           { id: View.STUDY_NOTES, label: 'Study Notes', icon: PenTool },
         ];

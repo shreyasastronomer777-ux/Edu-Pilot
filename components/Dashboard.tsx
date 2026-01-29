@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { View } from '../types';
-import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ChevronRight, GraduationCap, Timer, Zap, BookOpenCheck, Camera, Bot, BrainCircuit, MessageSquare, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ChevronRight, GraduationCap, Timer, Zap, BookOpenCheck, Camera, Bot, BrainCircuit, MessageSquare, Image as ImageIcon, Layout, FileDown, Compass, FileQuestion } from 'lucide-react';
 
 interface DashboardProps {
   onChangeView: (view: View) => void;
@@ -16,14 +16,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
   const tools = isTeacher ? [
     { id: View.SV_CHATBOT, title: 'AI Assistant', desc: 'Ask any teaching question and get helpful answers right away.', icon: MessageSquare, color: 'indigo' },
     { id: View.INSTANT_LESSON, title: 'Quick Plan Generator', desc: 'Make a full lesson plan and slides from any file or link.', icon: Sparkles, color: 'violet' },
-    { id: View.LESSON_PLANNER, title: 'Lesson Creator', icon: FileText, desc: 'Create good plans for your classes in seconds.', color: 'blue' },
-    { id: View.QUIZ_MAKER, title: 'Quiz Maker', desc: 'Make great tests for your students without any stress.', icon: GraduationCap, color: 'emerald' },
+    { id: View.LESSON_PLANNER, title: 'Lesson Creator', icon: FileText, desc: 'Create plans and SVG architectural slides for your classes.', color: 'blue' },
+    { id: View.PATHFINDER_MAKER, title: 'Pathfinder Maker', desc: 'Synthesize guided inquiry roadmaps for student research projects.', icon: Compass, color: 'emerald' },
+    { id: View.WORKSHEET_GENERATOR, title: 'Worksheet Architect', desc: 'Synthesize high-quality, printable SVG worksheets with diagrams.', icon: FileDown, color: 'teal' },
+    { id: View.QUIZ_MAKER, title: 'Quiz Maker', desc: 'Make great tests for your students without any stress.', icon: GraduationCap, color: 'orange' },
     { id: View.VISUAL_STUDIO, title: 'Image Generator', desc: 'Turn your ideas into beautiful pictures and diagrams.', icon: ImageIcon, color: 'purple' },
-    { id: View.HOMEWORK_CHECKER, title: 'Homework Checker', desc: 'Grade student work and give them helpful feedback easily.', icon: CheckSquare, color: 'orange' },
-    { id: View.ATTENDANCE, title: 'Class Roster', desc: 'Manage your students and keep track of who is in class.', icon: Users, color: 'pink' },
+    { id: View.HOMEWORK_CHECKER, title: 'Homework Checker', desc: 'Grade student work and give them helpful feedback easily.', icon: CheckSquare, color: 'pink' },
   ] : [
+    { id: View.EXAM_PREP, title: 'Exam Generator', desc: 'Upload lesson photos to generate rigorous practice questions.', icon: FileQuestion, color: 'rose' },
     { id: View.QUICK_REVISION, title: 'Easy Review', desc: 'Turn long files into simple notes that are easy to read.', icon: BookOpenCheck, color: 'violet' },
     { id: View.DOUBT_SOLVER, title: 'Answer Finder', desc: 'Got a hard question? Upload a file or photo for help.', icon: Camera, color: 'indigo' },
+    { id: View.SVG_STUDY_CARD, title: 'SVG Blueprint', desc: 'Convert your drawings and sketches into clean diagrams and cards.', icon: Layout, color: 'blue' },
     { id: View.FOCUS_ROOM, title: 'Study Space', desc: 'A quiet place to study with music and a simple timer.', icon: Timer, color: 'teal' },
   ];
 
@@ -35,7 +38,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
         <div className="space-y-6">
            <div className="flex flex-wrap items-center gap-3">
               <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-indigo-500/20 backdrop-blur-md">
-                Made by Shreyas & Vaibhav
+                Architected by Shreyas Gunjal & Vaibhav V Chiniwar
               </span>
               {!isTeacher && (
                 <span className="px-4 py-1.5 bg-yellow-500/10 text-yellow-500 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-yellow-500/20 flex items-center gap-2">
@@ -76,6 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
             pink: 'border-pink-500/20 bg-pink-500/5 text-pink-400',
             indigo: 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400',
             teal: 'border-teal-500/20 bg-teal-500/5 text-teal-400',
+            rose: 'border-rose-500/20 bg-rose-500/5 text-rose-400',
           };
 
           return (

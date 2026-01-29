@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -16,6 +15,10 @@ import StudentQuiz from './components/StudentQuiz';
 import FocusRoom from './components/FocusRoom';
 import DoubtSolver from './components/DoubtSolver';
 import QuickRevision from './components/QuickRevision';
+import SVGStudyCard from './components/SVGStudyCard';
+import WorksheetGenerator from './components/WorksheetGenerator';
+import PathfinderMaker from './components/PathfinderMaker';
+import ExamPrep from './components/ExamPrep';
 import RoleSelection from './components/RoleSelection';
 import SVChatbot from './components/SVChatbot';
 import ParentPortal from './components/ParentPortal';
@@ -23,11 +26,13 @@ import SchoolAdmin from './components/SchoolAdmin';
 import InstantLessonGenerator from './components/InstantLessonGenerator';
 import LandingPage from './components/LandingPage';
 import { View, Role } from './types';
-import { LogOut, Search, Loader2 } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [currentView, setCurrentView] = useState<View>(View.LANDING);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('sv-theme') === 'dark');
   const [userRole, setUserRole] = useState<Role | null>(() => localStorage.getItem('sv-role') as Role);
@@ -38,9 +43,25 @@ const App: React.FC = () => {
     localStorage.setItem('sv-theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      const isDemo = localStorage.getItem('sv-demo-mode') === 'true';
+      if (user || isDemo) {
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
+      }
+      setAuthChecking(false);
+    });
+    return unsubscribe;
+  }, []);
+
   const handleLogout = async () => {
+    try { await signOut(auth); } catch (e) {}
     localStorage.removeItem('sv-role');
     localStorage.removeItem('sv-demo-mode');
+    localStorage.removeItem('sv-user-name');
+    setIsLoggedIn(false);
     setUserRole(null);
     setCurrentView(View.LANDING);
   };
@@ -52,9 +73,10 @@ const App: React.FC = () => {
   };
 
   const handleGetStarted = () => {
-    if (userRole) {
+    const isDemo = localStorage.getItem('sv-demo-mode') === 'true';
+    if ((auth.currentUser || isDemo) && userRole) {
       setCurrentView(userRole === 'parent' ? View.PARENT_PORTAL : userRole === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
-    } else {
+    } else if (auth.currentUser || isDemo) {
       setCurrentView(View.DASHBOARD); 
     }
   };
@@ -76,6 +98,10 @@ const App: React.FC = () => {
       case View.FOCUS_ROOM: return <FocusRoom />;
       case View.DOUBT_SOLVER: return <DoubtSolver onBack={backToRoot} />;
       case View.QUICK_REVISION: return <QuickRevision onBack={backToRoot} />;
+      case View.SVG_STUDY_CARD: return <SVGStudyCard onBack={backToRoot} />;
+      case View.WORKSHEET_GENERATOR: return <WorksheetGenerator onBack={backToRoot} />;
+      case View.PATHFINDER_MAKER: return <PathfinderMaker onBack={backToRoot} />;
+      case View.EXAM_PREP: return <ExamPrep onBack={backToRoot} />;
       case View.SV_CHATBOT: return <SVChatbot onBack={backToRoot} userRole={userRole === 'teacher' ? 'teacher' : 'student'} />;
       case View.INSTANT_LESSON: return <InstantLessonGenerator onBack={backToRoot} />;
       case View.PARENT_PORTAL: return <ParentPortal />;
@@ -84,11 +110,18 @@ const App: React.FC = () => {
     }
   };
 
-  if (currentView === View.LANDING) {
+  if (authChecking) {
+    return <div className="h-screen w-full bg-[#050505] flex items-center justify-center"><Loader2 className="animate-spin text-white" size={48} /></div>;
+  }
+
+  if (currentView === View.LANDING && !isLoggedIn) {
     return <LandingPage onGetStarted={handleGetStarted} />;
   }
 
-  // If no role is selected, prompt for it immediately after landing
+  if (!isLoggedIn) {
+    return <LandingPage onGetStarted={handleGetStarted} />;
+  }
+
   if (!userRole) {
     return <RoleSelection onSelect={handleRoleSelect} />;
   }

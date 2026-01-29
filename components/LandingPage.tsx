@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebaseConfig';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -19,14 +19,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
     setIsLoggingIn(true);
     setError(null);
     try {
+      // Ensure local persistence for a better user experience
+      await setPersistence(auth, browserLocalPersistence);
       await signInWithPopup(auth, googleProvider);
       onGetStarted();
     } catch (err: any) {
-      console.error("Google Auth Error:", err);
+      console.error("Google Auth Error Details:", err);
       if (err.code === 'auth/unauthorized-domain') {
-        setError("Domain not authorized for Google Login. Please use 'Guest Mode' below.");
+        setError("Security Restriction: This domain is not whitelisted in Firebase. Please use 'Guest Mode' or notify the administrators: Shreyas Gunjal & Vaibhav V Chiniwar.");
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError("Sign-in cancelled. Please complete the popup to continue.");
       } else {
-        setError("Google sign-in did not work. Please try again or use Guest Mode.");
+        setError(`Authentication handshake failed: ${err.message || "Try again or use Guest Mode."}`);
       }
     } finally {
       setIsLoggingIn(false);
@@ -44,6 +48,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
     setIsLoggingIn(true);
     setError(null);
     try {
+      await setPersistence(auth, browserLocalPersistence);
       if (authView === 'signup') {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
@@ -53,7 +58,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       onGetStarted();
     } catch (err: any) {
       console.error("Email Auth Error:", err);
-      setError("Login failed. Please check your credentials and try again.");
+      setError("Identity verification failed. Please verify your credentials.");
     } finally {
       setIsLoggingIn(false);
     }
@@ -122,7 +127,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
           {/* HERO SECTION */}
           <section className="hero-gradient pt-40 pb-24 px-6">
             <div className="max-w-7xl mx-auto text-center">
-              <span className="inline-block py-1 px-4 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-widest mb-6">Easy AI Help</span>
+              <span className="inline-block py-1 px-4 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-widest mb-6">Designed by Shreyas Gunjal & Vaibhav V Chiniwar</span>
               <h1 className="text-5xl md:text-7xl font-bold font-outfit text-slate-900 mb-8 leading-[1.1]">
                 LEARN FAST. <br/><span className="text-indigo-600">TEACH WELL.</span>
               </h1>
@@ -190,7 +195,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                   <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full px-5 py-3.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 outline-none transition-all font-medium" />
                 </div>
 
-                {error && <p className="text-xs text-red-500 font-bold text-center py-1">{error}</p>}
+                {error && <p className="text-xs text-red-500 font-bold text-center py-2 px-4 bg-red-50 rounded-lg">{error}</p>}
 
                 <button type="submit" disabled={isLoggingIn} className="w-full btn-primary text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 mt-2">
                   {isLoggingIn ? <i className="fas fa-spinner fa-spin"></i> : <span>{authView === 'login' ? 'Sign In' : 'Join Now'}</span>}
@@ -240,7 +245,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-xs"><i className="fas fa-brain"></i></div>
             <span className="font-outfit font-bold text-xl text-slate-900">SVGPT<span className="text-indigo-600">AI</span></span>
           </div>
-          <p className="text-slate-400 text-sm font-medium">© 2026 SVGPT AI. Simple tools for everyone.</p>
+          <p className="text-slate-400 text-sm font-medium">© 2026 SVGPT AI. Developed by Shreyas Gunjal & Vaibhav V Chiniwar.</p>
           <div className="flex gap-6 text-slate-400">
             <a href="#" className="hover:text-indigo-600 transition-colors"><i className="fab fa-twitter"></i></a>
             <a href="#" className="hover:text-indigo-600 transition-colors"><i className="fab fa-google"></i></a>

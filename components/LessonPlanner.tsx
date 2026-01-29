@@ -1,7 +1,8 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { LessonPlanConfig, SlideDeck, Quiz, BrainBreak } from '../types';
-import { streamLessonPlan, generateSlidesFromLesson, generateQuizFromSource, generateBrainBreak, generateVisualAid } from '../services/geminiService';
-import { Send, Loader2, Download, Copy, FileText, ChevronDown, Printer, Wand2, ArrowLeft, Search, Save, Trash2, History, Sparkles, Sliders, GraduationCap, Presentation, Gamepad2, X, ChevronLeft, ChevronRight, Zap, LayoutTemplate } from 'lucide-react';
+import { streamLessonPlan, generateSlidesFromLesson, generateQuizFromSource, generateBrainBreak, generateVisualAid, synthesizeSVGSlides } from '../services/geminiService';
+import { Send, Loader2, Download, Copy, FileText, ChevronDown, Printer, Wand2, ArrowLeft, Search, Save, Trash2, History, Sparkles, Sliders, GraduationCap, Presentation, Gamepad2, X, ChevronLeft, ChevronRight, Zap, LayoutTemplate, Layers } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 interface SavedPlan {
@@ -56,7 +57,7 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
   
   // Multi-modal state
   const [isExporting, setIsExporting] = useState<string | null>(null);
-  const [exportData, setExportData] = useState<{ type: 'slides' | 'quiz' | 'break', data: any } | null>(null);
+  const [exportData, setExportData] = useState<{ type: 'slides' | 'quiz' | 'break' | 'svg_slides', data: any } | null>(null);
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [slideImages, setSlideImages] = useState<Record<number, string>>({});
 
@@ -135,6 +136,20 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
       setSlideImages({});
     } catch (e) {
       alert("Slide synthesis failed.");
+    } finally {
+      setIsExporting(null);
+    }
+  };
+
+  const exportSVGSlides = async () => {
+    if (!content) return;
+    setIsExporting('svg_slides');
+    try {
+      const svgs = await synthesizeSVGSlides(content);
+      setExportData({ type: 'svg_slides', data: svgs });
+      setActiveSlideIndex(0);
+    } catch (e) {
+      alert("SVG Slide synthesis failed.");
     } finally {
       setIsExporting(null);
     }
@@ -362,6 +377,14 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
                      Interactive Slides
                    </button>
                    <button 
+                     onClick={exportSVGSlides}
+                     disabled={!!isExporting}
+                     className="px-5 py-3 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-xl disabled:opacity-50"
+                   >
+                     {isExporting === 'svg_slides' ? <Loader2 className="animate-spin" size={14} /> : <Layers size={14} />}
+                     Architectural (SVG) Slides
+                   </button>
+                   <button 
                      onClick={exportQuiz}
                      disabled={!!isExporting}
                      className="px-5 py-3 bg-white dark:bg-slate-700 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-600 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-sm disabled:opacity-50"
@@ -391,11 +414,12 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
                  <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600">
                        {exportData.type === 'slides' && <Presentation size={20} />}
+                       {exportData.type === 'svg_slides' && <Layers size={20} />}
                        {exportData.type === 'quiz' && <GraduationCap size={20} />}
                        {exportData.type === 'break' && <Gamepad2 size={20} />}
                     </div>
                     <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-                       {exportData.type === 'slides' ? 'Interactive Slide Deck' : exportData.type === 'quiz' ? 'Evaluation Module' : 'Activity Script'}
+                       {exportData.type === 'slides' ? 'Interactive Slide Deck' : exportData.type === 'svg_slides' ? 'Architectural SVG Decks' : exportData.type === 'quiz' ? 'Evaluation Module' : 'Activity Script'}
                     </h3>
                  </div>
                  <button onClick={() => setExportData(null)} className="p-3 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-400 hover:text-red-500 transition-all">
@@ -446,6 +470,42 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
                           </div>
                           <button 
                             disabled={activeSlideIndex === exportData.data.slides.length - 1}
+                            onClick={() => setActiveSlideIndex(prev => prev + 1)}
+                            className="p-4 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 disabled:opacity-30 hover:scale-110 transition-all shadow-md"
+                          >
+                             <ChevronRight size={24} />
+                          </button>
+                       </div>
+                    </div>
+                 )}
+
+                 {exportData.type === 'svg_slides' && (
+                    <div className="w-full max-w-4xl flex flex-col gap-8 h-full">
+                       <div className="bg-white rounded-[2.5rem] shadow-2xl aspect-[16/9] flex items-center justify-center overflow-hidden border border-slate-200 transition-all relative p-12">
+                          <div dangerouslySetInnerHTML={{ __html: exportData.data[activeSlideIndex] }} className="w-full h-full flex items-center justify-center" />
+                          <div className="absolute top-8 left-8 flex gap-1.5">
+                             <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                             <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50"></div>
+                             <div className="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                          </div>
+                          <span className="absolute bottom-8 right-8 text-[10px] font-black uppercase text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 shadow-sm">Slide {activeSlideIndex + 1} / {exportData.data.length}</span>
+                       </div>
+
+                       <div className="flex items-center justify-center gap-6">
+                          <button 
+                            disabled={activeSlideIndex === 0}
+                            onClick={() => setActiveSlideIndex(prev => prev - 1)}
+                            className="p-4 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 disabled:opacity-30 hover:scale-110 transition-all shadow-md"
+                          >
+                             <ChevronLeft size={24} />
+                          </button>
+                          <div className="flex gap-2">
+                             {exportData.data.map((_: any, i: number) => (
+                                <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${activeSlideIndex === i ? 'w-8 bg-indigo-500' : 'w-2 bg-slate-300 dark:bg-slate-700'}`}></div>
+                             ))}
+                          </div>
+                          <button 
+                            disabled={activeSlideIndex === exportData.data.length - 1}
                             onClick={() => setActiveSlideIndex(prev => prev + 1)}
                             className="p-4 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 disabled:opacity-30 hover:scale-110 transition-all shadow-md"
                           >

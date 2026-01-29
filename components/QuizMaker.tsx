@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { generateQuizFromSource } from '../services/geminiService';
 import { Quiz } from '../types';
-import { HelpCircle, Loader2, Play, Download, Printer, CheckCircle2, ArrowLeft, Youtube, FileUp, Type, Wand2, History, Trash2, Activity, AlertCircle } from 'lucide-react';
+import { HelpCircle, Loader2, Play, Download, Printer, CheckCircle2, ArrowLeft, Youtube, FileUp, Type, Wand2, History, Trash2, Activity, AlertCircle, Search, Filter } from 'lucide-react';
 
 interface QuizMakerProps {
   onBack?: () => void;
@@ -15,6 +14,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
   const [history, setHistory] = useState<Quiz[]>(() => {
     const saved = localStorage.getItem('svgpt_quiz_history');
     return saved ? JSON.parse(saved) : [];
@@ -55,7 +55,10 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
         mimeType: sourceType === 'file' ? fileData?.type : undefined
       }, 10);
       setQuiz(result);
-      setHistory([result, ...history]);
+      // Check if a quiz with this title already exists to avoid duplicates
+      if (!history.find(h => h.title === result.title)) {
+        setHistory([result, ...history]);
+      }
     } catch (e) {
       setError("Multimodal synthesis failed. Ensure link or document is valid.");
     } finally {
@@ -83,6 +86,10 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
         printWindow.print();
     }
   };
+
+  const filteredHistory = history.filter(q => 
+    q.title.toLowerCase().includes(historySearchQuery.toLowerCase())
+  );
 
   return (
     <div className="max-w-6xl mx-auto pb-10">
@@ -157,26 +164,52 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
         </div>
 
         <div className="space-y-6">
-           <div className="flex items-center gap-2 mb-4 px-2">
-              <History size={18} className="text-indigo-500" />
-              <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">Recent Evaluations</h3>
+           <div className="flex items-center justify-between mb-4 px-2">
+              <div className="flex items-center gap-2">
+                <History size={18} className="text-indigo-500" />
+                <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">Recent Evaluations</h3>
+              </div>
+              {history.length > 0 && (
+                <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">
+                  {filteredHistory.length} Items
+                </div>
+              )}
            </div>
-           <div className="space-y-4">
-              {history.length > 0 ? history.map((q, i) => (
-                 <div key={i} className="bg-white dark:bg-white/[0.03] p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:border-indigo-500/30 transition-all group">
+
+           <div className="px-2 mb-6">
+              <div className="relative group">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={14} />
+                 <input 
+                   type="text" 
+                   placeholder="Filter history..."
+                   value={historySearchQuery}
+                   onChange={(e) => setHistorySearchQuery(e.target.value)}
+                   className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[10px] font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                 />
+                 <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity">
+                    <Filter size={12} className="text-indigo-500" />
+                 </div>
+              </div>
+           </div>
+
+           <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+              {filteredHistory.length > 0 ? filteredHistory.map((q, i) => (
+                 <div key={i} className="bg-white dark:bg-white/[0.03] p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:border-indigo-500/30 transition-all group animate-in slide-in-from-right-4 duration-300">
                     <div className="flex justify-between items-start mb-2">
                        <h4 className="text-xs font-black text-slate-900 dark:text-white truncate pr-4">{q.title}</h4>
-                       <button onClick={() => deleteFromHistory(q.title)} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button>
+                       <button onClick={() => deleteFromHistory(q.title)} className="text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
                     </div>
                     <div className="flex items-center justify-between">
-                       <span className="text-[8px] font-black uppercase text-slate-400">10 Questions</span>
+                       <span className="text-[8px] font-black uppercase text-slate-400">{q.questions.length} Questions</span>
                        <button onClick={() => setQuiz(q)} className="text-[8px] font-black uppercase text-indigo-500 hover:underline">Restore Workspace</button>
                     </div>
                  </div>
               )) : (
-                 <div className="text-center py-20 bg-slate-50 dark:bg-white/5 rounded-[2.5rem] opacity-30">
-                    <HelpCircle size={48} className="mx-auto mb-4 opacity-20" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">Archive Empty</p>
+                 <div className="text-center py-20 bg-slate-50 dark:bg-white/5 rounded-[2.5rem] opacity-30 border-2 border-dashed border-slate-200 dark:border-white/10">
+                    {historySearchQuery ? <Search size={48} className="mx-auto mb-4 opacity-20" /> : <HelpCircle size={48} className="mx-auto mb-4 opacity-20" />}
+                    <p className="text-[10px] font-black uppercase tracking-widest px-4">
+                      {historySearchQuery ? `No matching records for "${historySearchQuery}"` : 'Archive Empty'}
+                    </p>
                  </div>
               )}
            </div>

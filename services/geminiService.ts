@@ -3,7 +3,7 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 
 /**
- * SVGPT AI Engine - Powered by Google Gemini 1.5 Flash
+ * SVGPT AI Engine - Powered by Google Gemini 3 Pro & Flash
  */
 
 const getAI = () => {
@@ -30,23 +30,16 @@ const generateWithResilience = async (params: any) => {
   }
 };
 
-/**
- * Sanitizes history to meet Gemini 1.5 requirements:
- * 1. Must start with 'user'
- * 2. Roles must strictly alternate [user, model, user, model...]
- */
 const sanitizeHistory = (history: any[]) => {
   let sanitized = history.map(m => ({
     role: m.role === 'bot' || m.role === 'model' ? 'model' : 'user',
     parts: [{ text: (m.parts?.[0]?.text || m.text || "").trim() }]
   })).filter(m => m.parts[0].text !== "");
 
-  // 1. Ensure starts with 'user'
   while (sanitized.length > 0 && sanitized[0].role !== 'user') {
     sanitized.shift();
   }
 
-  // 2. Ensure strictly alternating
   const final: any[] = [];
   for (const turn of sanitized) {
     if (final.length === 0 || final[final.length - 1].role !== turn.role) {
@@ -58,17 +51,13 @@ const sanitizeHistory = (history: any[]) => {
 
 export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
   const context = sanitizeHistory(history);
-  
-  // If the last role in context is 'user', we shouldn't add another user turn.
-  // Instead, we replace it with the latest message or pop it.
   if (context.length > 0 && context[context.length - 1].role === 'user') {
     context.pop();
   }
-  
   context.push({ role: 'user', parts: [{ text: message }] });
 
   const response = await generateWithResilience({
-    model: "gemini-flash-latest", 
+    model: "gemini-3-flash-preview", 
     contents: context,
     config: {
       systemInstruction: `You are SVGPT, a high-performance AI co-pilot for a ${userRole || 'student'}. Be concise, academic, and supportive. Use Markdown for clarity.`,
@@ -81,15 +70,15 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-pro-preview",
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
-        { text: "Analyze this image and explain the concepts shown. Use step-by-step logic." }
+        { text: "Perform a deep analysis of this academic material. Deconstruct the concepts, solve any problems presented, and provide a comprehensive, step-by-step pedagogical explanation. Use Markdown for clarity." }
       ]
     }],
     config: { 
-      systemInstruction: "You are a specialized academic tutor. Explain complex visuals with extreme clarity."
+      systemInstruction: "You are a specialized academic tutor with expertise in analyzing both visual diagrams and complex PDF documents. Explain concepts with extreme clarity and logical rigor."
     }
   });
   return response.text || "Analysis failed.";
@@ -98,15 +87,15 @@ export const solveDoubt = async (base64Data: string, mimeType: string): Promise<
 export const generateRevisionInsights = async (base64Data: string, mimeType: string): Promise<string> => {
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
-        { text: "Summarize this document into bulleted revision notes." }
+        { text: "Synthesize high-impact revision notes from this document or image. Focus on core definitions, formulas, and critical takeaways. Organize with clear bullet points." }
       ]
     }],
     config: { 
-      systemInstruction: "Extract high-impact definitions and formulas for student revision."
+      systemInstruction: "Extract high-impact academic data for optimized student revision. Be concise and highly structured."
     }
   });
   return response.text || "Summarization failed.";
@@ -117,7 +106,7 @@ export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text:
   const prompt = `Synthesize a lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}.`;
   try {
     const response = await ai.models.generateContentStream({
-      model: "gemini-flash-latest",
+      model: "gemini-3-pro-preview",
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
         systemInstruction: "You are a master teacher. Synthesize structured, standard-aligned lesson plans.",
@@ -166,7 +155,7 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
   }
 
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
@@ -175,7 +164,7 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
 
 export const generateQuiz = async (topic: string, role: string, count: number = 5): Promise<Quiz> => {
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Create a practice quiz for a ${role} on the topic: ${topic}.` }] }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
@@ -184,7 +173,7 @@ export const generateQuiz = async (topic: string, role: string, count: number = 
 
 export const checkHomework = async (assignment: string, studentWork: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-pro-preview",
     contents: [{ role: 'user', parts: [{ text: `Evaluate this work. Criteria: ${assignment}\n\nSubmission: ${studentWork}` }] }],
     config: { systemInstruction: "Provide professional academic feedback and grading." }
   });
@@ -193,7 +182,7 @@ export const checkHomework = async (assignment: string, studentWork: string): Pr
 
 export const summarizeText = async (text: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Summarize this text: ${text}` }] }],
     config: { systemInstruction: "Be clear and concise. Use Markdown." }
   });
@@ -213,7 +202,7 @@ export const generateVisualAid = async (prompt: string): Promise<string> => {
 
 export const convertNotesToFlashcards = async (notes: string): Promise<{front: string, back: string}[]> => {
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Synthesize flashcards from these notes: ${notes}` }] }],
     config: { 
       responseMimeType: "application/json", 
@@ -243,7 +232,7 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
   }
 
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-pro-preview",
     contents: [{ role: 'user', parts }],
     config: { 
       responseMimeType: "application/json", 
@@ -302,7 +291,7 @@ export const generateSlidesFromLesson = async (lessonContent: string): Promise<S
   };
 
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Synthesize a slide deck for this content: ${lessonContent}` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
@@ -322,7 +311,7 @@ export const generateBrainBreak = async (context: string): Promise<BrainBreak> =
   };
 
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Suggest a classroom brain break activity based on: ${context}` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
@@ -343,7 +332,7 @@ export const gradeAnswerSheet = async (studentAsset: { dataUri: string, mimeType
   }
 
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-pro-preview",
     contents: [{ role: 'user', parts }],
     config: { systemInstruction: "Provide detailed academic grading." }
   });
@@ -352,7 +341,7 @@ export const gradeAnswerSheet = async (studentAsset: { dataUri: string, mimeType
 
 export const checkPlagiarism = async (text: string): Promise<{ analysis: string, sources: {uri: string, title: string}[] }> => {
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Analyze for plagiarism: ${text}` }] }],
     config: { tools: [{ googleSearch: {} }] }
   });
@@ -371,7 +360,7 @@ export const checkPlagiarism = async (text: string): Promise<{ analysis: string,
 
 export const compareAssignments = async (textA: string, textB: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-pro-preview",
     contents: [{ role: 'user', parts: [{ text: `Compare Student A and B for collusion:\n\nA: ${textA}\n\nB: ${textB}` }] }],
     config: { systemInstruction: "Analyze similarities between two academic submissions." }
   });
@@ -381,7 +370,7 @@ export const compareAssignments = async (textA: string, textB: string): Promise<
 export const convertAssetToFlashcards = async (base64Data: string, mimeType: string): Promise<{front: string, back: string}[]> => {
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [
       { inlineData: { data: cleanData, mimeType } },
       { text: "Synthesize flashcards from this document." }
@@ -404,7 +393,7 @@ export const convertAssetToFlashcards = async (base64Data: string, mimeType: str
 export const summarizeAudioLecture = async (base64Audio: string, mimeType: string): Promise<string> => {
   const cleanData = base64Audio.includes(',') ? base64Audio.split(',')[1] : base64Audio;
   const response = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [
       { inlineData: { data: cleanData, mimeType } },
       { text: "Synthesize structured notes from this audio recording." }
@@ -415,7 +404,7 @@ export const summarizeAudioLecture = async (base64Audio: string, mimeType: strin
 
 export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
   const scriptResponse = await generateWithResilience({
-    model: "gemini-flash-latest",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Synthesize an engaging audio script for this content: ${content}` }] }],
   });
   const script = scriptResponse.text!;
@@ -436,4 +425,118 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
 
   const audioBase64 = audioResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "";
   return { audioBase64, script };
+};
+
+export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType: string): Promise<{ svgCode: string, cards: { front: string, back: string }[] }> => {
+  const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+  const response = await generateWithResilience({
+    model: "gemini-3-pro-preview",
+    contents: [{
+      parts: [
+        { inlineData: { data: cleanData, mimeType } },
+        { text: "Perform a deep structural analysis of this drawing/diagram. 1. Synthesize a clean, valid SVG representation (simplified code) of the main components. 2. Generate 5 high-impact active recall flashcards based on the diagram's content. Output in JSON format." }
+      ]
+    }],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          svgCode: { type: Type.STRING, description: "Valid SVG XML string representing the diagram." },
+          cards: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                front: { type: Type.STRING },
+                back: { type: Type.STRING }
+              },
+              required: ["front", "back"]
+            }
+          }
+        },
+        required: ["svgCode", "cards"]
+      }
+    }
+  });
+  return JSON.parse(response.text!) as { svgCode: string, cards: { front: string, back: string }[] };
+};
+
+export const synthesizeSVGWorksheet = async (topic: string, gradeLevel: string): Promise<string> => {
+  const response = await generateWithResilience({
+    model: "gemini-3-pro-preview",
+    contents: [{
+      parts: [{ text: `Synthesize a high-quality, printable academic worksheet SVG for the topic: ${topic}. Grade level: ${gradeLevel}. Include: 1. A clear header. 2. A central instructional diagram or visual model (stylized SVG). 3. 5 analytical questions with answer spaces. 4. A concise grading rubric at the footer. Output ONLY valid SVG XML code.` }]
+    }],
+    config: {
+      systemInstruction: "You are an elite instructional designer. Synthesize professional, highly-structured SVG worksheets. Use clean lines and standard academic fonts."
+    }
+  });
+  return response.text!;
+};
+
+export const synthesizeSVGSlides = async (lessonContent: string): Promise<string[]> => {
+  const response = await generateWithResilience({
+    model: "gemini-3-pro-preview",
+    contents: [{
+      parts: [{ text: `Deconstruct this lesson plan into 6 beautiful SVG presentation slides: ${lessonContent}. Each slide should be a standalone valid SVG (800x450). Use professional colors, clear typography, and simplified architectural diagrams where relevant. Output a JSON array of SVG XML strings.` }]
+    }],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING, description: "A valid SVG XML string." }
+      }
+    }
+  });
+  return JSON.parse(response.text!) as string[];
+};
+
+/**
+ * NEW: Exam Prep Question Synthesis for Students
+ * Extracts questions and answers from a lesson image or PDF.
+ */
+export const synthesizeExamQuestions = async (base64Data: string, mimeType: string): Promise<{ question: string, answer: string }[]> => {
+  const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+  const response = await generateWithResilience({
+    model: "gemini-3-pro-preview",
+    contents: [{
+      parts: [
+        { inlineData: { data: cleanData, mimeType } },
+        { text: "Analyze this lesson material and synthesize a set of 10 rigorous exam-style questions. For each question, provide a detailed correct answer. Output in a JSON array format." }
+      ]
+    }],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            question: { type: Type.STRING },
+            answer: { type: Type.STRING }
+          },
+          required: ["question", "answer"]
+        }
+      }
+    }
+  });
+  return JSON.parse(response.text!) as { question: string, answer: string }[];
+};
+
+/**
+ * NEW: Pathfinder Maker for Teachers
+ * Generates a guided inquiry roadmap in SVG format.
+ */
+export const synthesizePathfinder = async (topic: string, gradeLevel: string): Promise<string> => {
+  const response = await generateWithResilience({
+    model: "gemini-3-pro-preview",
+    contents: [{
+      parts: [{ text: `Synthesize a professional academic 'Pathfinder' (Research Roadmap) as a high-quality SVG (Portrait A4 layout). Topic: ${topic}. Grade: ${gradeLevel}. Include: 1. A roadmap visual metaphor (curving path). 2. 5 Milestone nodes with inquiry questions. 3. Suggested high-quality source types for investigation. 4. A 'Final Reflection' prompt at the end. Output ONLY valid SVG XML code.` }]
+    }],
+    config: {
+      systemInstruction: "You are a master of instructional scaffolding. Create elegant, architectural SVG research guides. Use clear hierarchy and inspiring pedagogical design."
+    }
+  });
+  return response.text!;
 };

@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -17,6 +18,11 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Explicitly link services to the app instance
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Initialize Google Auth Provider with custom parameters
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 
 export { app, auth, db, googleProvider };

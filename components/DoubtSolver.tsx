@@ -9,6 +9,7 @@ type SolverMode = 'solve' | 'revision';
 const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [mode, setMode] = useState<SolverMode>('solve');
   const [asset, setAsset] = useState<string | null>(null);
+  const [assetName, setAssetName] = useState<string>('');
   const [mimeType, setMimeType] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -21,10 +22,11 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const processFile = (file: File) => {
     setError(null);
     if (file) {
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        setError("Invalid format. Please upload a PDF, JPG, or PNG document.");
+        setError("Unsupported file format. Please upload a PDF, JPG, PNG, or WEBP document.");
         setAsset(null);
+        setAssetName('');
         return;
       }
 
@@ -32,6 +34,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       reader.onload = (event) => {
         setAsset(event.target?.result as string);
         setMimeType(file.type);
+        setAssetName(file.name);
         setResult(null);
         setPointsAwarded(false);
         setIsSaved(false);
@@ -80,8 +83,8 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       localStorage.setItem('svgpt_xp', (currentPoints + 50).toString());
       setPointsAwarded(true);
       
-    } catch (e) {
-      setError("Neural synthesis failed. Ensure the asset is clear and academic in nature.");
+    } catch (e: any) {
+      setError(e.message || "Neural synthesis failed. Ensure the asset is clear and academic in nature.");
     } finally {
       setLoading(false);
     }
@@ -92,7 +95,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const existingNotes = JSON.parse(localStorage.getItem('svgpt_notes') || '[]');
     const newNote = {
       id: Date.now().toString(),
-      title: `${mode === 'solve' ? 'Problem Resolution' : 'Revision Insights'} - ${new Date().toLocaleDateString()}`,
+      title: `${mode === 'solve' ? 'Resolution' : 'Insights'}: ${assetName || 'Neural Scan'}`,
       subject: 'Synthesis Archive',
       content: result,
       color: mode === 'solve' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-emerald-100 dark:bg-emerald-900/30',
@@ -100,11 +103,11 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     };
     localStorage.setItem('svgpt_notes', JSON.stringify([newNote, ...existingNotes]));
     setIsSaved(true);
-    alert("Asset successfully archived to Notes Studio.");
   };
 
   const clearInterface = () => {
     setAsset(null);
+    setAssetName('');
     setMimeType('');
     setResult(null);
     setError(null);
@@ -115,13 +118,13 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const isPdf = mimeType === 'application/pdf';
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-20">
+    <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-20 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
          <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors group">
-           <div className="p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 group-hover:border-indigo-200">
+           <div className="p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 group-hover:border-indigo-200 shadow-sm">
               <ArrowLeft size={16} />
            </div>
-           Back to My Hub
+           Back to Dashboard
          </button>
          
          <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
@@ -133,7 +136,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             </button>
             <button 
               onClick={() => { setMode('revision'); setResult(null); setError(null); }}
-              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${mode === 'revision' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-100'}`}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${mode === 'revision' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/20' : 'text-slate-500 hover:text-indigo-600'}`}
             >
               <BookOpenCheck size={14} /> Quick Revision
             </button>
@@ -151,7 +154,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         {/* Input Card */}
         <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl p-10 rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col items-center">
            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-8 ${mode === 'solve' ? 'bg-indigo-500/10' : 'bg-emerald-500/10'}`}>
-              {mode === 'solve' ? <Camera className="text-indigo-500" size={32} /> : <FileText className="text-emerald-500" size={32} />}
+              {mode === 'solve' ? <BrainCircuit className="text-indigo-500" size={32} /> : <FileText className="text-emerald-500" size={32} />}
            </div>
            
            <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-900 dark:text-white mb-2">
@@ -172,9 +175,9 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <div className={`absolute inset-0 bg-indigo-500/5 rounded-[2.8rem] opacity-0 transition-opacity duration-300 ${isDragging ? 'opacity-100' : ''}`}></div>
                 <Upload size={48} className={`transition-colors mb-4 ${isDragging ? 'text-indigo-500 scale-110' : 'text-slate-200 group-hover:text-indigo-500'}`} />
                 <span className={`text-xs font-black uppercase tracking-[0.2em] px-8 text-center transition-colors ${isDragging ? 'text-indigo-600' : 'text-slate-400'}`}>
-                  {isDragging ? 'Drop Asset to Synthesize' : 'Capture Photo or Drag & Drop Document (Image/PDF)'}
+                  {isDragging ? 'Drop Asset to Synthesize' : 'Upload Image (JPG/PNG) or PDF Document'}
                 </span>
-                <input ref={fileInputRef} type="file" accept=".pdf,image/jpeg,image/png" className="hidden" onChange={handleUpload} />
+                <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleUpload} />
              </div>
            ) : (
              <div className="w-full flex flex-col items-center">
@@ -182,30 +185,35 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                    {isPdf ? (
                      <div className="flex flex-col items-center gap-4 text-slate-400">
                        <FileText size={80} className="animate-pulse" />
-                       <span className="text-[10px] font-black uppercase tracking-widest">PDF Source Loaded</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest px-10 text-center truncate w-full">{assetName || 'Document Loaded'}</span>
                      </div>
                    ) : (
-                     <img src={asset} className="w-full h-full object-cover" />
+                     <img src={asset} className="w-full h-full object-contain" />
                    )}
                    <button 
-                     onClick={() => setAsset(null)}
-                     className="absolute top-6 right-6 p-3 bg-white/90 rounded-2xl text-red-500 shadow-xl hover:scale-110 transition-transform"
+                     onClick={() => { setAsset(null); setAssetName(''); }}
+                     className="absolute top-6 right-6 p-3 bg-white/90 rounded-2xl text-red-500 shadow-xl hover:scale-110 transition-transform backdrop-blur-md"
                    >
                      <X size={20} />
                    </button>
+                   {!isPdf && (
+                     <div className="absolute bottom-6 left-6 right-6 bg-black/60 backdrop-blur-md p-3 rounded-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <p className="text-[9px] font-black text-white uppercase tracking-widest truncate">{assetName}</p>
+                     </div>
+                   )}
                 </div>
                 
                 <div className="flex gap-4 w-full">
                   <button 
                     onClick={clearInterface}
-                    className="p-5 bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-red-500 rounded-2xl transition-all"
+                    className="p-5 bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-red-500 rounded-2xl transition-all shadow-sm"
                   >
                     <Trash2 size={20} />
                   </button>
                   <button 
                      onClick={processAnalysis}
                      disabled={loading}
-                     className={`flex-1 py-5 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 ${mode === 'solve' ? 'premium-gradient' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                     className={`flex-1 py-5 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 ${mode === 'solve' ? 'premium-gradient' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'}`}
                   >
                      {loading ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
                      {loading ? 'Synthesizing Neural Insights...' : mode === 'solve' ? 'Synthesize Solution' : 'Extract Revision Points'}
@@ -223,8 +231,8 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         </div>
 
         {/* Output Card */}
-        <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden">
-           <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex justify-between items-center">
+        <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden min-h-[500px]">
+           <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex justify-between items-center px-10">
               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                  {mode === 'solve' ? <BrainCircuit size={16} className="text-indigo-500" /> : <BookOpenCheck size={16} className="text-emerald-500" />}
                  {mode === 'solve' ? 'Neural Pathway Solution' : 'Synthesized Mastery Points'}
@@ -234,9 +242,9 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                    <button 
                     onClick={handleSaveToNotes}
                     disabled={isSaved}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${isSaved ? 'text-green-500 bg-green-500/10' : 'text-slate-400 hover:text-indigo-500 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10'}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm ${isSaved ? 'text-green-500 bg-green-500/10' : 'text-slate-400 hover:text-indigo-500 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10'}`}
                    >
-                     <Save size={14} /> {isSaved ? 'Archived' : 'Save to Notes'}
+                     {isSaved ? <CheckCircle2 size={14} /> : <Save size={14} />} {isSaved ? 'Archived' : 'Archive Node'}
                    </button>
                 )}
                 {pointsAwarded && (
@@ -255,7 +263,7 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                       <div className={`w-16 h-16 border-4 border-t-transparent rounded-full animate-spin ${mode === 'solve' ? 'border-indigo-500' : 'border-emerald-500'}`}></div>
                       <Sparkles className={`absolute inset-0 m-auto animate-pulse ${mode === 'solve' ? 'text-indigo-500' : 'text-emerald-500'}`} size={24} />
                    </div>
-                   <p className="text-[10px] font-black uppercase tracking-[0.4em]">Optimizing logic gates...</p>
+                   <p className="text-[10px] font-black uppercase tracking-[0.4em]">Architecting Resolution...</p>
                 </div>
               ) : result ? (
                 <div className="animate-in fade-in duration-700">
@@ -292,9 +300,11 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                    </ReactMarkdown>
                 </div>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center opacity-20">
-                   {mode === 'solve' ? <BrainCircuit size={80} /> : <BookOpenCheck size={80} />}
-                   <p className="text-[10px] font-black uppercase tracking-widest mt-6 text-center">Awaiting Neural Data Input.<br/>Upload an asset to begin synthesis.</p>
+                <div className="h-full flex flex-col items-center justify-center opacity-10">
+                   <div className="p-10 border-2 border-dashed border-current rounded-full mb-8">
+                     {mode === 'solve' ? <BrainCircuit size={80} /> : <BookOpenCheck size={80} />}
+                   </div>
+                   <p className="text-[12px] font-black uppercase tracking-[0.6em] mt-2 text-center leading-relaxed">Awaiting Neural Data Input.<br/>Upload an asset to begin synthesis.</p>
                 </div>
               )}
            </div>
