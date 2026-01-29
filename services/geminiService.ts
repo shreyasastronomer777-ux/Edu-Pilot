@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 
@@ -9,7 +8,7 @@ import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 const getAI = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
-    throw new Error("AI Key missing. Please check your environment settings.");
+    throw new Error("Neural link offline. Please verify API key configuration.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -18,15 +17,18 @@ const generateWithResilience = async (params: any) => {
   const ai = getAI();
   try {
     const response = await ai.models.generateContent(params);
-    if (!response.text) throw new Error("The AI returned an empty response. Please try again.");
+    if (!response.text) throw new Error("The neural node returned an empty response. Recalibrating...");
     return response;
   } catch (error: any) {
-    console.error("AI Error:", error);
+    console.error("Neural Sync Error:", error);
     const msg = error.message?.toLowerCase() || "";
-    if (msg.includes("400") || msg.includes("invalid")) {
-       throw new Error("Neural synchronization error. Please clear this chat session.");
+    if (msg.includes("401") || msg.includes("api key") || msg.includes("unauthorized")) {
+       throw new Error("Neural Link Unauthorized. Please verify your academic API credentials.");
     }
-    throw new Error(error.message || "Something went wrong with the AI link.");
+    if (msg.includes("429") || msg.includes("quota")) {
+       throw new Error("Neural Traffic Limit Reached. Please wait a moment for the pipeline to clear.");
+    }
+    throw new Error(error.message || "An unexpected error occurred in the neural grid.");
   }
 };
 
@@ -64,7 +66,7 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
       temperature: 0.7
     }
   });
-  return response.text || "I am currently recalibrating. Please try again.";
+  return response.text || "Neural core recalibrating. Try again.";
 };
 
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
@@ -78,7 +80,7 @@ export const solveDoubt = async (base64Data: string, mimeType: string): Promise<
       ]
     }],
     config: { 
-      systemInstruction: "You are a specialized academic tutor with expertise in analyzing both visual diagrams and complex PDF documents. Explain concepts with extreme clarity and logical rigor."
+      systemInstruction: "You are a specialized academic tutor with expertise in analyzing both visual diagrams and complex PDF documents."
     }
   });
   return response.text || "Analysis failed.";
@@ -95,7 +97,7 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
       ]
     }],
     config: { 
-      systemInstruction: "Extract high-impact academic data for optimized student revision. Be concise and highly structured."
+      systemInstruction: "Extract high-impact academic data for optimized student revision."
     }
   });
   return response.text || "Summarization failed.";
@@ -109,7 +111,7 @@ export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text:
       model: "gemini-3-pro-preview",
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
-        systemInstruction: "You are a master teacher. Synthesize structured, standard-aligned lesson plans.",
+        systemInstruction: "You are a master teacher synthesizing structured, standard-aligned lesson plans.",
       },
     });
     for await (const chunk of response) {
@@ -493,8 +495,7 @@ export const synthesizeSVGSlides = async (lessonContent: string): Promise<string
 };
 
 /**
- * NEW: Exam Prep Question Synthesis for Students
- * Extracts questions and answers from a lesson image or PDF.
+ * Exam Prep Question Synthesis for Students
  */
 export const synthesizeExamQuestions = async (base64Data: string, mimeType: string): Promise<{ question: string, answer: string }[]> => {
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
@@ -525,8 +526,7 @@ export const synthesizeExamQuestions = async (base64Data: string, mimeType: stri
 };
 
 /**
- * NEW: Pathfinder Maker for Teachers
- * Generates a guided inquiry roadmap in SVG format.
+ * Pathfinder Maker for Teachers
  */
 export const synthesizePathfinder = async (topic: string, gradeLevel: string): Promise<string> => {
   const response = await generateWithResilience({
@@ -535,7 +535,7 @@ export const synthesizePathfinder = async (topic: string, gradeLevel: string): P
       parts: [{ text: `Synthesize a professional academic 'Pathfinder' (Research Roadmap) as a high-quality SVG (Portrait A4 layout). Topic: ${topic}. Grade: ${gradeLevel}. Include: 1. A roadmap visual metaphor (curving path). 2. 5 Milestone nodes with inquiry questions. 3. Suggested high-quality source types for investigation. 4. A 'Final Reflection' prompt at the end. Output ONLY valid SVG XML code.` }]
     }],
     config: {
-      systemInstruction: "You are a master of instructional scaffolding. Create elegant, architectural SVG research guides. Use clear hierarchy and inspiring pedagogical design."
+      systemInstruction: "You are a master of instructional scaffolding. Create elegant, architectural SVG research guides."
     }
   });
   return response.text!;
