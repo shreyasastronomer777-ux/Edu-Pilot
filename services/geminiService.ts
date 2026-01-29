@@ -3,6 +3,7 @@ import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 
 /**
  * SVGPT AI Engine - Powered by Google Gemini 3 Flash
+ * Optimized for high-reliability academic synthesis
  */
 
 const getAI = () => {
@@ -13,35 +14,34 @@ const getAI = () => {
   return new GoogleGenAI({ apiKey });
 };
 
+/**
+ * Enhanced JSON extractor to handle markdown noise
+ */
 const cleanJsonString = (str: string) => {
-  // Removes markdown code blocks if the model accidentally includes them
-  return str.replace(/```json\n?/, "").replace(/\n?```/, "").trim();
+  if (!str) return "";
+  // Attempt to extract content between ```json and ``` or ``` and ```
+  const match = str.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  const candidate = match ? match[1] : str;
+  return candidate.trim();
 };
 
 const generateWithResilience = async (params: any) => {
   const ai = getAI();
   try {
-    const config = {
-      ...params.config,
-      thinkingConfig: { thinkingBudget: 0 } // Disable thinking for maximum speed and stability on free tiers
-    };
-    const response = await ai.models.generateContent({
-      ...params,
-      config
-    });
-    if (!response.text) throw new Error("The neural node returned an empty response. Recalibrating...");
+    const response = await ai.models.generateContent(params);
+    if (!response.text) throw new Error("The neural node returned an empty response.");
     return response;
   } catch (error: any) {
     console.error("Neural Sync Error:", error);
     const msg = error.message?.toLowerCase() || "";
     if (msg.includes("401") || msg.includes("api key") || msg.includes("unauthorized")) {
-       throw new Error("Neural Link Unauthorized. Please verify your academic API credentials.");
+       throw new Error("Neural Link Unauthorized. Verify API credentials.");
     }
     if (msg.includes("429") || msg.includes("quota")) {
-       throw new Error("Neural Traffic Limit Reached. Please wait a moment for the pipeline to clear.");
+       throw new Error("Neural Traffic Limit. Please wait 60 seconds for cooldown.");
     }
-    if (msg.includes("400")) {
-       throw new Error("Neural synchronization error. The request was malformed or restricted.");
+    if (msg.includes("safety") || msg.includes("blocked")) {
+       throw new Error("Neural Safety Filter triggered. Please rephrase your query.");
     }
     throw new Error(error.message || "An unexpected error occurred in the neural grid.");
   }
@@ -91,11 +91,11 @@ export const solveDoubt = async (base64Data: string, mimeType: string): Promise<
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
-        { text: "Perform a deep analysis of this academic material. Deconstruct the concepts, solve any problems presented, and provide a comprehensive, step-by-step pedagogical explanation. Use Markdown for clarity." }
+        { text: "Perform a deep analysis of this academic material. Deconstruct concepts and provide step-by-step pedagogical explanations. Use Markdown." }
       ]
     }],
     config: { 
-      systemInstruction: "You are a specialized academic tutor with expertise in analyzing both visual diagrams and complex PDF documents."
+      systemInstruction: "You are a specialized academic tutor expert in document analysis."
     }
   });
   return response.text || "Analysis failed.";
@@ -108,26 +108,22 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
-        { text: "Synthesize high-impact revision notes from this document or image. Focus on core definitions, formulas, and critical takeaways. Organize with clear bullet points." }
+        { text: "Synthesize high-impact revision notes. Focus on core definitions, formulas, and critical takeaways with clear bullet points." }
       ]
-    }],
-    config: { 
-      systemInstruction: "Extract high-impact academic data for optimized student revision."
-    }
+    }]
   });
   return response.text || "Summarization failed.";
 };
 
 export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text: string) => void) => {
   const ai = getAI();
-  const prompt = `Synthesize a comprehensive lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}. Structure with clear objectives, activities, and evaluation.`;
+  const prompt = `Synthesize a lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}.`;
   try {
     const response = await ai.models.generateContentStream({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         systemInstruction: "You are a master teacher synthesizing structured, standard-aligned lesson plans.",
-        thinkingConfig: { thinkingBudget: 0 }
       },
     });
     for await (const chunk of response) {
@@ -166,10 +162,10 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
     parts = [
       { inlineData: { data: cleanData, mimeType: source.mimeType } },
-      { text: `Synthesize an assessment with ${count} questions based on this asset. Output JSON.` }
+      { text: `Synthesize a ${count}-question JSON assessment based on this asset.` }
     ];
   } else {
-    parts = [{ text: `Synthesize an assessment with ${count} questions on: ${source.data}. Output JSON.` }];
+    parts = [{ text: `Synthesize a ${count}-question JSON assessment on: ${source.data}.` }];
   }
 
   const response = await generateWithResilience({
@@ -177,7 +173,12 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
     contents: [{ role: 'user', parts }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
-  return JSON.parse(cleanJsonString(response.text!)) as Quiz;
+  
+  try {
+    return JSON.parse(cleanJsonString(response.text!)) as Quiz;
+  } catch (e) {
+    throw new Error("Neural response parsing failed. Retrying...");
+  }
 };
 
 export const generateQuiz = async (topic: string, role: string, count: number = 5): Promise<Quiz> => {
@@ -243,10 +244,10 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
     parts = [
       { inlineData: { data: cleanData, mimeType: source.mimeType } },
-      { text: "Synthesize a full lesson plan, slides, and summary from this document. Output JSON." }
+      { text: "Synthesize a full lesson plan, a slide deck object, and a one-sentence summary from this document. Output ONLY raw JSON." }
     ];
   } else {
-    parts = [{ text: `Synthesize a full lesson plan, slides, and summary from this data: ${source.data}. Output JSON.` }];
+    parts = [{ text: `Synthesize a full lesson plan, a slide deck object, and a one-sentence summary from this data: ${source.data}. Output ONLY raw JSON.` }];
   }
 
   const response = await generateWithResilience({
@@ -257,8 +258,8 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          plan: { type: Type.STRING },
-          summary: { type: Type.STRING },
+          plan: { type: Type.STRING, description: "Full markdown lesson plan" },
+          summary: { type: Type.STRING, description: "Concise summary" },
           slides: {
             type: Type.OBJECT,
             properties: {
@@ -284,7 +285,11 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
     }
   });
 
-  return JSON.parse(cleanJsonString(response.text!)) as { plan: string, slides: SlideDeck, summary: string };
+  try {
+    return JSON.parse(cleanJsonString(response.text!)) as { plan: string, slides: SlideDeck, summary: string };
+  } catch (e) {
+    throw new Error("Neural synthesis returned invalid formatting. Please retry.");
+  }
 };
 
 export const generateSlidesFromLesson = async (lessonContent: string): Promise<SlideDeck> => {
@@ -427,7 +432,7 @@ export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType:
     contents: [{
       parts: [
         { inlineData: { data: cleanData, mimeType } },
-        { text: "Perform a deep structural analysis of this drawing/diagram. 1. Synthesize a clean, valid SVG representation (simplified code) of the main components. 2. Generate 5 high-impact active recall flashcards based on the diagram's content. Output JSON." }
+        { text: "Perform a deep structural analysis. 1. Synthesize a clean valid SVG representation. 2. Generate 5 active recall flashcards. Output JSON." }
       ]
     }],
     config: {
@@ -435,7 +440,7 @@ export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType:
       responseSchema: {
         type: Type.OBJECT,
         properties: {
-          svgCode: { type: Type.STRING, description: "Valid SVG XML string representing the diagram." },
+          svgCode: { type: Type.STRING, description: "Valid SVG XML string." },
           cards: {
             type: Type.ARRAY,
             items: {
@@ -459,10 +464,10 @@ export const synthesizeSVGWorksheet = async (topic: string, gradeLevel: string):
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{
-      parts: [{ text: `Synthesize a high-quality, printable academic worksheet SVG for the topic: ${topic}. Grade level: ${gradeLevel}. Include: 1. A clear header. 2. A central instructional diagram or visual model (stylized SVG). 3. 5 analytical questions with answer spaces. 4. A concise grading rubric at the footer. Output ONLY valid SVG XML code.` }]
+      parts: [{ text: `Synthesize a high-quality, printable academic worksheet SVG for the topic: ${topic}. Grade level: ${gradeLevel}. Include a header, diagram, 5 questions, and a rubric. Output ONLY valid SVG XML code.` }]
     }],
     config: {
-      systemInstruction: "You are an elite instructional designer. Synthesize professional, highly-structured SVG worksheets. Use clean lines and standard academic fonts."
+      systemInstruction: "You are an elite instructional designer. Synthesize professional SVG worksheets."
     }
   });
   return response.text!;
@@ -472,7 +477,7 @@ export const synthesizeSVGSlides = async (lessonContent: string): Promise<string
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{
-      parts: [{ text: `Deconstruct this lesson plan into 6 beautiful SVG presentation slides: ${lessonContent}. Each slide should be a standalone valid SVG (800x450). Output a JSON array of SVG XML strings.` }]
+      parts: [{ text: `Deconstruct this lesson into 6 beautiful SVG slides: ${lessonContent}. Output a JSON array of SVG XML strings.` }]
     }],
     config: {
       responseMimeType: "application/json",
@@ -492,7 +497,7 @@ export const synthesizeExamQuestions = async (base64Data: string, mimeType: stri
     contents: [{
       parts: [
         { inlineData: { data: cleanData, mimeType } },
-        { text: "Analyze this lesson material and synthesize a set of 10 rigorous exam-style questions. For each question, provide a detailed correct answer. Output JSON." }
+        { text: "Analyze this lesson and synthesize 10 rigorous exam questions with detailed answers. Output JSON." }
       ]
     }],
     config: {
@@ -517,32 +522,29 @@ export const synthesizePathfinder = async (topic: string, gradeLevel: string): P
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{
-      parts: [{ text: `Synthesize a professional academic 'Pathfinder' (Research Roadmap) as a high-quality SVG (Portrait A4 layout). Topic: ${topic}. Grade: ${gradeLevel}. Output ONLY valid SVG XML code.` }]
+      parts: [{ text: `Synthesize a professional academic 'Pathfinder' SVG (Research Roadmap). Topic: ${topic}. Grade: ${gradeLevel}. Output ONLY valid SVG XML code.` }]
     }],
     config: {
-      systemInstruction: "You are a master of instructional scaffolding. Create elegant, architectural SVG research guides."
+      systemInstruction: "You are a master of instructional scaffolding. Create elegant SVG research guides."
     }
   });
   return response.text!;
 };
 
-// Fix: Implemented generateAudioBriefing to synthesize a script and then convert it to audio.
 export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
   const ai = getAI();
   
-  // 1. Generate the script using the standard text model
   const scriptResponse = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: [{ role: 'user', parts: [{ text: `Transform these academic notes into a professional, engaging audio briefing script (approx. 200 words): ${content}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Transform into a professional audio briefing script (200 words): ${content}` }] }],
     config: {
-      systemInstruction: "You are an expert academic narrator. Synthesize a concise, clear script for a student audio briefing. Use an informative yet encouraging tone.",
+      systemInstruction: "You are an expert academic narrator.",
       temperature: 0.7
     }
   });
   
-  const script = scriptResponse.text || "Neural script synthesis failed.";
+  const script = scriptResponse.text || "Synthesis failed.";
 
-  // 2. Synthesize audio from the script using the TTS model
   const audioResponse = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: script }] }],
@@ -558,7 +560,7 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
 
   const audioPart = audioResponse.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
   if (!audioPart?.inlineData?.data) {
-    throw new Error("Neural audio synthesis failed. The model did not return audio data.");
+    throw new Error("Neural audio synthesis failed.");
   }
 
   return { 
