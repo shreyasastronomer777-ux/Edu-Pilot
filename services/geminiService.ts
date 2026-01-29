@@ -2,7 +2,7 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 
 /**
- * SVGPT AI Engine - Powered by Google Gemini 3 Pro & Flash
+ * SVGPT AI Engine - Powered by Google Gemini 3 Flash
  */
 
 const getAI = () => {
@@ -11,6 +11,11 @@ const getAI = () => {
     throw new Error("Neural link offline. Please verify API key configuration.");
   }
   return new GoogleGenAI({ apiKey });
+};
+
+const cleanJsonString = (str: string) => {
+  // Removes markdown code blocks if the model accidentally includes them
+  return str.replace(/```json\n?/, "").replace(/\n?```/, "").trim();
 };
 
 const generateWithResilience = async (params: any) => {
@@ -72,7 +77,7 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
@@ -108,7 +113,7 @@ export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text:
   const prompt = `Synthesize a lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}.`;
   try {
     const response = await ai.models.generateContentStream({
-      model: "gemini-3-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
         systemInstruction: "You are a master teacher synthesizing structured, standard-aligned lesson plans.",
@@ -161,7 +166,7 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
     contents: [{ role: 'user', parts }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
-  return JSON.parse(response.text!) as Quiz;
+  return JSON.parse(cleanJsonString(response.text!)) as Quiz;
 };
 
 export const generateQuiz = async (topic: string, role: string, count: number = 5): Promise<Quiz> => {
@@ -170,12 +175,12 @@ export const generateQuiz = async (topic: string, role: string, count: number = 
     contents: [{ role: 'user', parts: [{ text: `Create a practice quiz for a ${role} on the topic: ${topic}.` }] }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
-  return JSON.parse(response.text!) as Quiz;
+  return JSON.parse(cleanJsonString(response.text!)) as Quiz;
 };
 
 export const checkHomework = async (assignment: string, studentWork: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Evaluate this work. Criteria: ${assignment}\n\nSubmission: ${studentWork}` }] }],
     config: { systemInstruction: "Provide professional academic feedback and grading." }
   });
@@ -218,7 +223,7 @@ export const convertNotesToFlashcards = async (notes: string): Promise<{front: s
       } 
     }
   });
-  return JSON.parse(response.text!) as {front: string, back: string}[];
+  return JSON.parse(cleanJsonString(response.text!)) as {front: string, back: string}[];
 };
 
 export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'url', data: string, mimeType?: string }): Promise<{ plan: string, slides: SlideDeck, summary: string }> => {
@@ -234,7 +239,7 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
   }
 
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts }],
     config: { 
       responseMimeType: "application/json", 
@@ -268,7 +273,7 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
     }
   });
 
-  return JSON.parse(response.text!) as { plan: string, slides: SlideDeck, summary: string };
+  return JSON.parse(cleanJsonString(response.text!)) as { plan: string, slides: SlideDeck, summary: string };
 };
 
 export const generateSlidesFromLesson = async (lessonContent: string): Promise<SlideDeck> => {
@@ -297,7 +302,7 @@ export const generateSlidesFromLesson = async (lessonContent: string): Promise<S
     contents: [{ role: 'user', parts: [{ text: `Synthesize a slide deck for this content: ${lessonContent}` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
-  return JSON.parse(response.text!) as SlideDeck;
+  return JSON.parse(cleanJsonString(response.text!)) as SlideDeck;
 };
 
 export const generateBrainBreak = async (context: string): Promise<BrainBreak> => {
@@ -317,7 +322,7 @@ export const generateBrainBreak = async (context: string): Promise<BrainBreak> =
     contents: [{ role: 'user', parts: [{ text: `Suggest a classroom brain break activity based on: ${context}` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
-  return JSON.parse(response.text!) as BrainBreak;
+  return JSON.parse(cleanJsonString(response.text!)) as BrainBreak;
 };
 
 export const gradeAnswerSheet = async (studentAsset: { dataUri: string, mimeType: string }, criteria: string, answerKey?: { dataUri: string, mimeType: string }): Promise<string> => {
@@ -334,7 +339,7 @@ export const gradeAnswerSheet = async (studentAsset: { dataUri: string, mimeType
   }
 
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts }],
     config: { systemInstruction: "Provide detailed academic grading." }
   });
@@ -362,7 +367,7 @@ export const checkPlagiarism = async (text: string): Promise<{ analysis: string,
 
 export const compareAssignments = async (textA: string, textB: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Compare Student A and B for collusion:\n\nA: ${textA}\n\nB: ${textB}` }] }],
     config: { systemInstruction: "Analyze similarities between two academic submissions." }
   });
@@ -389,7 +394,7 @@ export const convertAssetToFlashcards = async (base64Data: string, mimeType: str
       } 
     }
   });
-  return JSON.parse(response.text!) as {front: string, back: string}[];
+  return JSON.parse(cleanJsonString(response.text!)) as {front: string, back: string}[];
 };
 
 export const summarizeAudioLecture = async (base64Audio: string, mimeType: string): Promise<string> => {
@@ -432,7 +437,7 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
 export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType: string): Promise<{ svgCode: string, cards: { front: string, back: string }[] }> => {
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{
       parts: [
         { inlineData: { data: cleanData, mimeType } },
@@ -461,12 +466,12 @@ export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType:
       }
     }
   });
-  return JSON.parse(response.text!) as { svgCode: string, cards: { front: string, back: string }[] };
+  return JSON.parse(cleanJsonString(response.text!)) as { svgCode: string, cards: { front: string, back: string }[] };
 };
 
 export const synthesizeSVGWorksheet = async (topic: string, gradeLevel: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{
       parts: [{ text: `Synthesize a high-quality, printable academic worksheet SVG for the topic: ${topic}. Grade level: ${gradeLevel}. Include: 1. A clear header. 2. A central instructional diagram or visual model (stylized SVG). 3. 5 analytical questions with answer spaces. 4. A concise grading rubric at the footer. Output ONLY valid SVG XML code.` }]
     }],
@@ -479,7 +484,7 @@ export const synthesizeSVGWorksheet = async (topic: string, gradeLevel: string):
 
 export const synthesizeSVGSlides = async (lessonContent: string): Promise<string[]> => {
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{
       parts: [{ text: `Deconstruct this lesson plan into 6 beautiful SVG presentation slides: ${lessonContent}. Each slide should be a standalone valid SVG (800x450). Use professional colors, clear typography, and simplified architectural diagrams where relevant. Output a JSON array of SVG XML strings.` }]
     }],
@@ -491,7 +496,7 @@ export const synthesizeSVGSlides = async (lessonContent: string): Promise<string
       }
     }
   });
-  return JSON.parse(response.text!) as string[];
+  return JSON.parse(cleanJsonString(response.text!)) as string[];
 };
 
 /**
@@ -500,7 +505,7 @@ export const synthesizeSVGSlides = async (lessonContent: string): Promise<string
 export const synthesizeExamQuestions = async (base64Data: string, mimeType: string): Promise<{ question: string, answer: string }[]> => {
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{
       parts: [
         { inlineData: { data: cleanData, mimeType } },
@@ -522,7 +527,7 @@ export const synthesizeExamQuestions = async (base64Data: string, mimeType: stri
       }
     }
   });
-  return JSON.parse(response.text!) as { question: string, answer: string }[];
+  return JSON.parse(cleanJsonString(response.text!)) as { question: string, answer: string }[];
 };
 
 /**
@@ -530,7 +535,7 @@ export const synthesizeExamQuestions = async (base64Data: string, mimeType: stri
  */
 export const synthesizePathfinder = async (topic: string, gradeLevel: string): Promise<string> => {
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{
       parts: [{ text: `Synthesize a professional academic 'Pathfinder' (Research Roadmap) as a high-quality SVG (Portrait A4 layout). Topic: ${topic}. Grade: ${gradeLevel}. Include: 1. A roadmap visual metaphor (curving path). 2. 5 Milestone nodes with inquiry questions. 3. Suggested high-quality source types for investigation. 4. A 'Final Reflection' prompt at the end. Output ONLY valid SVG XML code.` }]
     }],
