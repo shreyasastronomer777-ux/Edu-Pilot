@@ -21,7 +21,14 @@ const cleanJsonString = (str: string) => {
 const generateWithResilience = async (params: any) => {
   const ai = getAI();
   try {
-    const response = await ai.models.generateContent(params);
+    const config = {
+      ...params.config,
+      thinkingConfig: { thinkingBudget: 0 } // Disable thinking for maximum speed and stability on free tiers
+    };
+    const response = await ai.models.generateContent({
+      ...params,
+      config
+    });
     if (!response.text) throw new Error("The neural node returned an empty response. Recalibrating...");
     return response;
   } catch (error: any) {
@@ -32,6 +39,9 @@ const generateWithResilience = async (params: any) => {
     }
     if (msg.includes("429") || msg.includes("quota")) {
        throw new Error("Neural Traffic Limit Reached. Please wait a moment for the pipeline to clear.");
+    }
+    if (msg.includes("400")) {
+       throw new Error("Neural synchronization error. The request was malformed or restricted.");
     }
     throw new Error(error.message || "An unexpected error occurred in the neural grid.");
   }
@@ -110,21 +120,22 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
 
 export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text: string) => void) => {
   const ai = getAI();
-  const prompt = `Synthesize a lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}.`;
+  const prompt = `Synthesize a comprehensive lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}. Structure with clear objectives, activities, and evaluation.`;
   try {
     const response = await ai.models.generateContentStream({
       model: "gemini-3-flash-preview",
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      contents: prompt,
       config: {
         systemInstruction: "You are a master teacher synthesizing structured, standard-aligned lesson plans.",
+        thinkingConfig: { thinkingBudget: 0 }
       },
     });
     for await (const chunk of response) {
       if (chunk.text) onChunk(chunk.text);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Stream Error:", error);
-    throw error;
+    throw new Error(error.message || "Neural streaming interrupted.");
   }
 };
 
@@ -155,10 +166,10 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
     parts = [
       { inlineData: { data: cleanData, mimeType: source.mimeType } },
-      { text: `Synthesize an assessment with ${count} questions based on this asset.` }
+      { text: `Synthesize an assessment with ${count} questions based on this asset. Output JSON.` }
     ];
   } else {
-    parts = [{ text: `Synthesize an assessment with ${count} questions on: ${source.data}.` }];
+    parts = [{ text: `Synthesize an assessment with ${count} questions on: ${source.data}. Output JSON.` }];
   }
 
   const response = await generateWithResilience({
@@ -172,7 +183,7 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
 export const generateQuiz = async (topic: string, role: string, count: number = 5): Promise<Quiz> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ role: 'user', parts: [{ text: `Create a practice quiz for a ${role} on the topic: ${topic}.` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Create a practice quiz for a ${role} on the topic: ${topic}. Output JSON.` }] }],
     config: { responseMimeType: "application/json", responseSchema: quizSchema }
   });
   return JSON.parse(cleanJsonString(response.text!)) as Quiz;
@@ -210,7 +221,7 @@ export const generateVisualAid = async (prompt: string): Promise<string> => {
 export const convertNotesToFlashcards = async (notes: string): Promise<{front: string, back: string}[]> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ role: 'user', parts: [{ text: `Synthesize flashcards from these notes: ${notes}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Synthesize flashcards from these notes: ${notes}. Output JSON.` }] }],
     config: { 
       responseMimeType: "application/json", 
       responseSchema: {
@@ -232,10 +243,10 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
     const cleanData = source.data.includes(',') ? source.data.split(',')[1] : source.data;
     parts = [
       { inlineData: { data: cleanData, mimeType: source.mimeType } },
-      { text: "Synthesize a full lesson plan, slides, and summary from this document." }
+      { text: "Synthesize a full lesson plan, slides, and summary from this document. Output JSON." }
     ];
   } else {
-    parts = [{ text: `Synthesize a full lesson plan, slides, and summary from this link: ${source.data}` }];
+    parts = [{ text: `Synthesize a full lesson plan, slides, and summary from this data: ${source.data}. Output JSON.` }];
   }
 
   const response = await generateWithResilience({
@@ -299,7 +310,7 @@ export const generateSlidesFromLesson = async (lessonContent: string): Promise<S
 
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ role: 'user', parts: [{ text: `Synthesize a slide deck for this content: ${lessonContent}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Synthesize a slide deck for this content: ${lessonContent}. Output JSON.` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
   return JSON.parse(cleanJsonString(response.text!)) as SlideDeck;
@@ -319,7 +330,7 @@ export const generateBrainBreak = async (context: string): Promise<BrainBreak> =
 
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ role: 'user', parts: [{ text: `Suggest a classroom brain break activity based on: ${context}` }] }],
+    contents: [{ role: 'user', parts: [{ text: `Suggest a classroom brain break activity based on: ${context}. Output JSON.` }] }],
     config: { responseMimeType: "application/json", responseSchema: schema }
   });
   return JSON.parse(cleanJsonString(response.text!)) as BrainBreak;
@@ -380,7 +391,7 @@ export const convertAssetToFlashcards = async (base64Data: string, mimeType: str
     model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [
       { inlineData: { data: cleanData, mimeType } },
-      { text: "Synthesize flashcards from this document." }
+      { text: "Synthesize flashcards from this document. Output JSON." }
     ] }],
     config: { 
       responseMimeType: "application/json", 
@@ -409,31 +420,6 @@ export const summarizeAudioLecture = async (base64Audio: string, mimeType: strin
   return response.text!;
 };
 
-export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
-  const scriptResponse = await generateWithResilience({
-    model: "gemini-3-flash-preview",
-    contents: [{ role: 'user', parts: [{ text: `Synthesize an engaging audio script for this content: ${content}` }] }],
-  });
-  const script = scriptResponse.text!;
-
-  const ai = getAI();
-  const audioResponse = await ai.models.generateContent({
-    model: "gemini-2.5-flash-preview-tts",
-    contents: [{ parts: [{ text: script }] }],
-    config: {
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Kore' },
-        },
-      },
-    },
-  });
-
-  const audioBase64 = audioResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "";
-  return { audioBase64, script };
-};
-
 export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType: string): Promise<{ svgCode: string, cards: { front: string, back: string }[] }> => {
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
@@ -441,7 +427,7 @@ export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType:
     contents: [{
       parts: [
         { inlineData: { data: cleanData, mimeType } },
-        { text: "Perform a deep structural analysis of this drawing/diagram. 1. Synthesize a clean, valid SVG representation (simplified code) of the main components. 2. Generate 5 high-impact active recall flashcards based on the diagram's content. Output in JSON format." }
+        { text: "Perform a deep structural analysis of this drawing/diagram. 1. Synthesize a clean, valid SVG representation (simplified code) of the main components. 2. Generate 5 high-impact active recall flashcards based on the diagram's content. Output JSON." }
       ]
     }],
     config: {
@@ -486,7 +472,7 @@ export const synthesizeSVGSlides = async (lessonContent: string): Promise<string
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{
-      parts: [{ text: `Deconstruct this lesson plan into 6 beautiful SVG presentation slides: ${lessonContent}. Each slide should be a standalone valid SVG (800x450). Use professional colors, clear typography, and simplified architectural diagrams where relevant. Output a JSON array of SVG XML strings.` }]
+      parts: [{ text: `Deconstruct this lesson plan into 6 beautiful SVG presentation slides: ${lessonContent}. Each slide should be a standalone valid SVG (800x450). Output a JSON array of SVG XML strings.` }]
     }],
     config: {
       responseMimeType: "application/json",
@@ -499,9 +485,6 @@ export const synthesizeSVGSlides = async (lessonContent: string): Promise<string
   return JSON.parse(cleanJsonString(response.text!)) as string[];
 };
 
-/**
- * Exam Prep Question Synthesis for Students
- */
 export const synthesizeExamQuestions = async (base64Data: string, mimeType: string): Promise<{ question: string, answer: string }[]> => {
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
@@ -509,7 +492,7 @@ export const synthesizeExamQuestions = async (base64Data: string, mimeType: stri
     contents: [{
       parts: [
         { inlineData: { data: cleanData, mimeType } },
-        { text: "Analyze this lesson material and synthesize a set of 10 rigorous exam-style questions. For each question, provide a detailed correct answer. Output in a JSON array format." }
+        { text: "Analyze this lesson material and synthesize a set of 10 rigorous exam-style questions. For each question, provide a detailed correct answer. Output JSON." }
       ]
     }],
     config: {
@@ -530,18 +513,56 @@ export const synthesizeExamQuestions = async (base64Data: string, mimeType: stri
   return JSON.parse(cleanJsonString(response.text!)) as { question: string, answer: string }[];
 };
 
-/**
- * Pathfinder Maker for Teachers
- */
 export const synthesizePathfinder = async (topic: string, gradeLevel: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{
-      parts: [{ text: `Synthesize a professional academic 'Pathfinder' (Research Roadmap) as a high-quality SVG (Portrait A4 layout). Topic: ${topic}. Grade: ${gradeLevel}. Include: 1. A roadmap visual metaphor (curving path). 2. 5 Milestone nodes with inquiry questions. 3. Suggested high-quality source types for investigation. 4. A 'Final Reflection' prompt at the end. Output ONLY valid SVG XML code.` }]
+      parts: [{ text: `Synthesize a professional academic 'Pathfinder' (Research Roadmap) as a high-quality SVG (Portrait A4 layout). Topic: ${topic}. Grade: ${gradeLevel}. Output ONLY valid SVG XML code.` }]
     }],
     config: {
       systemInstruction: "You are a master of instructional scaffolding. Create elegant, architectural SVG research guides."
     }
   });
   return response.text!;
+};
+
+// Fix: Implemented generateAudioBriefing to synthesize a script and then convert it to audio.
+export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
+  const ai = getAI();
+  
+  // 1. Generate the script using the standard text model
+  const scriptResponse = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: [{ role: 'user', parts: [{ text: `Transform these academic notes into a professional, engaging audio briefing script (approx. 200 words): ${content}` }] }],
+    config: {
+      systemInstruction: "You are an expert academic narrator. Synthesize a concise, clear script for a student audio briefing. Use an informative yet encouraging tone.",
+      temperature: 0.7
+    }
+  });
+  
+  const script = scriptResponse.text || "Neural script synthesis failed.";
+
+  // 2. Synthesize audio from the script using the TTS model
+  const audioResponse = await ai.models.generateContent({
+    model: "gemini-2.5-flash-preview-tts",
+    contents: [{ parts: [{ text: script }] }],
+    config: {
+      responseModalities: [Modality.AUDIO],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: 'Zephyr' },
+        },
+      },
+    },
+  });
+
+  const audioPart = audioResponse.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+  if (!audioPart?.inlineData?.data) {
+    throw new Error("Neural audio synthesis failed. The model did not return audio data.");
+  }
+
+  return { 
+    audioBase64: audioPart.inlineData.data, 
+    script 
+  };
 };

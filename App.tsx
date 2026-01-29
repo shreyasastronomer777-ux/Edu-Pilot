@@ -148,7 +148,7 @@ const App: React.FC = () => {
         </div>
         
         <div className="p-8 pt-24 md:pt-32 animate-in fade-in duration-700 flex-grow overflow-x-hidden">
-          {/* HIGH-VISIBILITY ADVERTISEMENT / SPONSORSHIP SLOT */}
+          {/* HIGH-VISIBILITY SPONSORSHIP SLOT */}
           <div className="mb-10 max-w-[1200px] mx-auto w-full">
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[2.5rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
