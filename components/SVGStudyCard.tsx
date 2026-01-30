@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, Layout, Download, Copy, Trash2, Layers, AlertCircle, Image as ImageIcon, Palette, GraduationCap, ChevronRight, RotateCcw, FileDown } from 'lucide-react';
+import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, Layout, Download, Copy, Trash2, Layers, AlertCircle, Image as ImageIcon, Palette, GraduationCap, ChevronRight, RotateCcw, FileDown, Printer, FileType, FileJson, Check } from 'lucide-react';
 import { synthesizeSVGDiagramAndCards, generateVisualAid } from '../services/geminiService';
 import { Quiz } from '../types';
 
@@ -21,18 +21,12 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [quizScore, setQuizScore] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
 
-  // PDF Export State
+  // PDF & Export Hub State
   const [showExportHub, setShowExportHub] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const svgContainerRef = useRef<HTMLDivElement>(null);
-
-  const handleTabKeyDown = (e: React.KeyboardEvent, tab: 'blueprint' | 'illustration' | 'cards' | 'quiz') => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setActiveTab(tab);
-    }
-  };
 
   const processFile = (file: File) => {
     setError(null);
@@ -71,7 +65,9 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       const output = await synthesizeSVGDiagramAndCards(asset, mimeType);
       let enrichedSvg = output.svgCode;
       if (enrichedSvg.includes('<svg')) {
-        enrichedSvg = enrichedSvg.replace('<svg', `<svg role="img" aria-label="Synthesized academic diagram blueprint" `);
+        // Enhance SVG for accessibility
+        enrichedSvg = enrichedSvg.replace('<svg', `<svg role="img" aria-labelledby="blueprint-title" `);
+        enrichedSvg = enrichedSvg.replace('>', `><title id="blueprint-title">Synthesized academic diagram blueprint of ${output.quiz.title}</title>`);
       }
       setResult({ ...output, svgCode: enrichedSvg });
       const currentPoints = Number(localStorage.getItem('svgpt_xp')) || 0;
@@ -123,6 +119,36 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     setShowExplanation(false);
     setQuizScore(0);
     setQuizFinished(false);
+  };
+
+  const downloadSVG = () => {
+    if (!result) return;
+    const blob = new Blob([result.svgCode], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `blueprint-${Date.now()}.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadJSON = () => {
+    if (!result) return;
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `synthesis-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copySemanticData = () => {
+    if (!result) return;
+    const text = `Title: ${result.quiz.title}\n\nFlashcards:\n${result.cards.map(c => `- ${c.front}: ${c.back}`).join('\n')}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const exportPDF = (type: 'study-guide' | 'diagram-only' | 'assessment-only') => {
@@ -240,22 +266,28 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <div className="relative">
               <button 
                 onClick={() => setShowExportHub(!showExportHub)}
-                className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-xl hover:scale-105 transition-all"
+                className="px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl hover:scale-105 transition-all"
               >
-                <FileDown size={14} /> Export Hub
+                <Download size={14} /> Deployment Hub
               </button>
               {showExportHub && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl z-50 p-4 animate-in slide-in-from-top-2 duration-300">
-                  <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 px-2">PDF Export Modules</div>
+                <div className="absolute top-full right-0 mt-3 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.25)] z-50 p-4 animate-in slide-in-from-top-2 duration-300">
+                  <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-3">Export Assets</div>
                   <div className="space-y-1">
                     <button onClick={() => { exportPDF('study-guide'); setShowExportHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
-                      <FileText size={16} className="text-indigo-500" /> Full Study Guide
-                    </button>
-                    <button onClick={() => { exportPDF('diagram-only'); setShowExportHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
-                      <Layout size={16} className="text-indigo-500" /> Diagram Only
+                      <FileText size={16} className="text-indigo-500" /> Full Study Guide (PDF)
                     </button>
                     <button onClick={() => { exportPDF('assessment-only'); setShowExportHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
-                      <GraduationCap size={16} className="text-indigo-500" /> Assessment Only
+                      <GraduationCap size={16} className="text-indigo-500" /> Assessment Only (PDF)
+                    </button>
+                    <button onClick={() => { downloadSVG(); setShowExportHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
+                      <FileType size={16} className="text-indigo-500" /> Vector Blueprint (SVG)
+                    </button>
+                    <button onClick={() => { downloadJSON(); setShowExportHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
+                      <FileJson size={16} className="text-indigo-500" /> Neural JSON Data
+                    </button>
+                    <button onClick={() => { copySemanticData(); setShowExportHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
+                      {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} className="text-indigo-500" />} Copy Study Data
                     </button>
                   </div>
                 </div>
@@ -338,8 +370,8 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <button onClick={handleNeuralRender} className="p-2 bg-purple-500/10 text-purple-600 rounded-xl hover:bg-purple-500 hover:text-white transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500" title="Synthesize AI Illustration">
                   <Palette size={16} />
                 </button>
-                <button onClick={exportPDF.bind(null, 'diagram-only')} className="p-2 bg-indigo-500/10 text-indigo-600 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" title="PDF Export">
-                  <Download size={16} />
+                <button onClick={() => exportPDF('diagram-only')} className="p-2 bg-indigo-500/10 text-indigo-600 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" title="PDF Export">
+                  <Printer size={16} />
                 </button>
               </div>
             )}
@@ -406,6 +438,19 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                 {activeTab === 'quiz' && (
                   <div className="h-full flex flex-col">
+                    {/* Header matching user's "Artificial Intelligence Fundamentals" reference */}
+                    <div className="bg-white dark:bg-white/[0.04] p-8 md:p-10 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-xl mb-10 flex flex-wrap items-center justify-between gap-6">
+                        <h3 className="text-2xl md:text-3xl font-[900] text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
+                            {result.quiz.title}
+                        </h3>
+                        <button 
+                            onClick={() => exportPDF('assessment-only')}
+                            className="px-8 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
+                        >
+                            <Printer size={18} className="text-indigo-500" /> PRINT EVALUATION
+                        </button>
+                    </div>
+
                     {!quizFinished ? (
                       <div className="flex-1 flex flex-col animate-in slide-in-from-right-4">
                          <div className="mb-8 flex justify-between items-center bg-indigo-500/5 p-4 rounded-2xl border border-indigo-500/10">

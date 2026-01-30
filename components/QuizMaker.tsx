@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { generateQuizFromSource } from '../services/geminiService';
 import { Quiz } from '../types';
-import { HelpCircle, Loader2, Play, Download, Printer, CheckCircle2, ArrowLeft, Youtube, FileUp, Type, Wand2, History, Trash2, Activity, AlertCircle, Search, Filter } from 'lucide-react';
+import { HelpCircle, Loader2, Play, Download, Printer, CheckCircle2, ArrowLeft, Youtube, FileUp, Type, Wand2, History, Trash2, Activity, AlertCircle, Search, Filter, FileJson, FileText, Check, ChevronDown, FileType, GraduationCap } from 'lucide-react';
 
 interface QuizMakerProps {
   onBack?: () => void;
@@ -19,6 +19,10 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
     const saved = localStorage.getItem('svgpt_quiz_history');
     return saved ? JSON.parse(saved) : [];
   });
+
+  // Export State
+  const [showDeploymentHub, setShowDeploymentHub] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('svgpt_quiz_history', JSON.stringify(history));
@@ -69,63 +73,89 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
     setHistory(history.filter(q => q.title !== title));
   };
 
-  const handlePrint = (quizToPrint: Quiz) => {
+  const exportPDF = (type: 'assessment' | 'answer-key') => {
+    if (!quiz) return;
     const printWindow = window.open('', '_blank');
-    if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>${quizToPrint.title}</title>
-              <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-                body { font-family: 'Inter', sans-serif; padding: 60px; color: #1e293b; max-width: 800px; margin: 0 auto; }
-                .header { border-bottom: 2px solid #000; padding-bottom: 30px; margin-bottom: 50px; display: flex; justify-content: space-between; align-items: flex-end; }
-                .header-left h1 { margin: 0; font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
-                .header-right { text-align: right; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #64748b; }
-                .info-block { border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 40px; display: flex; gap: 40px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #475569; }
-                .q { margin-bottom: 45px; page-break-inside: avoid; }
-                .q-text { font-weight: 700; font-size: 16px; margin-bottom: 20px; display: flex; gap: 15px; }
-                .q-num { background: #000; color: #fff; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0; font-size: 12px; }
-                .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-left: 43px; }
-                .opt { border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 6px; font-size: 14px; font-weight: 500; }
-                .footer { margin-top: 100px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 10px; color: #94a3b8; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
-                @media print { .options { grid-template-columns: 1fr; } }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <div class="header-left">
-                  <h1>Assessment Hub</h1>
-                </div>
-                <div class="header-right">
-                  Evaluation Ref: SV-${Math.random().toString(36).substr(2, 6).toUpperCase()}
-                </div>
+    if (!printWindow) return;
+
+    const isAnswerKey = type === 'answer-key';
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${quiz.title} - ${isAnswerKey ? 'Answer Key' : 'Assessment'}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+            body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 60px; color: #1e293b; max-width: 800px; margin: 0 auto; line-height: 1.5; }
+            .header { border-bottom: 3px solid #6366f1; padding-bottom: 25px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+            .header h1 { margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px; }
+            .badge { background: #6366f1; color: white; padding: 4px 12px; border-radius: 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; display: inline-block; }
+            .info-box { border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 40px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+            .q { margin-bottom: 35px; page-break-inside: avoid; }
+            .q-header { display: flex; gap: 15px; margin-bottom: 15px; }
+            .q-num { background: #1e293b; color: white; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 800; }
+            .q-text { font-weight: 700; font-size: 15px; color: #0f172a; padding-top: 3px; }
+            .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-left: 43px; }
+            .opt { border: 1.5px solid #e2e8f0; padding: 10px 15px; border-radius: 8px; font-size: 13px; font-weight: 500; }
+            .opt.correct { border-color: #10b981; background: #f0fdf4; color: #065f46; font-weight: 700; }
+            .explanation { margin-top: 10px; padding: 12px 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #6366f1; font-size: 12px; color: #475569; font-style: italic; }
+            .footer { margin-top: 60px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
+            @media print { .options { grid-template-columns: 1fr; } }
+          </style>
+        </head>
+        <body>
+          <div class="badge">${isAnswerKey ? 'Master Key' : 'Formal Assessment'}</div>
+          <div class="header">
+            <h1>${quiz.title}</h1>
+            <div style="font-size: 10px; font-weight: 800; color: #6366f1;">REF: SV-${Math.random().toString(36).substr(2, 6).toUpperCase()}</div>
+          </div>
+          <div class="info-box">
+            <div>Student Name: ____________________________________</div>
+            <div>Date: ____________________</div>
+          </div>
+          ${quiz.questions.map((q, i) => `
+            <div class="q">
+              <div class="q-header">
+                <div class="q-num">${i + 1}</div>
+                <div class="q-text">${q.question}</div>
               </div>
-              <div class="info-block">
-                <div>Name: ____________________________</div>
-                <div>Date: ________________</div>
-                <div>Score: _______ / ${quizToPrint.questions.length}</div>
+              <div class="options">
+                ${q.options.map(opt => `
+                  <div class="opt ${isAnswerKey && opt === q.correctAnswer ? 'correct' : ''}">
+                    ${isAnswerKey && opt === q.correctAnswer ? '✓ ' : '□ '} ${opt}
+                  </div>
+                `).join('')}
               </div>
-              <h2 style="font-weight: 900; text-transform: uppercase; margin-bottom: 40px; text-align: center;">${quizToPrint.title}</h2>
-              ${quizToPrint.questions.map((q, i) => `
-                <div class="q">
-                  <div class="q-text">
-                    <div class="q-num">${i+1}</div>
-                    <div>${q.question}</div>
-                  </div>
-                  <div class="options">
-                    ${q.options.map(o => `<div class="opt">${o}</div>`).join('')}
-                  </div>
-                </div>
-              `).join('')}
-              <div class="footer">Synthesized by SVGPT Neural Engine • Shreyas Gunjal & Vaibhav V Chiniwar</div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
-    }
+              ${isAnswerKey ? `<div class="explanation"><strong>Rationale:</strong> ${q.explanation}</div>` : ''}
+            </div>
+          `).join('')}
+          <div class="footer">Synthesized by SVGPT Neural Engine • Verified Academic Output</div>
+          <script>window.onload = () => { window.print(); window.close(); }</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const downloadJSON = () => {
+    if (!quiz) return;
+    const blob = new Blob([JSON.stringify(quiz, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quiz-${quiz.title.toLowerCase().replace(/\s+/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyToClipboard = () => {
+    if (!quiz) return;
+    const text = `Quiz: ${quiz.title}\n\n` + quiz.questions.map((q, i) => 
+      `${i+1}. ${q.question}\n` + q.options.map((o, idx) => `   ${String.fromCharCode(65+idx)}) ${o}`).join('\n')
+    ).join('\n\n');
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const filteredHistory = history.filter(q => 
@@ -184,28 +214,61 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
 
           {quiz && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-              <div className="flex items-center justify-between gap-6 bg-white dark:bg-white/[0.04] p-6 md:p-8 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-xl backdrop-blur-xl">
-                <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight">{quiz.title}</h3>
-                <button 
-                  onClick={() => handlePrint(quiz)} 
-                  className="px-6 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
-                >
-                  <Printer size={16} /> PRINT EVALUATION
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-6 bg-white dark:bg-white/[0.04] p-6 md:p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-xl backdrop-blur-xl">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black uppercase tracking-[0.4em] text-indigo-500 mb-2">Neural Resolution</span>
+                  <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-tight">{quiz.title}</h3>
+                </div>
+                
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowDeploymentHub(!showDeploymentHub)}
+                    className="px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl hover:scale-105 transition-all"
+                  >
+                    <Download size={18} /> DEPLOYMENT HUB
+                  </button>
+                  
+                  {showDeploymentHub && (
+                    <div className="absolute top-full right-0 mt-3 w-72 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.25)] z-50 p-4 animate-in slide-in-from-top-2">
+                       <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 px-3">Asset Distribution</div>
+                       <div className="space-y-1">
+                          <button onClick={() => { exportPDF('assessment'); setShowDeploymentHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
+                             <Printer size={16} className="text-indigo-500" /> Assessment PDF
+                          </button>
+                          <button onClick={() => { exportPDF('answer-key'); setShowDeploymentHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
+                             <GraduationCap size={16} className="text-emerald-500" /> Answer Key PDF
+                          </button>
+                          <button onClick={() => { downloadJSON(); setShowDeploymentHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
+                             <FileJson size={16} className="text-indigo-500" /> Neural JSON Data
+                          </button>
+                          <button onClick={() => { copyToClipboard(); setShowDeploymentHub(false); }} className="w-full text-left p-3 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-3">
+                             {copied ? <Check size={16} className="text-green-500" /> : <CheckCircle2 size={16} className="text-indigo-500" />} Copy Text Content
+                          </button>
+                       </div>
+                    </div>
+                  )}
+                </div>
               </div>
+
               <div className="space-y-4">
                 {quiz.questions.map((q, i) => (
-                  <div key={i} className="bg-white/50 dark:bg-white/[0.03] p-8 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:border-indigo-500/20 transition-colors shadow-sm">
-                     <p className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-start gap-4 leading-relaxed">
-                       <span className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center text-sm font-black flex-shrink-0 shadow-lg">Q{i+1}</span>
-                       {q.question}
-                     </p>
+                  <div key={i} className="bg-white/50 dark:bg-white/[0.03] p-8 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:border-indigo-500/20 transition-colors shadow-sm group">
+                     <div className="flex items-start gap-4 mb-6">
+                       <span className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center text-sm font-black flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform">Q{i+1}</span>
+                       <p className="text-lg font-bold text-slate-900 dark:text-white leading-relaxed pt-1">{q.question}</p>
+                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-14">
                         {q.options.map((opt, idx) => (
-                          <div key={idx} className={`p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-sm font-bold ${opt === q.correctAnswer ? 'text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900/50' : 'text-slate-600 dark:text-slate-300'}`}>
+                          <div key={idx} className={`p-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-sm font-bold transition-all ${opt === q.correctAnswer ? 'text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/10' : 'text-slate-600 dark:text-slate-300'}`}>
                              {opt}
                           </div>
                         ))}
+                     </div>
+                     <div className="mt-6 pl-14 pt-4 border-t border-slate-100 dark:border-white/5">
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 italic">
+                          <span className="font-black uppercase tracking-widest text-[9px] text-indigo-500 not-italic mr-2">Rationale:</span> 
+                          {q.explanation}
+                        </p>
                      </div>
                   </div>
                 ))}
