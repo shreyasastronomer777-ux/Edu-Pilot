@@ -26,7 +26,7 @@ import SchoolAdmin from './components/SchoolAdmin';
 import InstantLessonGenerator from './components/InstantLessonGenerator';
 import LandingPage from './components/LandingPage';
 import { View, Role } from './types';
-import { LogOut, Loader2, Sparkles, ArrowRight, Globe, Key, ShieldCheck, ExternalLink, Cpu } from 'lucide-react';
+import { LogOut, Loader2, Cpu } from 'lucide-react';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
@@ -148,44 +148,6 @@ const App: React.FC = () => {
         </div>
         
         <div className="p-8 pt-24 md:pt-32 animate-in fade-in duration-700 flex-grow overflow-x-hidden">
-          {/* HIGH-VISIBILITY SPONSORSHIP SLOT */}
-          <div className="mb-10 max-w-[1200px] mx-auto w-full">
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[2.5rem] blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-              <div className="relative bg-white/50 dark:bg-white/[0.02] backdrop-blur-3xl border border-slate-200/50 dark:border-white/10 rounded-[2.5rem] p-4 md:p-6 flex flex-col items-center justify-center text-center overflow-hidden transition-all">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
-                  <span className="text-[8px] font-black uppercase tracking-[0.4em] text-slate-400">Institutional Partner Network</span>
-                </div>
-                <div id="svgpt-institutional-ad-container" className="flex flex-col md:flex-row items-center gap-4">
-                   <a 
-                     href="https://shiny-fortune.com/dbm.FpzCd/GRNWviZtGNUT/JeMm_9ku/ZNU/lvkiPUT/Ya3bNKT/k/5rNNTzYGtcNKjpck1AO/Tdkp1KNvwo" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="group/link flex items-center gap-3 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
-                   >
-                     <Globe size={14} className="text-indigo-200 group-hover/link:animate-spin" />
-                     Initialize Neural Resource
-                     <ArrowRight size={14} />
-                   </a>
-                   <a 
-                     href="https://vigorousescape.com/b.3zVm0DPS3bpHvvbem/V_JoZfDF0O2ANmzhUY5NOjTOUe0KLHTpYT3-NrTVk_5xNYTwUV" 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     className="group/link flex items-center gap-3 px-8 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all border border-white/10"
-                   >
-                     <Sparkles size={14} className="text-indigo-400 group-hover/link:animate-spin" />
-                     Partner Workspace
-                     <ArrowRight size={14} />
-                   </a>
-                </div>
-                <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 max-w-md italic mt-4">
-                   Optimized for high-performance academic trajectories and neural workload management.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {renderContent()}
         </div>
       </main>
