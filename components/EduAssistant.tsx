@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageSquare, ChevronDown, Trash2, Bot, Sparkles } from 'lucide-react';
 import { chatWithEduAssistant } from '../services/geminiService';
@@ -78,41 +77,41 @@ const EduAssistant: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-10 right-10 z-[100]">
+    <div className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[100]">
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="w-16 h-16 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group overflow-hidden"
+          className="w-14 h-14 md:w-16 md:h-16 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group overflow-hidden"
         >
           <div className="absolute inset-0 premium-gradient opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <MessageSquare className="relative z-10" size={28} />
+          <MessageSquare className="relative z-10 w-6 h-6 md:w-7 md:h-7" />
         </button>
       ) : (
-        <div className="bg-white/90 dark:bg-[#0B1221]/95 backdrop-blur-3xl w-[400px] h-[600px] rounded-[2.5rem] shadow-2xl border border-slate-200/50 dark:border-white/10 flex flex-col overflow-hidden animate-in">
-          <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-black/20">
+        <div className="bg-white/90 dark:bg-[#0B1221]/95 backdrop-blur-3xl w-[calc(100vw-3rem)] md:w-[400px] h-[550px] md:h-[600px] rounded-[2.5rem] shadow-2xl border border-slate-200/50 dark:border-white/10 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5">
+          <div className="p-5 md:p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-black/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 p-1.5 bg-white dark:bg-slate-800">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-white/10 p-1.5 bg-white dark:bg-slate-800">
                 <img src="https://iili.io/feG2UBt.md.png" alt="SVGPT" className="w-full h-full object-cover" />
               </div>
-              <span className="font-black text-slate-900 dark:text-white uppercase text-sm tracking-tighter">Isolated Node</span>
+              <span className="font-black text-slate-900 dark:text-white uppercase text-xs md:text-sm tracking-tighter">Isolated Node</span>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={resetAssistant} className="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-xl transition-all">
-                <Trash2 size={16} />
+              <button onClick={resetAssistant} title="Clear history" className="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-xl transition-all">
+                <Trash2 size={14} />
               </button>
-              <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all">
-                <ChevronDown size={20} className="text-slate-400" />
+              <button onClick={() => setIsOpen(false)} title="Minimize" className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-all">
+                <ChevronDown size={18} className="text-slate-400" />
               </button>
             </div>
           </div>
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar">
             {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in`}>
-                <div className={`max-w-[85%] p-4 rounded-2xl text-xs font-bold leading-relaxed ${
-                  m.role === 'user' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-slate-100 dark:bg-white/5 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-white/5 shadow-sm'
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2`}>
+                <div className={`max-w-[90%] md:max-w-[85%] p-3.5 md:p-4 rounded-2xl text-[11px] md:text-xs font-bold leading-relaxed ${
+                  m.role === 'user' ? 'bg-slate-900 text-white rounded-tr-none shadow-md' : 'bg-slate-100 dark:bg-white/5 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-white/5 shadow-sm'
                 }`}>
                   {m.role === 'bot' ? (
-                    <div className="prose prose-xs dark:prose-invert max-w-none">
+                    <div className="prose prose-xs dark:prose-invert max-w-none overflow-x-hidden">
                       <ReactMarkdown>{m.text}</ReactMarkdown>
                     </div>
                   ) : m.text}
@@ -129,17 +128,17 @@ const EduAssistant: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="p-6 pt-0 bg-white/50 dark:bg-black/20">
-            <div className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10">
+          <div className="p-4 md:p-6 pt-0 bg-white/50 dark:bg-black/20">
+            <div className="flex items-center gap-2 p-1.5 md:p-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-inner">
               <input
                 type="text" value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Secure message..."
-                className="flex-1 bg-transparent px-3 text-xs font-bold outline-none dark:text-white"
+                className="flex-1 bg-transparent px-2 md:px-3 text-[11px] md:text-xs font-bold outline-none dark:text-white"
               />
-              <button onClick={handleSend} disabled={!input.trim() || isLoading} className="w-10 h-10 premium-gradient text-white rounded-xl flex items-center justify-center disabled:opacity-50 transition-all hover:scale-105 active:scale-95">
-                <Send size={16} />
+              <button onClick={handleSend} disabled={!input.trim() || isLoading} className="w-9 h-9 md:w-10 md:h-10 premium-gradient text-white rounded-xl flex items-center justify-center disabled:opacity-50 transition-all hover:scale-105 active:scale-95 shadow-lg">
+                <Send size={14} className="md:w-4 md:h-4" />
               </button>
             </div>
           </div>

@@ -3,45 +3,65 @@ import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 
 /**
  * SVGPT AI Engine - Powered by Google Gemini 3 Flash
- * Optimized for high-reliability academic synthesis
+ * Optimized for high-reliability academic synthesis on mobile and web
  */
 
 const getAI = () => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("Neural link offline. Please verify API key configuration.");
+  if (!apiKey || apiKey === "undefined") {
+    throw new Error("Neural link offline. The API_KEY is missing from the environment configuration.");
   }
   return new GoogleGenAI({ apiKey });
 };
 
 /**
- * Enhanced JSON extractor to handle markdown noise
+ * Aggressive JSON extractor to handle dirty streams and markdown wrappers
  */
 const cleanJsonString = (str: string) => {
   if (!str) return "";
-  // Attempt to extract content between ```json and ``` or ``` and ```
+  // Step 1: Look for markdown code blocks
   const match = str.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  const candidate = match ? match[1] : str;
+  let candidate = match ? match[1] : str;
+  
+  // Step 2: If no code blocks or parsing fails, find the first '{' and last '}'
+  if (!candidate.trim().startsWith('{') && !candidate.trim().startsWith('[')) {
+    const firstBrace = str.indexOf('{');
+    const lastBrace = str.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      candidate = str.substring(firstBrace, lastBrace + 1);
+    }
+  }
   return candidate.trim();
 };
 
 const generateWithResilience = async (params: any) => {
-  const ai = getAI();
   try {
-    const response = await ai.models.generateContent(params);
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      ...params,
+      config: {
+        ...params.config,
+        // Ensure faster response for mobile stability
+        thinkingConfig: { thinkingBudget: 0 }
+      }
+    });
     if (!response.text) throw new Error("The neural node returned an empty response.");
     return response;
   } catch (error: any) {
     console.error("Neural Sync Error:", error);
     const msg = error.message?.toLowerCase() || "";
+    
+    if (msg.includes("api_key is missing")) {
+       throw new Error("Neural Link Offline: API Key not configured in environment.");
+    }
     if (msg.includes("401") || msg.includes("api key") || msg.includes("unauthorized")) {
-       throw new Error("Neural Link Unauthorized. Verify API credentials.");
+       throw new Error("Neural Link Unauthorized. Verify academic API credentials.");
     }
     if (msg.includes("429") || msg.includes("quota")) {
-       throw new Error("Neural Traffic Limit. Please wait 60 seconds for cooldown.");
+       throw new Error("Neural Traffic Limit. Cooldown active for 60 seconds.");
     }
     if (msg.includes("safety") || msg.includes("blocked")) {
-       throw new Error("Neural Safety Filter triggered. Please rephrase your query.");
+       throw new Error("Neural Safety Filter triggered. Refine your query parameters.");
     }
     throw new Error(error.message || "An unexpected error occurred in the neural grid.");
   }
@@ -91,11 +111,11 @@ export const solveDoubt = async (base64Data: string, mimeType: string): Promise<
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
-        { text: "Perform a deep analysis of this academic material. Deconstruct concepts and provide step-by-step pedagogical explanations. Use Markdown." }
+        { text: "Perform an advanced academic analysis. 1. If an equation is present, provide a 'Neural Equation Breakdown' identifying every component. 2. Explain the mechanism step-by-step. 3. List 'Key Components' and their academic significance. 4. Conclude with a 'Synthesis Takeaway'. Use bold LaTeX notation for all formulas." }
       ]
     }],
     config: { 
-      systemInstruction: "You are a specialized academic tutor expert in document analysis."
+      systemInstruction: "You are SVGPT Scientific Core. You specialize in identifying balanced equations and performing deep pedagogical deconstruction."
     }
   });
   return response.text || "Analysis failed.";
@@ -116,14 +136,15 @@ export const generateRevisionInsights = async (base64Data: string, mimeType: str
 };
 
 export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text: string) => void) => {
-  const ai = getAI();
-  const prompt = `Synthesize a lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}.`;
   try {
+    const ai = getAI();
+    const prompt = `Synthesize a lesson plan for ${config.gradeLevel}. Subject: ${config.subject}. Topic: ${config.topic}. Focus: ${config.focus}.`;
     const response = await ai.models.generateContentStream({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         systemInstruction: "You are a master teacher synthesizing structured, standard-aligned lesson plans.",
+        thinkingConfig: { thinkingBudget: 0 }
       },
     });
     for await (const chunk of response) {
@@ -175,9 +196,10 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
   });
   
   try {
-    return JSON.parse(cleanJsonString(response.text!)) as Quiz;
+    const cleaned = cleanJsonString(response.text!);
+    return JSON.parse(cleaned) as Quiz;
   } catch (e) {
-    throw new Error("Neural response parsing failed. Retrying...");
+    throw new Error("Neural response parsing failed. The model output was non-standard. Retrying may fix this.");
   }
 };
 
@@ -286,7 +308,8 @@ export const synthesizeInstantLessonAssets = async (source: { type: 'file' | 'ur
   });
 
   try {
-    return JSON.parse(cleanJsonString(response.text!)) as { plan: string, slides: SlideDeck, summary: string };
+    const cleaned = cleanJsonString(response.text!);
+    return JSON.parse(cleaned) as { plan: string, slides: SlideDeck, summary: string };
   } catch (e) {
     throw new Error("Neural synthesis returned invalid formatting. Please retry.");
   }
@@ -549,7 +572,7 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: script }] }],
     config: {
-      responseModalities: [Modality.AUDIO],
+      responseModalalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: {
           prebuiltVoiceConfig: { voiceName: 'Zephyr' },

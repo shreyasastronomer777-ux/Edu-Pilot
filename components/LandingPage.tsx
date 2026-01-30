@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { Globe, Sparkles, ArrowRight, Loader2, PlayCircle, ShieldCheck, Zap, Info } from 'lucide-react';
+import { Globe, Sparkles, ArrowRight, Loader2, PlayCircle, ShieldCheck, Zap, Info, AlertTriangle } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -14,7 +13,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{code?: string, message: string} | null>(null);
 
   const handleGoogleAuth = async () => {
     setIsLoggingIn(true);
@@ -24,8 +23,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       await signInWithPopup(auth, googleProvider);
       onGetStarted();
     } catch (err: any) {
-      console.error("Google Auth Error Details:", err);
-      setError(`Authentication handshake failed: ${err.message || "Try again or use Guest Mode."}`);
+      console.error("Auth Handshake Error:", err);
+      const errorCode = err.code || "";
+      if (errorCode === 'auth/unauthorized-domain') {
+        setError({
+          code: 'domain',
+          message: "Neural Link Restricted: This domain is not whitelisted in the Firebase configuration. Use 'Neural Bypass' to continue."
+        });
+      } else {
+        setError({ message: `Authentication handshake failed: ${err.message || "Try again or use Guest Mode."}` });
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -51,7 +58,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       }
       onGetStarted();
     } catch (err: any) {
-      setError("Identity verification failed. Please verify your credentials.");
+      setError({ message: "Identity verification failed. Please verify your credentials." });
     } finally {
       setIsLoggingIn(false);
     }
@@ -245,7 +252,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                     </div>
                  </div>
               </div>
-            </div>
           </section>
 
           {/* MAIN TOOLS SECTION */}
@@ -276,7 +282,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
           </section>
         </main>
       ) : (
-        /* AUTH SECTION - REMAINS PREMIUM AS IMPLEMENTED */
+        /* AUTH SECTION */
         <main className="min-h-screen flex items-center justify-center px-6 py-24 bg-[#F8FAFF] animate-in fade-in duration-500">
           <div className="max-w-md w-full">
             <div className="text-center mb-12">
@@ -309,8 +315,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                 </div>
 
                 {error && (
-                  <div className="p-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-100 text-center animate-in shake duration-300">
-                    {error}
+                  <div className={`p-4 rounded-xl flex flex-col gap-3 animate-in shake duration-300 border ${error.code === 'domain' ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-red-50 border-red-100 text-red-600'}`}>
+                    <div className="flex items-start gap-3">
+                       {error.code === 'domain' ? <AlertTriangle size={16} className="mt-0.5" /> : <Info size={16} className="mt-0.5" />}
+                       <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">{error.message}</p>
+                    </div>
+                    {error.code === 'domain' && (
+                      <button 
+                        type="button"
+                        onClick={handleGuestAccess}
+                        className="w-full py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md hover:bg-indigo-700 transition-all"
+                      >
+                        Initialize Neural Bypass (Guest Mode)
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -321,7 +339,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
 
               <div className="relative flex items-center justify-center my-10">
                 <div className="w-full border-t border-slate-100"></div>
-                <span className="absolute bg-white px-6 text-[9px] font-black text-slate-300 uppercase tracking-widest">Neural Bypass</span>
+                <span className="absolute bg-white px-6 text-[9px] font-black text-slate-300 uppercase tracking-widest">Secondary Handshake</span>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

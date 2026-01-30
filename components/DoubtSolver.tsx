@@ -1,6 +1,5 @@
-
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, BookOpenCheck, Save, Trash2, AlertCircle } from 'lucide-react';
+import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, BookOpenCheck, Save, Trash2, AlertCircle, Atom, FlaskConical } from 'lucide-react';
 import { solveDoubt, generateRevisionInsights } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
 
@@ -196,11 +195,6 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                    >
                      <X size={20} />
                    </button>
-                   {!isPdf && (
-                     <div className="absolute bottom-6 left-6 right-6 bg-black/60 backdrop-blur-md p-3 rounded-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                       <p className="text-[9px] font-black text-white uppercase tracking-widest truncate">{assetName}</p>
-                     </div>
-                   )}
                 </div>
                 
                 <div className="flex gap-4 w-full">
@@ -221,21 +215,14 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </div>
              </div>
            )}
-
-           {error && (
-              <div className="mt-8 flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl w-full animate-in slide-in-from-bottom-2">
-                 <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
-                 <p className="text-xs font-bold text-red-600 dark:text-red-400">{error}</p>
-              </div>
-           )}
         </div>
 
         {/* Output Card */}
         <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden min-h-[500px]">
            <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex justify-between items-center px-10">
               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                 {mode === 'solve' ? <BrainCircuit size={16} className="text-indigo-500" /> : <BookOpenCheck size={16} className="text-emerald-500" />}
-                 {mode === 'solve' ? 'Neural Pathway Solution' : 'Synthesized Mastery Points'}
+                 {mode === 'solve' ? <Atom size={16} className="text-indigo-500" /> : <BookOpenCheck size={16} className="text-emerald-500" />}
+                 {mode === 'solve' ? 'Neural Pathway Resolution' : 'Synthesized Mastery Points'}
               </h3>
               <div className="flex items-center gap-4">
                 {result && !loading && (
@@ -247,12 +234,6 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                      {isSaved ? <CheckCircle2 size={14} /> : <Save size={14} />} {isSaved ? 'Archived' : 'Archive Node'}
                    </button>
                 )}
-                {pointsAwarded && (
-                  <div className="flex items-center gap-2 animate-in slide-in-from-right-2">
-                     <span className="text-[10px] font-black text-green-500 uppercase">+50 MP Earned</span>
-                     <CheckCircle2 size={16} className="text-green-500" />
-                  </div>
-                )}
               </div>
            </div>
 
@@ -263,48 +244,59 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                       <div className={`w-16 h-16 border-4 border-t-transparent rounded-full animate-spin ${mode === 'solve' ? 'border-indigo-500' : 'border-emerald-500'}`}></div>
                       <Sparkles className={`absolute inset-0 m-auto animate-pulse ${mode === 'solve' ? 'text-indigo-500' : 'text-emerald-500'}`} size={24} />
                    </div>
-                   <p className="text-[10px] font-black uppercase tracking-[0.4em]">Architecting Resolution...</p>
+                   <p className="text-[10px] font-black uppercase tracking-[0.4em]">Deconstructing Scientific Logic...</p>
                 </div>
               ) : result ? (
                 <div className="animate-in fade-in duration-700">
                    <ReactMarkdown 
                      components={{
                        h1: ({node, ...props}) => <h1 className="text-2xl font-black tracking-tighter uppercase text-slate-900 dark:text-white border-b-2 border-indigo-500/10 pb-4 mb-8" {...props} />,
-                       h2: ({node, ...props}) => <h2 className="text-lg font-black uppercase tracking-tight text-indigo-500 mt-10 mb-6 flex items-center gap-2" {...props} />,
+                       h2: ({node, ...props}) => (
+                         <h2 className="group text-lg font-black uppercase tracking-tight text-indigo-500 mt-12 mb-6 flex items-center gap-3" {...props}>
+                            <div className="w-2 h-6 bg-indigo-500 rounded-full"></div>
+                            {props.children}
+                         </h2>
+                       ),
                        h3: ({node, ...props}) => <h3 className="text-base font-black text-slate-800 dark:text-slate-100 mt-8 mb-4 uppercase" {...props} />,
-                       p: ({node, ...props}) => <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 leading-relaxed mb-6" {...props} />,
-                       ul: ({node, ...props}) => <ul className="space-y-4 mb-8 list-none pl-2" {...props} />,
-                       ol: ({node, ...props}) => <ol className="space-y-4 mb-8 list-decimal pl-8 text-slate-700 dark:text-slate-300 font-bold" {...props} />,
+                       p: ({node, ...props}) => {
+                         const content = String(props.children);
+                         // Highlight scientific components
+                         if (content.includes('->') || content.includes('→') || content.includes('$')) {
+                            return (
+                              <div className="bg-slate-50 dark:bg-black/30 p-8 rounded-[2.5rem] border border-slate-100 dark:border-white/5 my-8 shadow-inner text-center font-mono text-lg font-black text-indigo-600 dark:text-indigo-400">
+                                 {props.children}
+                              </div>
+                            );
+                         }
+                         return <p className="text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 leading-relaxed mb-6" {...props} />;
+                       },
                        li: ({node, ...props}) => (
-                         <li className="flex items-start gap-3 group animate-in slide-in-from-left-2 duration-300">
-                           <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2.5 flex-shrink-0 group-hover:scale-125 group-hover:shadow-[0_0_8px_rgba(99,102,241,0.6)] transition-all"></div>
-                           <span className="text-sm md:text-base font-medium text-slate-700 dark:text-slate-200" {...props} />
+                         <li className="flex items-start gap-4 group animate-in slide-in-from-left-2 duration-300 mb-4">
+                           <div className="w-8 h-8 rounded-xl bg-indigo-500/5 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-500 group-hover:text-white transition-all text-indigo-500">
+                              <FlaskConical size={14} />
+                           </div>
+                           <span className="text-sm md:text-base font-medium text-slate-700 dark:text-slate-200 pt-1" {...props} />
                          </li>
                        ),
-                       code: ({node, ...props}) => <code className="bg-slate-100 dark:bg-black/40 px-2 py-0.5 rounded-md font-mono text-indigo-600 dark:text-indigo-400 font-bold border border-slate-200 dark:border-white/5" {...props} />,
-                       pre: ({node, ...props}) => (
-                         <pre className="bg-[#0D1117] text-slate-200 p-8 rounded-3xl overflow-x-auto my-10 border border-white/10 font-mono text-xs leading-[1.8] shadow-2xl relative" {...props}>
-                            <div className="absolute top-4 left-6 flex gap-1.5">
-                               <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
-                               <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50"></div>
-                               <div className="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
-                            </div>
-                            {props.children}
-                         </pre>
-                       ),
-                       strong: ({node, ...props}) => <strong className="font-black text-slate-900 dark:text-white bg-indigo-500/10 px-1.5 py-0.5 rounded-md" {...props} />,
-                       blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10 p-6 rounded-r-3xl my-8 italic text-slate-700 dark:text-slate-300" {...props} />,
+                       strong: ({node, ...props}) => <strong className="font-black text-indigo-600 dark:text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded-lg border border-indigo-500/10" {...props} />,
+                       blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10 p-8 rounded-r-[2.5rem] my-10 italic text-slate-800 dark:text-slate-200 font-bold" {...props} />,
                      }}
                    >
                      {result}
                    </ReactMarkdown>
+                   <div className="mt-12 pt-8 border-t border-slate-100 dark:border-white/5 flex items-center gap-4 text-emerald-500 bg-emerald-500/5 p-6 rounded-3xl border border-emerald-500/10">
+                      <CheckCircle2 size={24} className="flex-shrink-0" />
+                      <p className="text-xs font-black uppercase tracking-widest leading-relaxed">
+                        Synthesis Complete: Scholarly trajectory validated against global scientific standard.
+                      </p>
+                   </div>
                 </div>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center opacity-10">
                    <div className="p-10 border-2 border-dashed border-current rounded-full mb-8">
-                     {mode === 'solve' ? <BrainCircuit size={80} /> : <BookOpenCheck size={80} />}
+                     {mode === 'solve' ? <Atom size={80} /> : <BookOpenCheck size={80} />}
                    </div>
-                   <p className="text-[12px] font-black uppercase tracking-[0.6em] mt-2 text-center leading-relaxed">Awaiting Neural Data Input.<br/>Upload an asset to begin synthesis.</p>
+                   <p className="text-[12px] font-black uppercase tracking-[0.6em] mt-2 text-center leading-relaxed">Awaiting Academic Snapshot</p>
                 </div>
               )}
            </div>
