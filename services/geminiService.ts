@@ -448,14 +448,14 @@ export const summarizeAudioLecture = async (base64Audio: string, mimeType: strin
   return response.text!;
 };
 
-export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType: string): Promise<{ svgCode: string, cards: { front: string, back: string }[] }> => {
+export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType: string): Promise<{ svgCode: string, cards: { front: string, back: string }[], quiz: Quiz }> => {
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{
       parts: [
         { inlineData: { data: cleanData, mimeType } },
-        { text: "Perform a deep structural analysis. 1. Synthesize a clean valid SVG representation. 2. Generate 5 active recall flashcards. Output JSON." }
+        { text: "Perform a deep structural analysis. 1. Synthesize a clean valid SVG representation. 2. Generate 5 active recall flashcards. 3. Generate a 5-question multiple choice quiz to test understanding of the diagram components. Output JSON." }
       ]
     }],
     config: {
@@ -474,13 +474,33 @@ export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType:
               },
               required: ["front", "back"]
             }
+          },
+          quiz: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              questions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    question: { type: Type.STRING },
+                    options: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    correctAnswer: { type: Type.STRING },
+                    explanation: { type: Type.STRING }
+                  },
+                  required: ["question", "options", "correctAnswer", "explanation"]
+                }
+              }
+            },
+            required: ["title", "questions"]
           }
         },
-        required: ["svgCode", "cards"]
+        required: ["svgCode", "cards", "quiz"]
       }
     }
   });
-  return JSON.parse(cleanJsonString(response.text!)) as { svgCode: string, cards: { front: string, back: string }[] };
+  return JSON.parse(cleanJsonString(response.text!)) as { svgCode: string, cards: { front: string, back: string }[], quiz: Quiz };
 };
 
 export const synthesizeSVGWorksheet = async (topic: string, gradeLevel: string): Promise<string> => {

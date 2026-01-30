@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, BookOpenCheck, Save, Trash2, AlertCircle, Atom, FlaskConical } from 'lucide-react';
+import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, BookOpenCheck, Save, Trash2, AlertCircle, Atom, FlaskConical, Printer } from 'lucide-react';
 import { solveDoubt, generateRevisionInsights } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
 
@@ -47,23 +47,6 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     if (file) processFile(file);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
-  };
-
   const processAnalysis = async () => {
     if (!asset) return;
     setLoading(true);
@@ -86,6 +69,44 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       setError(e.message || "Neural synthesis failed. Ensure the asset is clear and academic in nature.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePrint = () => {
+    if (!result) return;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>SVGPT Resolution: ${assetName || 'Academic Asset'}</title>
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+              body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 50px; color: #0f172a; line-height: 1.6; }
+              .header { border-bottom: 4px solid #6366f1; padding-bottom: 20px; margin-bottom: 40px; }
+              .header h1 { margin: 0; font-weight: 800; font-size: 28px; text-transform: uppercase; letter-spacing: -1px; }
+              .header p { margin: 5px 0 0; color: #64748b; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; }
+              h2 { font-weight: 800; color: #4f46e5; margin-top: 30px; text-transform: uppercase; font-size: 18px; }
+              p { margin-bottom: 15px; }
+              ul { padding-left: 20px; margin-bottom: 20px; }
+              li { margin-bottom: 8px; }
+              .formula { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; font-family: monospace; font-weight: bold; text-align: center; font-size: 18px; margin: 20px 0; }
+              .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Academic Resolution</h1>
+              <p>SVGPT Neural Synthesis Hub • ${new Date().toLocaleDateString()}</p>
+            </div>
+            ${result.replace(/#{1,3}\s/g, '<h2>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+            <div class="footer">Architected by Shreyas Gunjal & Vaibhav V Chiniwar • SVGPT Intelligence Core</div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
     }
   };
 
@@ -150,7 +171,6 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
-        {/* Input Card */}
         <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl p-10 rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col items-center">
            <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-8 ${mode === 'solve' ? 'bg-indigo-500/10' : 'bg-emerald-500/10'}`}>
               {mode === 'solve' ? <BrainCircuit className="text-indigo-500" size={32} /> : <FileText className="text-emerald-500" size={32} />}
@@ -166,9 +186,9 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
            {!asset ? (
              <div 
                onClick={() => fileInputRef.current?.click()}
-               onDragOver={handleDragOver}
-               onDragLeave={handleDragLeave}
-               onDrop={handleDrop}
+               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+               onDragLeave={() => setIsDragging(false)}
+               onDrop={(e) => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if(f) processFile(f); }}
                className={`w-full aspect-[4/3] border-4 border-dashed rounded-[3rem] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 group relative ${isDragging ? 'border-indigo-500 bg-indigo-500/5 ring-8 ring-indigo-500/10' : 'border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5'}`}
              >
                 <div className={`absolute inset-0 bg-indigo-500/5 rounded-[2.8rem] opacity-0 transition-opacity duration-300 ${isDragging ? 'opacity-100' : ''}`}></div>
@@ -217,7 +237,6 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
            )}
         </div>
 
-        {/* Output Card */}
         <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden min-h-[500px]">
            <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex justify-between items-center px-10">
               <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -226,13 +245,21 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               </h3>
               <div className="flex items-center gap-4">
                 {result && !loading && (
-                   <button 
-                    onClick={handleSaveToNotes}
-                    disabled={isSaved}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm ${isSaved ? 'text-green-500 bg-green-500/10' : 'text-slate-400 hover:text-indigo-500 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10'}`}
-                   >
-                     {isSaved ? <CheckCircle2 size={14} /> : <Save size={14} />} {isSaved ? 'Archived' : 'Archive Node'}
-                   </button>
+                   <div className="flex gap-2">
+                      <button 
+                        onClick={handlePrint}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm text-slate-400 hover:text-indigo-500 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"
+                      >
+                        <Printer size={14} /> Print Resolution
+                      </button>
+                      <button 
+                        onClick={handleSaveToNotes}
+                        disabled={isSaved}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm ${isSaved ? 'text-green-500 bg-green-500/10' : 'text-slate-400 hover:text-indigo-500 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10'}`}
+                      >
+                        {isSaved ? <CheckCircle2 size={14} /> : <Save size={14} />} {isSaved ? 'Archived' : 'Archive Node'}
+                      </button>
+                   </div>
                 )}
               </div>
            </div>
@@ -248,6 +275,19 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 </div>
               ) : result ? (
                 <div className="animate-in fade-in duration-700">
+                   {/* Summary Block for "Solve This" clarity */}
+                   <div className="mb-10 p-8 bg-indigo-500/5 dark:bg-indigo-500/10 border-2 border-indigo-500/20 rounded-[2.5rem] relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                         <Sparkles size={120} />
+                      </div>
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500 mb-3 flex items-center gap-2">
+                        <Zap size={14} fill="currentColor" /> Neural Core Snapshot
+                      </h4>
+                      <p className="text-lg font-[900] tracking-tight text-slate-900 dark:text-white leading-snug">
+                        Analysis complete. Key structural components identified and pedagogical path established. Scroll for step-by-step deconstruction.
+                      </p>
+                   </div>
+
                    <ReactMarkdown 
                      components={{
                        h1: ({node, ...props}) => <h1 className="text-2xl font-black tracking-tighter uppercase text-slate-900 dark:text-white border-b-2 border-indigo-500/10 pb-4 mb-8" {...props} />,
@@ -260,7 +300,6 @@ const DoubtSolver: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                        h3: ({node, ...props}) => <h3 className="text-base font-black text-slate-800 dark:text-slate-100 mt-8 mb-4 uppercase" {...props} />,
                        p: ({node, ...props}) => {
                          const content = String(props.children);
-                         // Highlight scientific components
                          if (content.includes('->') || content.includes('→') || content.includes('$')) {
                             return (
                               <div className="bg-slate-50 dark:bg-black/30 p-8 rounded-[2.5rem] border border-slate-100 dark:border-white/5 my-8 shadow-inner text-center font-mono text-lg font-black text-indigo-600 dark:text-indigo-400">
