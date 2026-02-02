@@ -1,10 +1,11 @@
-
 import React, { useState, useRef } from 'react';
-import { FileQuestion, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, Layout, Download, Eye, EyeOff } from 'lucide-react';
+import { FileQuestion, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, Layout, Download, Eye, EyeOff, AlertCircle, Type, ClipboardPaste, Bolt } from 'lucide-react';
 import { synthesizeExamQuestions } from '../services/geminiService';
 
 const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+  const [inputMode, setInputMode] = useState<'file' | 'text'>('file');
   const [asset, setAsset] = useState<string | null>(null);
+  const [pastedText, setPastedText] = useState('');
   const [mimeType, setMimeType] = useState('');
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState<{ question: string, answer: string }[] | null>(null);
@@ -17,7 +18,7 @@ const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     if (file) {
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        setError("Unsupported format. Please upload a clear photo of your lesson or a PDF.");
+        setError("Invalid format. Use JPG/PNG/PDF.");
         setAsset(null);
         return;
       }
@@ -32,17 +33,23 @@ const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   const handleSynthesize = async () => {
-    if (!asset) return;
-    setLoading(true);
     setError(null);
+    if (inputMode === 'file' && !asset) return;
+    if (inputMode === 'text' && !pastedText.trim()) return;
+
+    setLoading(true);
     try {
-      const output = await synthesizeExamQuestions(asset, mimeType);
+      const output = await synthesizeExamQuestions({
+        type: inputMode,
+        data: inputMode === 'file' ? asset! : pastedText,
+        mimeType: inputMode === 'file' ? mimeType : undefined
+      });
       setQuestions(output);
       
       const currentPoints = Number(localStorage.getItem('svgpt_xp')) || 0;
       localStorage.setItem('svgpt_xp', (currentPoints + 120).toString());
-    } catch (e) {
-      setError("Analysis failed. Please ensure the text in the image is legible.");
+    } catch (e: any) {
+      setError("High-velocity synthesis failed. Verify input connectivity.");
     } finally {
       setLoading(false);
     }
@@ -53,83 +60,92 @@ const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-20 animate-in fade-in duration-700">
+    <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-20 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors group">
-          <div className="p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 group-hover:border-indigo-200 shadow-sm">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-rose-600 transition-colors group">
+          <div className="p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 group-hover:border-rose-200 shadow-sm">
             <ArrowLeft size={16} />
           </div>
-          Back to Dashboard
+          Back to Workspace
         </button>
         <div className="flex items-center gap-3 px-6 py-2 bg-rose-500/10 rounded-full border border-rose-500/20">
-          <FileQuestion className="text-rose-600 dark:text-rose-400" size={16} />
+          <Bolt className="text-rose-600 dark:text-rose-400 animate-pulse" size={16} />
           <span className="text-[10px] font-black uppercase tracking-widest text-rose-700 dark:text-rose-500">
-            Exam Intel Synthesis v1.0
+            TURBO SYNTHESIS ACTIVE (LITE-CORE)
           </span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl p-10 rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col items-center">
-          <div className="w-20 h-20 bg-rose-500/10 rounded-3xl flex items-center justify-center mb-8">
-            <BrainCircuit className="text-rose-500" size={32} />
+        <div className="bg-white/90 dark:bg-[#0B1221]/90 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-2xl flex flex-col items-center">
+          <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 mb-6 shadow-inner animate-[bounce_3s_infinite]">
+            <Bolt size={32} />
           </div>
-          <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-900 dark:text-white mb-2">Lesson-to-Exam</h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-10 text-center">Scan your materials to generate rigorous test questions</p>
+          <h2 className="text-4xl font-[900] tracking-tighter uppercase text-slate-900 dark:text-white mb-2 text-center leading-none">Fast-Track Exam</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10 text-center">Zero-Latency Academic Deconstruction</p>
 
-          {!asset ? (
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full aspect-[4/3] border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-all group"
-            >
-              <Upload size={48} className="text-slate-200 group-hover:text-rose-500 transition-colors mb-4" />
-              <span className="text-xs font-black uppercase tracking-[0.2em] px-8 text-center text-slate-400">
-                Drop Lesson Photo or PDF
-              </span>
-              <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={e => e.target.files?.[0] && processFile(e.target.files[0])} />
-            </div>
-          ) : (
-            <div className="w-full flex flex-col items-center">
-              <div className="relative w-full aspect-[4/3] rounded-[3rem] overflow-hidden border border-slate-200 dark:border-white/10 group mb-8 shadow-2xl bg-slate-50 dark:bg-black/20 flex items-center justify-center">
-                {mimeType === 'application/pdf' ? (
-                  <div className="flex flex-col items-center gap-4 text-slate-400">
-                    <FileText size={80} className="animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">PDF Node Loaded</span>
-                  </div>
-                ) : (
-                  <img src={asset} className="w-full h-full object-contain" />
-                )}
-                <button onClick={() => setAsset(null)} className="absolute top-6 right-6 p-3 bg-white/90 rounded-2xl text-red-500 shadow-xl hover:scale-110 transition-transform">
-                  <X size={20} />
-                </button>
-              </div>
+          <div className="w-full max-w-lg flex flex-col gap-6">
+            <div className="flex p-1 bg-slate-100 dark:bg-black/20 rounded-2xl border border-slate-200 dark:border-white/10 w-fit mx-auto">
               <button 
-                onClick={handleSynthesize}
-                disabled={loading}
-                className="w-full py-5 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                onClick={() => { setInputMode('file'); setQuestions(null); }}
+                className={`px-10 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${inputMode === 'file' ? 'bg-white dark:bg-slate-700 text-rose-600 shadow-xl' : 'text-slate-400'}`}
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
-                Synthesize Exam Questions
+                Neural Scan
+              </button>
+              <button 
+                onClick={() => { setInputMode('text'); setQuestions(null); }}
+                className={`px-10 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${inputMode === 'text' ? 'bg-white dark:bg-slate-700 text-rose-600 shadow-xl' : 'text-slate-400'}`}
+              >
+                Write Text
               </button>
             </div>
-          )}
 
-          {error && (
-            <div className="mt-8 flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl w-full animate-in slide-in-from-bottom-2">
-              <Zap size={18} className="text-red-500" />
-              <p className="text-xs font-bold text-red-600 dark:text-red-400">{error}</p>
+            <div className="relative group">
+              {inputMode === 'file' ? (
+                !asset ? (
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full aspect-[4/3] border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[3rem] flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                  >
+                    <Upload size={48} className="text-slate-200 group-hover:text-rose-500 transition-colors" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">DEPLOY ASSET (PDF/IMG)</span>
+                    <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={e => e.target.files?.[0] && processFile(e.target.files[0])} />
+                  </div>
+                ) : (
+                  <div className="relative w-full aspect-[4/3] rounded-[3rem] overflow-hidden border border-slate-200 dark:border-white/10 group bg-slate-50 dark:bg-black/20 flex items-center justify-center">
+                    {mimeType === 'application/pdf' ? <FileText size={80} className="text-slate-300 animate-pulse" /> : <img src={asset} className="w-full h-full object-contain" alt="Scan" />}
+                    <button onClick={() => setAsset(null)} className="absolute top-6 right-6 p-3 bg-white/90 dark:bg-slate-800/90 text-red-500 rounded-2xl shadow-xl hover:scale-110 transition-transform"><X size={20} /></button>
+                  </div>
+                )
+              ) : (
+                <textarea 
+                  value={pastedText}
+                  onChange={(e) => setPastedText(e.target.value)}
+                  placeholder="Paste lesson data for turbo-speed synthesis..."
+                  className="w-full h-64 p-8 bg-slate-50 dark:bg-black/40 rounded-[2.5rem] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white font-medium text-sm outline-none focus:ring-8 focus:ring-rose-500/10 transition-all resize-none shadow-inner"
+                />
+              )}
             </div>
-          )}
+
+            <button 
+              onClick={handleSynthesize}
+              disabled={loading || (inputMode === 'file' ? !asset : !pastedText.trim())}
+              className="w-full py-6 bg-rose-600 hover:bg-rose-700 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-[0_20px_40px_-10px_rgba(225,29,72,0.4)] active:scale-95 transition-all disabled:opacity-30 flex items-center justify-center gap-3 group"
+            >
+              {loading ? <Loader2 className="animate-spin" size={22} /> : <Bolt className="group-hover:animate-ping" size={22} />}
+              {loading ? 'SYNERGIZING...' : 'FLASH SYNTHESIS'}
+            </button>
+          </div>
         </div>
 
-        <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden min-h-[500px]">
-          <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex justify-between items-center px-10">
+        <div className="bg-white/90 dark:bg-[#0B1221]/90 backdrop-blur-3xl rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-2xl flex flex-col overflow-hidden min-h-[500px]">
+          <div className="p-8 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex justify-between items-center px-12">
             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Sparkles size={16} className="text-rose-500" /> Neural Question Pool
+              <Zap size={16} className="text-rose-500" /> VELOCITY POOL
             </h3>
             {questions && (
-              <button onClick={() => window.print()} className="p-2 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-xl hover:bg-slate-200 transition-all shadow-sm">
-                <Download size={16} />
+              <button onClick={() => window.print()} className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 text-slate-500 rounded-xl hover:scale-110 transition-all">
+                <Download size={18} />
               </button>
             )}
           </div>
@@ -137,29 +153,32 @@ const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           <div className="flex-1 p-10 overflow-y-auto custom-scrollbar">
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-400">
-                <Loader2 className="animate-spin text-rose-500 mb-6" size={48} />
-                <p className="text-[10px] font-black uppercase tracking-[0.4em]">Deconstructing Lesson Geometry...</p>
+                <div className="relative mb-8">
+                  <div className="w-20 h-20 border-4 border-rose-500/20 border-t-rose-500 rounded-full animate-spin"></div>
+                  <Bolt className="absolute inset-0 m-auto text-rose-500 animate-pulse" size={32} />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-[0.5em] text-center">TURBO-MAPPING ASSETS...</p>
               </div>
             ) : questions ? (
-              <div className="space-y-6 animate-in fade-in duration-1000">
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
                 {questions.map((q, i) => (
-                  <div key={i} className="p-6 bg-white dark:bg-white/[0.02] rounded-3xl border border-slate-100 dark:border-white/5 hover:border-rose-500/30 transition-all group">
-                    <div className="flex items-start gap-4">
-                      <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center text-[10px] font-black text-rose-500 flex-shrink-0">
+                  <div key={i} className="p-8 bg-slate-50 dark:bg-black/20 rounded-[2.5rem] border border-slate-100 dark:border-white/5 hover:border-rose-500/30 transition-all">
+                    <div className="flex items-start gap-6">
+                      <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xs font-black shadow-lg">
                         {i + 1}
                       </div>
                       <div className="flex-1 space-y-4">
-                        <p className="text-sm font-black text-slate-900 dark:text-white leading-relaxed">{q.question}</p>
+                        <p className="text-lg font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight">{q.question}</p>
                         <button 
                           onClick={() => toggleAnswer(i)}
-                          className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors"
+                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-500 transition-colors"
                         >
-                          {showAnswers[i] ? <EyeOff size={14} /> : <Eye size={14} />}
+                          {showAnswers[i] ? <EyeOff size={16} /> : <Eye size={16} />}
                           {showAnswers[i] ? 'Hide Answer' : 'Reveal Solution'}
                         </button>
                         {showAnswers[i] && (
-                          <div className="p-5 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 animate-in slide-in-from-top-2">
-                            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 leading-relaxed italic">
+                          <div className="p-6 bg-emerald-500/10 rounded-[1.8rem] border border-emerald-500/20 animate-in zoom-in-95">
+                            <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400 leading-relaxed italic">
                               {q.answer}
                             </p>
                           </div>
@@ -170,9 +189,9 @@ const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 ))}
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center opacity-10">
-                <FileQuestion size={100} strokeWidth={1} />
-                <p className="text-[12px] font-black uppercase tracking-[0.6em] mt-10 text-center leading-relaxed">Awaiting Academic Node Input</p>
+              <div className="h-full flex flex-col items-center justify-center opacity-10 grayscale">
+                <Bolt size={120} strokeWidth={1} />
+                <p className="text-[12px] font-black uppercase tracking-[0.8em] mt-10">AWAITING INPUT</p>
               </div>
             )}
           </div>

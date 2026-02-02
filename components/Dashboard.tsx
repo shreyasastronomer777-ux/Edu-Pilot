@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View } from '../types';
 import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ChevronRight, GraduationCap, Timer, Zap, BookOpenCheck, Camera, Bot, BrainCircuit, MessageSquare, Image as ImageIcon, Layout, FileDown, Compass, FileQuestion } from 'lucide-react';
@@ -23,7 +22,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
     { id: View.VISUAL_STUDIO, title: 'Image Generator', desc: 'Turn your ideas into beautiful pictures and diagrams.', icon: ImageIcon, color: 'purple' },
     { id: View.HOMEWORK_CHECKER, title: 'Homework Checker', desc: 'Grade student work and give them helpful feedback easily.', icon: CheckSquare, color: 'pink' },
   ] : [
-    { id: View.EXAM_PREP, title: 'Exam Generator', desc: 'Upload lesson photos to generate rigorous practice questions.', icon: FileQuestion, color: 'rose' },
+    { id: View.EXAM_PREP, title: 'Exam Generator', desc: 'Upload lesson photos or paste text to generate rigorous practice questions.', icon: FileQuestion, color: 'rose' },
     { id: View.QUICK_REVISION, title: 'Easy Review', desc: 'Turn long files into simple notes that are easy to read.', icon: BookOpenCheck, color: 'violet' },
     { id: View.DOUBT_SOLVER, title: 'Answer Finder', desc: 'Got a hard question? Upload a file or photo for help.', icon: Camera, color: 'indigo' },
     { id: View.SVG_STUDY_CARD, title: 'SVG Blueprint', desc: 'Convert your drawings and sketches into clean diagrams and cards.', icon: Layout, color: 'blue' },
@@ -38,7 +37,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
         <div className="space-y-6">
            <div className="flex flex-wrap items-center gap-3">
               <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-indigo-500/20 backdrop-blur-md">
-                Architected by Shreyas Gunjal & Vaibhav V Chiniwar
+                Architected by Shreyas Gunjal, Vaibhav V Chiniwar & Vamshi Br.
               </span>
               {!isTeacher && (
                 <span className="px-4 py-1.5 bg-yellow-500/10 text-yellow-500 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-yellow-500/20 flex items-center gap-2">

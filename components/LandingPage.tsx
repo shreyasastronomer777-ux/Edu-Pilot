@@ -395,7 +395,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             <span className="font-outfit font-bold text-2xl text-slate-900 tracking-tight">SVGPT<span className="text-indigo-600">AI</span></span>
           </div>
           <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest text-center md:text-left">
-            © 2026 SVGPT Intelligence Hub. <br className="md:hidden" /> Developed by Shreyas Gunjal & Vaibhav V Chiniwar.
+            © 2026 SVGPT Intelligence Hub. <br className="md:hidden" /> Developed by Shreyas Gunjal, Vaibhav V Chiniwar & Vamshi Br.
           </p>
           <div className="flex gap-8 text-slate-300">
             <a href="#" className="hover:text-indigo-600 transition-all"><i className="fab fa-twitter text-lg"></i></a>
