@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
 
@@ -372,7 +373,8 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
   const audioRes = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: script }] }],
-    config: { responseModalalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } }
+    // Fixed typo: responseModalities
+    config: { responseModalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } }
   });
   return { audioBase64: audioRes.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "", script };
 };

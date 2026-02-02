@@ -305,16 +305,24 @@ const Flashcards: React.FC = () => {
                   onClick={() => setIsFlipped(!isFlipped)}
                 >
                    <div className={`relative w-full h-full duration-700 [transform-style:preserve-3d] transition-transform ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
-                      <div className="absolute inset-0 [backface-visibility:hidden] bg-white dark:bg-slate-800 rounded-[3rem] border-2 border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col items-center justify-center p-12 text-center group-hover:border-indigo-500 transition-colors">
+                      <div className="absolute inset-0 [backface-visibility:hidden] bg-white dark:bg-slate-800 rounded-[3rem] border-2 border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col items-center justify-center p-8 md:p-12 text-center group-hover:border-indigo-500 transition-colors">
                          <div className="absolute top-10 w-10 h-1 text-slate-100 dark:text-slate-700 rounded-full"></div>
-                         <h3 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight uppercase">{studyQueue[currentCardIndex].front}</h3>
-                         <div className="absolute bottom-10 flex items-center gap-2 opacity-20 group-hover:opacity-40 transition-opacity">
+                         <div className="flex-1 w-full flex items-center justify-center overflow-y-auto custom-scrollbar pt-10 pb-16 px-4">
+                            <h3 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                              {studyQueue[currentCardIndex].front}
+                            </h3>
+                         </div>
+                         <div className="absolute bottom-6 flex items-center gap-2 opacity-20 group-hover:opacity-40 transition-opacity">
                             <RotateCcw size={16} />
                             <span className="text-[10px] font-black uppercase tracking-widest">Neural Flip</span>
                          </div>
                       </div>
-                      <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-indigo-600 dark:bg-indigo-900 rounded-[3rem] shadow-2xl flex items-center justify-center p-12 text-center text-white">
-                         <p className="text-xl md:text-3xl font-bold leading-relaxed tracking-tight">{studyQueue[currentCardIndex].back}</p>
+                      <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-indigo-600 dark:bg-indigo-900 rounded-[3rem] shadow-2xl flex flex-col items-center justify-center p-8 md:p-12 text-center text-white">
+                         <div className="flex-1 w-full flex items-center justify-center overflow-y-auto custom-scrollbar py-10 px-4">
+                            <p className="text-lg md:text-2xl font-bold leading-relaxed tracking-tight">
+                              {studyQueue[currentCardIndex].back}
+                            </p>
+                         </div>
                       </div>
                    </div>
                 </div>
@@ -348,7 +356,7 @@ const Flashcards: React.FC = () => {
 
           {finishedSession && (
              <div className="flex flex-col items-center justify-center h-full text-center animate-in zoom-in-95 duration-700">
-                <div className="w-24 h-24 bg-indigo-500/10 rounded-[2rem] flex items-center justify-center text-indigo-500 mb-8 animate-bounce shadow-inner">
+                <div className="w-24 h-24 bg-indigo-500/10 rounded-[2.5rem] flex items-center justify-center text-indigo-500 mb-8 animate-bounce shadow-inner">
                    <Sparkles size={48} />
                 </div>
                 <h2 className="text-4xl font-black tracking-tighter uppercase text-slate-900 dark:text-white mb-2">Recall Optimized</h2>
