@@ -74,13 +74,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             --partner-dark: #0B1221;
         }
         .glass-nav {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(79, 70, 229, 0.05);
         }
         .hero-gradient {
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent),
-                        radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.05), transparent);
+            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent 50%),
+                        radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.08), transparent 50%);
         }
         .btn-primary {
             background: var(--brand-primary);
@@ -103,6 +103,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         @keyframes shimmer {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
+        }
+        @keyframes drift {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(2%, 4%) scale(1.05); }
+          50% { transform: translate(-3%, 2%) scale(0.95); }
+          75% { transform: translate(1%, -3%) scale(1.02); }
+        }
+        .drifting-blob {
+          animation: drift 25s ease-in-out infinite;
+          will-change: transform;
         }
       `}</style>
 
@@ -133,9 +143,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       {authView === 'none' ? (
         <main className="flex-1 flex flex-col">
           {/* HERO SECTION */}
-          <section className="hero-gradient pt-48 pb-10 px-6">
-            <div className="max-w-7xl mx-auto text-center flex flex-col items-center">
-              <span className="inline-block py-1.5 px-5 bg-white shadow-sm border border-slate-100 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8 animate-in fade-in slide-in-from-bottom-2">
+          <section className="relative hero-gradient pt-48 pb-10 px-6 overflow-hidden">
+            {/* Animating Background Blobs */}
+            <div className="absolute inset-0 pointer-events-none z-0">
+               <div className="absolute top-[-10%] right-[-5%] w-[50%] h-[60%] bg-indigo-200/20 blur-[120px] rounded-full drifting-blob" style={{ animationDelay: '0s' }}></div>
+               <div className="absolute bottom-[-20%] left-[-10%] w-[45%] h-[55%] bg-purple-200/20 blur-[100px] rounded-full drifting-blob" style={{ animationDelay: '-5s' }}></div>
+               <div className="absolute top-[20%] left-[10%] w-[30%] h-[40%] bg-blue-100/10 blur-[90px] rounded-full drifting-blob" style={{ animationDelay: '-12s' }}></div>
+            </div>
+
+            <div className="max-w-7xl mx-auto text-center flex flex-col items-center relative z-10">
+              <span className="inline-block py-1.5 px-5 bg-white/60 backdrop-blur-md shadow-sm border border-slate-100 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8 animate-in fade-in slide-in-from-bottom-2">
                 Engineered for Academic Peak Performance
               </span>
               
@@ -149,7 +166,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
               
               <div className="flex flex-col sm:flex-row items-center gap-5 mb-24">
                 <button onClick={() => setAuthView('signup')} className="btn-primary text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-200 active:scale-95">Initialize Profile</button>
-                <button onClick={handleGuestAccess} className="bg-white border border-slate-200 text-slate-700 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all shadow-sm active:scale-95">Guest Access</button>
+                <button onClick={handleGuestAccess} className="bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all shadow-sm active:scale-95">Guest Access</button>
               </div>
 
               {/* AD FEATURE: PHOTO OF AN AD / SPONSORED SPOTLIGHT */}
@@ -255,24 +272,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
           </section>
 
           {/* MAIN TOOLS SECTION */}
-          <section id="workspace" className="py-32 px-6">
+          <section id="workspace" className="py-32 px-6 bg-white">
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-24">
                    <h2 className="text-4xl font-black tracking-tighter uppercase mb-4">Neural Infrastructure</h2>
                    <p className="text-slate-500 font-medium">Modular components for optimized educational flows.</p>
                 </div>
                 <div className="grid md:grid-cols-3 gap-10">
-                    <div className="p-12 bg-white rounded-[3.5rem] border border-slate-100 hover:border-indigo-200 hover:shadow-2xl transition-all group">
+                    <div className="p-12 bg-slate-50 rounded-[3.5rem] border border-slate-100 hover:border-indigo-200 hover:bg-white hover:shadow-2xl transition-all group">
                         <div className="w-16 h-16 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mb-10 shadow-xl group-hover:scale-110 transition-transform duration-500"><i className="fas fa-wand-sparkles text-2xl"></i></div>
                         <h3 className="text-2xl font-black mb-4 tracking-tight uppercase">Lesson Studio</h3>
                         <p className="text-slate-500 text-sm leading-relaxed font-medium">Synthesize high-rigor instructional assets from raw data streams in milliseconds.</p>
                     </div>
-                    <div className="p-12 bg-white rounded-[3.5rem] border border-slate-100 hover:border-emerald-200 hover:shadow-2xl transition-all group">
+                    <div className="p-12 bg-slate-50 rounded-[3.5rem] border border-slate-100 hover:border-emerald-200 hover:bg-white hover:shadow-2xl transition-all group">
                         <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mb-10 shadow-xl group-hover:scale-110 transition-transform duration-500"><i className="fas fa-check-double text-2xl"></i></div>
                         <h3 className="text-2xl font-black mb-4 tracking-tight uppercase">Evaluation Engine</h3>
                         <p className="text-slate-500 text-sm leading-relaxed font-medium">Precision-grade student submissions with neural feedback loops and criteria matching.</p>
                     </div>
-                    <div className="p-12 bg-white rounded-[3.5rem] border border-slate-100 hover:border-orange-200 hover:shadow-2xl transition-all group">
+                    <div className="p-12 bg-slate-50 rounded-[3.5rem] border border-slate-100 hover:border-orange-200 hover:bg-white hover:shadow-2xl transition-all group">
                         <div className="w-16 h-16 bg-orange-600 text-white rounded-2xl flex items-center justify-center mb-10 shadow-xl group-hover:scale-110 transition-transform duration-500"><i className="fas fa-brain-circuit text-2xl"></i></div>
                         <h3 className="text-2xl font-black mb-4 tracking-tight uppercase">Isolated Archive</h3>
                         <p className="text-slate-500 text-sm leading-relaxed font-medium">A high-performance repository for scholarly notes and deconstructed academic nodes.</p>
@@ -284,7 +301,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       ) : (
         /* AUTH SECTION */
         <main className="min-h-screen flex items-center justify-center px-6 py-24 bg-[#F8FAFF] animate-in fade-in duration-500">
-          <div className="max-w-md w-full">
+          <div className="max-w-md w-full relative z-10">
             <div className="text-center mb-12">
               <div className="w-20 h-20 bg-indigo-600 rounded-[1.8rem] flex items-center justify-center text-white mx-auto mb-8 shadow-2xl shadow-indigo-200 animate-pulse">
                 <i className="fas fa-fingerprint text-3xl"></i>
@@ -371,7 +388,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
         </main>
       )}
 
-      <footer className="bg-white border-t border-slate-100 py-20 px-6">
+      <footer className="bg-white border-t border-slate-100 py-20 px-6 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white"><i className="fas fa-brain"></i></div>
