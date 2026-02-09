@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RefreshCw, Brain, Plus, Minus, Volume2, VolumeX, Sparkles, Mic, MicOff, Wind, Loader2, Waves, Trees, AlertCircle, Key, Activity, X, MessageCircle, CloudRain, Moon, Music } from 'lucide-react';
+import { Play, Pause, RefreshCw, Brain, Plus, Minus, Volume2, VolumeX, Sparkles, Mic, MicOff, Wind, Loader2, Waves, Trees, AlertCircle, Key, Activity, X, MessageCircle, CloudRain, Moon, Music, Bell } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIBlob } from '@google/genai';
 
 // Guidelines Compliant Helpers
@@ -55,6 +55,7 @@ const FocusRoom: React.FC = () => {
   const [sessionType, setSessionType] = useState<'focus' | 'break'>('focus');
   const [isAiConnected, setIsAiConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showFinishedOverlay, setShowFinishedOverlay] = useState(false);
   
   // Ambient Sound State
   const [activeAmbient, setActiveAmbient] = useState<string | null>(null);
@@ -116,7 +117,7 @@ const FocusRoom: React.FC = () => {
         });
       }, 1000);
     } else if (timeLeft === 0 && isActive) {
-      handleSessionSwitch();
+      handleSessionEnd();
     }
     return () => clearInterval(interval);
   }, [isActive, timeLeft, showAssistantBubble]);
@@ -142,6 +143,13 @@ const FocusRoom: React.FC = () => {
     return masterAudioContextRef.current;
   };
 
+  const handleSessionEnd = () => {
+    setIsActive(false);
+    stopLiveSession();
+    setShowFinishedOverlay(true);
+    if (videoRef.current) videoRef.current.pause();
+  };
+
   const handleSessionSwitch = () => {
     if (sessionType === 'focus') {
       setSessionType('break');
@@ -150,8 +158,8 @@ const FocusRoom: React.FC = () => {
       setSessionType('focus');
       setTimeLeft(duration * 60);
     }
+    setShowFinishedOverlay(false);
     setIsActive(false);
-    stopLiveSession();
   };
 
   const startLiveSession = async () => {
@@ -251,6 +259,13 @@ const FocusRoom: React.FC = () => {
     }
   };
 
+  const adjustDuration = (amount: number) => {
+    if (isActive) return;
+    const newDuration = Math.max(5, Math.min(120, duration + amount));
+    setDuration(newDuration);
+    setTimeLeft(newDuration * 60);
+  };
+
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
@@ -289,6 +304,35 @@ const FocusRoom: React.FC = () => {
         </div>
       )}
 
+      {/* Session Finished Overlay */}
+      {showFinishedOverlay && (
+        <div className="fixed inset-0 z-[110] bg-indigo-600/20 backdrop-blur-[100px] flex items-center justify-center p-6 animate-in zoom-in-95 duration-700">
+           <div className="bg-white dark:bg-[#0B1221] p-16 rounded-[5rem] shadow-4xl border border-white/10 text-center max-w-lg w-full flex flex-col items-center">
+              <div className="w-24 h-24 bg-indigo-500/10 rounded-[2.5rem] flex items-center justify-center text-indigo-500 mb-10 animate-bounce">
+                 <Bell size={48} />
+              </div>
+              <h2 className="text-4xl font-[900] tracking-tighter uppercase text-slate-900 dark:text-white mb-4">Focus Terminated</h2>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-lg mb-12">
+                Your neural study cycle is complete. Take a breather or synthesize another module.
+              </p>
+              <div className="flex flex-col w-full gap-4">
+                 <button 
+                   onClick={handleSessionSwitch}
+                   className="w-full py-5 premium-gradient text-white rounded-3xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-500/20 active:scale-95 transition-all"
+                 >
+                    Initialize {sessionType === 'focus' ? 'Break Cycle' : 'Focus Cycle'}
+                 </button>
+                 <button 
+                   onClick={() => { setShowFinishedOverlay(false); setTimeLeft(duration * 60); }}
+                   className="w-full py-5 bg-slate-100 dark:bg-white/5 text-slate-500 rounded-3xl font-black uppercase tracking-widest text-xs active:scale-95 transition-all"
+                 >
+                    Reset Grid
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
       <div className="relative z-10 w-full max-w-4xl px-6 flex flex-col items-center gap-10">
         {/* Main Focus Card */}
         <div className={`relative w-full max-w-[460px] aspect-square transition-all duration-1000 ${
@@ -311,11 +355,26 @@ const FocusRoom: React.FC = () => {
                <circle cx="50%" cy="50%" r="42%" fill="transparent" stroke="currentColor" strokeWidth="2" className={`${isActive ? 'text-white/5' : 'text-slate-100 dark:text-white/5'}`} />
                <circle cx="50%" cy="50%" r="42%" fill="transparent" stroke={isActive ? '#6366F1' : '#4B49AC'} strokeWidth={isActive ? '16' : '10'} strokeDasharray="100 100" style={{ strokeDashoffset: 100 - progress }} pathLength="100" strokeLinecap="round" className="transition-all duration-1000 ease-linear" />
             </svg>
+            
+            {/* Adjustment Controls */}
+            {!isActive && (
+              <div className="absolute inset-x-0 top-[20%] flex justify-center gap-12 text-slate-300">
+                 <button onClick={() => adjustDuration(-5)} className="p-3 hover:text-indigo-500 transition-colors"><Minus size={24} /></button>
+                 <button onClick={() => adjustDuration(5)} className="p-3 hover:text-indigo-500 transition-colors"><Plus size={24} /></button>
+              </div>
+            )}
+
             <div className={`z-20 flex font-[900] tabular-nums tracking-[-0.05em] transition-colors duration-1000 ${isActive ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
               <span className="text-[110px] leading-none">{String(minutes).padStart(2, '0')}</span>
               <span className="text-[90px] leading-none px-2 animate-pulse opacity-40">:</span>
               <span className="text-[110px] leading-none">{String(seconds).padStart(2, '0')}</span>
             </div>
+
+            {!isActive && (
+              <div className="absolute inset-x-0 bottom-[20%] flex justify-center">
+                 <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">Adjust Duration</span>
+              </div>
+            )}
           </div>
 
           <div className="w-full flex items-center justify-center gap-8 mt-4">

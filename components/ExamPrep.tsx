@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { FileQuestion, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, Layout, Download, Eye, EyeOff, AlertCircle, Type, ClipboardPaste, Bolt } from 'lucide-react';
 import { synthesizeExamQuestions } from '../services/geminiService';
@@ -60,7 +61,7 @@ const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-20 animate-in fade-in duration-500">
+    <div className="max-w-6xl mx-auto flex flex-col gap-8 pb-20 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-rose-600 transition-colors group">
           <div className="p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/10 group-hover:border-rose-200 shadow-sm">
@@ -69,7 +70,7 @@ const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           Back to Workspace
         </button>
         <div className="flex items-center gap-3 px-6 py-2 bg-rose-500/10 rounded-full border border-rose-500/20">
-          <Bolt className="text-rose-600 dark:text-rose-400 animate-pulse" size={16} />
+          <BrainCircuit className="text-rose-600 dark:text-rose-400 animate-pulse" size={16} />
           <span className="text-[10px] font-black uppercase tracking-widest text-rose-700 dark:text-rose-500">
             TURBO SYNTHESIS ACTIVE (LITE-CORE)
           </span>
@@ -78,11 +79,11 @@ const ExamPrep: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white/90 dark:bg-[#0B1221]/90 backdrop-blur-3xl p-10 rounded-[3.5rem] border border-slate-200 dark:border-white/5 shadow-2xl flex flex-col items-center">
-          <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-500 mb-6 shadow-inner animate-[bounce_3s_infinite]">
-            <Bolt size={32} />
+          <div className="w-20 h-20 bg-rose-500/10 rounded-3xl flex items-center justify-center text-rose-500 mb-6 shadow-inner">
+            <BrainCircuit size={48} />
           </div>
-          <h2 className="text-4xl font-[900] tracking-tighter uppercase text-slate-900 dark:text-white mb-2 text-center leading-none">Fast-Track Exam</h2>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10 text-center">Zero-Latency Academic Deconstruction</p>
+          <h2 className="text-4xl font-[900] tracking-tighter uppercase text-slate-900 dark:text-white mb-2 text-center leading-none">LESSON-TO-EXAM</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-10 text-center uppercase">Scan your materials to generate rigorous test questions</p>
 
           <div className="w-full max-w-lg flex flex-col gap-6">
             <div className="flex p-1 bg-slate-100 dark:bg-black/20 rounded-2xl border border-slate-200 dark:border-white/10 w-fit mx-auto">

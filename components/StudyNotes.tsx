@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PenTool, Search, Plus, Tag, X, Save, Sparkles, Loader2, FileUp, FileText, Image as ImageIcon, Wand2, Trash2 } from 'lucide-react';
+import { PenTool, Search, Plus, Tag, X, Save, Sparkles, Loader2, FileUp, FileText, Image as ImageIcon, Wand2, Trash2, Pin, PinOff } from 'lucide-react';
 import { generateRevisionInsights } from '../services/geminiService';
 import { auth } from '../firebaseConfig';
 
@@ -11,6 +11,7 @@ interface Note {
   content: string;
   color: string;
   date: string;
+  isPinned?: boolean;
 }
 
 const StudyNotes: React.FC = () => {
@@ -19,7 +20,21 @@ const StudyNotes: React.FC = () => {
 
   const [notes, setNotes] = useState<Note[]>(() => {
     const saved = localStorage.getItem(storageKey);
-    return saved ? JSON.parse(saved) : [];
+    const parsed = saved ? JSON.parse(saved) : [];
+    
+    // Create a default welcome note if the archive is empty
+    if (parsed.length === 0) {
+      return [{
+        id: 'welcome-node-001',
+        title: 'Neural Node: Getting Started',
+        subject: 'Synthesis Archive',
+        content: 'Welcome to your Isolated Note repository. This high-performance archive is designed for scholarly persistence.\n\nKey Capabilities:\n1. Manual Synthesis: Click "New Note" to record raw academic data.\n2. Asset Deconstruction: Use "Synthesize Asset" to upload PDFs or images for immediate neural extraction.\n3. Search Optimization: Use the semantic search bar to locate specific academic vectors.\n4. Persistence: All nodes are automatically cached in your local environment.',
+        color: 'bg-indigo-100 dark:bg-indigo-900/30',
+        date: new Date().toLocaleDateString(),
+        isPinned: true
+      }];
+    }
+    return parsed;
   });
 
   const [search, setSearch] = useState('');
@@ -53,7 +68,8 @@ const StudyNotes: React.FC = () => {
         subject: newSubject,
         content: newContent,
         color: newColor,
-        date: new Date().toLocaleDateString()
+        date: new Date().toLocaleDateString(),
+        isPinned: false
       };
       setNotes([note, ...notes]);
       setIsAdding(false);
@@ -88,11 +104,17 @@ const StudyNotes: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const filteredNotes = notes.filter(n => 
-    n.title.toLowerCase().includes(search.toLowerCase()) || 
-    n.subject.toLowerCase().includes(search.toLowerCase()) ||
-    n.content.toLowerCase().includes(search.toLowerCase())
-  );
+  const togglePin = (id: string) => {
+    setNotes(notes.map(n => n.id === id ? { ...n, isPinned: !n.isPinned } : n));
+  };
+
+  const filteredNotes = notes
+    .filter(n => 
+      n.title.toLowerCase().includes(search.toLowerCase()) || 
+      n.subject.toLowerCase().includes(search.toLowerCase()) ||
+      n.content.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => (a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1));
 
   return (
     <div className="max-w-6xl mx-auto h-[calc(100vh-6rem)] flex flex-col animate-in fade-in duration-700">
@@ -137,12 +159,17 @@ const StudyNotes: React.FC = () => {
                     <span className="px-3 py-1 bg-white/60 dark:bg-black/20 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 border border-black/5 dark:border-white/5">
                       {note.subject}
                     </span>
-                    <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{note.date}</span>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => togglePin(note.id)} className={`p-1.5 rounded-lg transition-colors ${note.isPinned ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:text-indigo-500'}`}>
+                        {note.isPinned ? <Pin size={14} /> : <PinOff size={14} />}
+                      </button>
+                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{note.date}</span>
+                    </div>
                  </div>
                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{note.title}</h3>
                  <p className="text-slate-600 dark:text-slate-300 text-sm font-medium leading-relaxed whitespace-pre-wrap line-clamp-[6]">{note.content}</p>
                  
-                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all">
+                 <div className="absolute top-4 right-12 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
                     <button onClick={(e) => { e.stopPropagation(); if(confirm('Delete permanently?')) setNotes(notes.filter(n => n.id !== note.id)); }} className="p-2.5 bg-red-500 text-white rounded-xl shadow-lg hover:scale-110 active:scale-90 transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -168,12 +195,27 @@ const StudyNotes: React.FC = () => {
                  </button>
                </div>
                <div className="p-10 flex-1 overflow-y-auto space-y-8 custom-scrollbar">
+                  <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+                    {colors.map(c => (
+                      <button 
+                        key={c.val} 
+                        onClick={() => setNewColor(c.val)}
+                        className={`w-8 h-8 rounded-full border-2 transition-all ${newColor === c.val ? 'border-indigo-600 scale-110 shadow-lg' : 'border-transparent'} ${c.val.split(' ')[0]}`}
+                      />
+                    ))}
+                  </div>
                   <input type="text" placeholder="Title..." value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full text-3xl font-[900] bg-transparent border-none outline-none text-slate-900 dark:text-white tracking-tighter" />
+                  <div className="flex items-center gap-3">
+                    <Tag size={16} className="text-indigo-500" />
+                    <select value={newSubject} onChange={e => setNewSubject(e.target.value)} className="bg-transparent text-xs font-black uppercase tracking-widest text-slate-400 outline-none">
+                      {subjects.map(s => <option key={s} value={s} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{s}</option>)}
+                    </select>
+                  </div>
                   <textarea placeholder="Synthesize notes..." value={newContent} onChange={(e) => setNewContent(e.target.value)} className="w-full h-80 resize-none bg-transparent border-none outline-none text-slate-700 dark:text-slate-300 text-lg font-medium leading-relaxed" />
                </div>
                <div className="p-8 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/40 flex justify-end gap-4">
                  <button onClick={() => setIsAdding(false)} className="px-8 py-4 text-slate-500 font-black uppercase tracking-widest text-[10px]">Cancel</button>
-                 <button onClick={handleSave} disabled={!newTitle || !newContent} className="px-12 py-4 premium-gradient text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl">Archive Node</button>
+                 <button onClick={handleSave} disabled={!newTitle || !newContent} className="px-12 py-4 premium-gradient text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-2xl active:scale-95 transition-all">Archive Node</button>
                </div>
             </div>
          </div>

@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { generateQuizFromSource } from '../services/geminiService';
 import { Quiz } from '../types';
-import { HelpCircle, Loader2, Play, Download, Printer, CheckCircle2, ArrowLeft, Youtube, FileUp, Type, Wand2, History, Trash2, Activity, AlertCircle, Search, Filter, FileJson, FileText, Check, ChevronDown, FileType, GraduationCap, User, Edit3, Upload } from 'lucide-react';
+import { HelpCircle, Loader2, Play, Download, Printer, CheckCircle2, ArrowLeft, Youtube, FileUp, Type, Wand2, History, Trash2, Activity, AlertCircle, Search, Filter, FileJson, FileText, Check, ChevronDown, FileType, GraduationCap, User, Edit3, Upload, FileDown } from 'lucide-react';
 
 interface QuizMakerProps {
   onBack?: () => void;
@@ -228,6 +227,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
                     <h3 className="text-xl font-black tracking-tight uppercase text-slate-900 dark:text-white">{quiz.title}</h3>
                   </div>
                   <div className="flex gap-2">
+                    <button onClick={() => exportPDF('assessment')} className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all" title="Export PDF"><FileDown size={18}/></button>
                     <button onClick={() => exportPDF('assessment')} className="p-3 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-indigo-500 hover:text-white transition-all" title="Print Assessment"><Printer size={18}/></button>
                     <button onClick={downloadJSON} className="p-3 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-indigo-500 hover:text-white transition-all" title="Download JSON"><Download size={18}/></button>
                   </div>

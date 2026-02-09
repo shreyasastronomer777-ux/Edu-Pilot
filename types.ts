@@ -12,6 +12,8 @@ export enum View {
   INSTANT_LESSON = 'INSTANT_LESSON',
   WORKSHEET_GENERATOR = 'WORKSHEET_GENERATOR',
   PATHFINDER_MAKER = 'PATHFINDER_MAKER',
+  EXAM_GENERATOR = 'EXAM_GENERATOR',
+  GUEST_ASSESSMENT = 'GUEST_ASSESSMENT',
   // Student Views
   FLASHCARDS = 'FLASHCARDS',
   STUDY_NOTES = 'STUDY_NOTES',
@@ -34,6 +36,31 @@ export interface QuizQuestion {
   options: string[];
   correctAnswer: string;
   explanation: string;
+}
+
+export interface ExamQuestion {
+  type: 'MCQ' | 'SHORT' | 'LONG';
+  question: string;
+  marks: number;
+  bloomLevel: string;
+  estimatedTime: string;
+  answerKey?: string;
+  markingScheme?: string[];
+  options?: string[];
+}
+
+export interface ExamPaper {
+  title: string;
+  subject: string;
+  grade: string;
+  totalMarks: number;
+  duration: string;
+  instructions: string[];
+  sections: {
+    name: string;
+    description: string;
+    questions: ExamQuestion[];
+  }[];
 }
 
 export interface Quiz {

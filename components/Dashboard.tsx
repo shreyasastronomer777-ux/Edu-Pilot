@@ -1,6 +1,8 @@
+
 import React, { useState } from 'react';
 import { View } from '../types';
-import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ChevronRight, GraduationCap, Timer, Zap, BookOpenCheck, Camera, Bot, BrainCircuit, MessageSquare, Image as ImageIcon, Layout, FileDown, Compass, FileQuestion } from 'lucide-react';
+import { Sparkles, Clock, FileText, ArrowRight, Search, CheckSquare, Users, ChevronRight, GraduationCap, Timer, Zap, BookOpenCheck, Camera, Bot, BrainCircuit, MessageSquare, Image as ImageIcon, Layout, FileDown, Compass, FileQuestion, ScrollText } from 'lucide-react';
+import { Credits } from './Branding';
 
 interface DashboardProps {
   onChangeView: (view: View) => void;
@@ -14,6 +16,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
 
   const tools = isTeacher ? [
     { id: View.SV_CHATBOT, title: 'AI Assistant', desc: 'Ask any teaching question and get helpful answers right away.', icon: MessageSquare, color: 'indigo' },
+    { id: View.EXAM_GENERATOR, title: 'Exam Studio', desc: 'Synthesize rigorous, balanced exam papers with Bloom\'s alignment.', icon: ScrollText, color: 'rose' },
     { id: View.INSTANT_LESSON, title: 'Quick Plan Generator', desc: 'Make a full lesson plan and slides from any file or link.', icon: Sparkles, color: 'violet' },
     { id: View.LESSON_PLANNER, title: 'Lesson Creator', icon: FileText, desc: 'Create plans and SVG architectural slides for your classes.', color: 'blue' },
     { id: View.PATHFINDER_MAKER, title: 'Pathfinder Maker', desc: 'Synthesize guided inquiry roadmaps for student research projects.', icon: Compass, color: 'emerald' },
@@ -22,7 +25,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
     { id: View.VISUAL_STUDIO, title: 'Image Generator', desc: 'Turn your ideas into beautiful pictures and diagrams.', icon: ImageIcon, color: 'purple' },
     { id: View.HOMEWORK_CHECKER, title: 'Homework Checker', desc: 'Grade student work and give them helpful feedback easily.', icon: CheckSquare, color: 'pink' },
   ] : [
-    { id: View.EXAM_PREP, title: 'Exam Generator', desc: 'Upload lesson photos or paste text to generate rigorous practice questions.', icon: FileQuestion, color: 'rose' },
+    { id: View.EXAM_PREP, title: 'LESSON-TO-EXAM', desc: 'SCAN YOUR MATERIALS TO GENERATE RIGOROUS TEST QUESTIONS', icon: BrainCircuit, color: 'rose' },
     { id: View.QUICK_REVISION, title: 'Easy Review', desc: 'Turn long files into simple notes that are easy to read.', icon: BookOpenCheck, color: 'violet' },
     { id: View.DOUBT_SOLVER, title: 'Answer Finder', desc: 'Got a hard question? Upload a file or photo for help.', icon: Camera, color: 'indigo' },
     { id: View.SVG_STUDY_CARD, title: 'SVG Blueprint', desc: 'Convert your drawings and sketches into clean diagrams and cards.', icon: Layout, color: 'blue' },
@@ -37,7 +40,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
         <div className="space-y-6">
            <div className="flex flex-wrap items-center gap-3">
               <span className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-indigo-500/20 backdrop-blur-md">
-                Architected by Shreyas Gunjal, Vaibhav V Chiniwar & Vamshi Br.
+                Founding Architects: Vamshi, Vaibhav & Shreyas
               </span>
               {!isTeacher && (
                 <span className="px-4 py-1.5 bg-yellow-500/10 text-yellow-500 text-[10px] font-black uppercase tracking-[0.3em] rounded-full border border-yellow-500/20 flex items-center gap-2">
@@ -46,23 +49,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onChangeView, userRole }) => {
               )}
            </div>
           <h1 className="text-6xl md:text-7xl font-[900] text-slate-900 dark:text-white leading-[0.85] tracking-tighter uppercase">
-            My <br />
+            ENTRANCE <br />
             <span className="inline text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Workspace.</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-xl font-medium max-w-xl">
-            Welcome back! Pick a tool below to start {isTeacher ? 'planning your class' : 'your study time'}.
+            Welcome back to ENTRANCE. Pick a tool below to start {isTeacher ? 'planning your class' : 'your study time'}.
           </p>
         </div>
 
-        <div className="relative group w-full md:w-[350px]">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
-          <input 
-            type="text" 
-            placeholder="Search for a tool..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-16 pr-6 py-6 bg-white dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl focus:ring-8 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-sm text-slate-800 dark:text-white"
-          />
+        <div className="flex flex-col gap-6 items-end">
+          <Credits className="items-end text-right hidden md:flex" />
+          <div className="relative group w-full md:w-[350px]">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={20} />
+            <input 
+              type="text" 
+              placeholder="Search for a tool..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-16 pr-6 py-6 bg-white dark:bg-white/5 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl focus:ring-8 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-bold text-sm text-slate-800 dark:text-white"
+            />
+          </div>
         </div>
       </header>
 

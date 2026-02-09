@@ -1,21 +1,18 @@
 
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role } from "../types";
+import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role, ExamPaper } from "../types";
 
 /**
- * SVGPT AI Engine - High Velocity Optimized
+ * SVGPT AI Engine - Technical Core
+ * Powered by Google Gemini Intelligence
  */
 
 const getAI = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "undefined") {
-    throw new Error("Neural link offline. The API_KEY is missing from the environment configuration.");
-  }
-  return new GoogleGenAI({ apiKey });
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
 
 /**
- * Aggressive JSON extractor to handle dirty streams and markdown wrappers
+ * Robust JSON extraction for model responses
  */
 const cleanJsonString = (str: string) => {
   if (!str) return "";
@@ -38,7 +35,7 @@ const generateWithResilience = async (params: any) => {
       ...params,
       config: {
         ...params.config,
-        thinkingConfig: { thinkingBudget: 0 }
+        // No thinking budget by default for Flash models to reduce latency
       }
     });
     if (!response.text) throw new Error("Empty neural response.");
@@ -47,6 +44,68 @@ const generateWithResilience = async (params: any) => {
     console.error("Neural Sync Error:", error);
     throw new Error(error.message || "Unexpected error in neural grid.");
   }
+};
+
+export const generateExamPaper = async (config: any): Promise<ExamPaper> => {
+  const prompt = `Synthesize a professional academic exam paper. 
+  Subject: ${config.subject}
+  Chapters: ${config.chapters}
+  Total Marks: ${config.totalMarks}
+  Grade: ${config.grade}
+  Blueprint: ${JSON.stringify(config.blueprint)}
+  
+  Requirements:
+  1. Distribute questions based on Bloom's Taxonomy cognitive levels.
+  2. Include estimated time for each question.
+  3. Provide a clear marking scheme for subjective questions.
+  4. Ensure full syllabus coverage of the specified chapters.
+  5. Output ONLY valid JSON matching the ExamPaper interface.`;
+
+  const response = await generateWithResilience({
+    model: "gemini-3-flash-preview",
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          title: { type: Type.STRING },
+          subject: { type: Type.STRING },
+          grade: { type: Type.STRING },
+          totalMarks: { type: Type.NUMBER },
+          duration: { type: Type.STRING },
+          instructions: { type: Type.ARRAY, items: { type: Type.STRING } },
+          sections: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                description: { type: Type.STRING },
+                questions: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      type: { type: Type.STRING, enum: ['MCQ', 'SHORT', 'LONG'] },
+                      question: { type: Type.STRING },
+                      marks: { type: Type.NUMBER },
+                      bloomLevel: { type: Type.STRING },
+                      estimatedTime: { type: Type.STRING },
+                      answerKey: { type: Type.STRING },
+                      markingScheme: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      options: { type: Type.ARRAY, items: { type: Type.STRING } }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+  return JSON.parse(cleanJsonString(response.text!)) as ExamPaper;
 };
 
 export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
@@ -70,7 +129,7 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3-pro-preview",
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
@@ -255,7 +314,7 @@ export const gradeAnswerSheet = async (studentAsset: any, criteria: string, answ
 
 export const checkPlagiarism = async (text: string): Promise<{ analysis: string, sources: {uri: string, title: string}[] }> => {
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3-pro-preview",
     contents: [{ role: 'user', parts: [{ text: `Plagiarism check: ${text}` }] }],
     config: { tools: [{ googleSearch: {} }] }
   });
@@ -318,10 +377,6 @@ export const synthesizeSVGSlides = async (lessonContent: string): Promise<string
   return JSON.parse(cleanJsonString(response.text!));
 };
 
-/**
- * HIGH VELOCITY EXAM SYNTHESIS
- * Optimized using Gemini Flash Lite for near-instant results
- */
 export const synthesizeExamQuestions = async (input: { type: 'file' | 'text', data: string, mimeType?: string }): Promise<{ question: string, answer: string }[]> => {
   let parts: any[] = [];
   if (input.type === 'file') {
@@ -335,7 +390,7 @@ export const synthesizeExamQuestions = async (input: { type: 'file' | 'text', da
   }
 
   const response = await generateWithResilience({
-    model: "gemini-flash-lite-latest", // TURBO SPEED MODEL
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts }],
     config: {
       responseMimeType: "application/json",
@@ -373,7 +428,6 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
   const audioRes = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: script }] }],
-    // Fixed typo: responseModalities
     config: { responseModalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } }
   });
   return { audioBase64: audioRes.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "", script };

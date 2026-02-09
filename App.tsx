@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -19,13 +20,15 @@ import SVGStudyCard from './components/SVGStudyCard';
 import WorksheetGenerator from './components/WorksheetGenerator';
 import PathfinderMaker from './components/PathfinderMaker';
 import ExamPrep from './components/ExamPrep';
+import ExamGenerator from './components/ExamGenerator';
+import GuestAssessment from './components/GuestAssessment';
 import RoleSelection from './components/RoleSelection';
 import SVChatbot from './components/SVChatbot';
 import ParentPortal from './components/ParentPortal';
 import SchoolAdmin from './components/SchoolAdmin';
 import InstantLessonGenerator from './components/InstantLessonGenerator';
 import LandingPage from './components/LandingPage';
-import { View, Role } from './types';
+import { View, Role, ExamPaper } from './types';
 import { LogOut, Loader2, Cpu } from 'lucide-react';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -36,6 +39,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.LANDING);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('sv-theme') === 'dark');
   const [userRole, setUserRole] = useState<Role | null>(() => localStorage.getItem('sv-role') as Role);
+  const [activeGuestExam, setActiveGuestExam] = useState<ExamPaper | null>(null);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -81,6 +85,16 @@ const App: React.FC = () => {
     }
   };
 
+  const handleEnterAssessment = (code: string) => {
+    const examData = localStorage.getItem(`guest_exam_${code}`);
+    if (examData) {
+      setActiveGuestExam(JSON.parse(examData));
+      setCurrentView(View.GUEST_ASSESSMENT);
+    } else {
+      alert("Invalid Neural Key. Access Denied.");
+    }
+  };
+
   const renderContent = () => {
     const backToRoot = () => setCurrentView(userRole === 'parent' ? View.PARENT_PORTAL : userRole === 'admin' ? View.SCHOOL_ADMIN : View.DASHBOARD);
     
@@ -102,6 +116,8 @@ const App: React.FC = () => {
       case View.WORKSHEET_GENERATOR: return <WorksheetGenerator onBack={backToRoot} />;
       case View.PATHFINDER_MAKER: return <PathfinderMaker onBack={backToRoot} />;
       case View.EXAM_PREP: return <ExamPrep onBack={backToRoot} />;
+      case View.EXAM_GENERATOR: return <ExamGenerator onBack={backToRoot} />;
+      case View.GUEST_ASSESSMENT: return activeGuestExam ? <GuestAssessment paper={activeGuestExam} onFinish={() => setCurrentView(View.LANDING)} /> : null;
       case View.SV_CHATBOT: return <SVChatbot onBack={backToRoot} userRole={userRole === 'teacher' ? 'teacher' : 'student'} />;
       case View.INSTANT_LESSON: return <InstantLessonGenerator onBack={backToRoot} />;
       case View.PARENT_PORTAL: return <ParentPortal />;
@@ -122,12 +138,22 @@ const App: React.FC = () => {
     );
   }
 
+  if (currentView === View.GUEST_ASSESSMENT) {
+    return (
+      <div className={`h-full min-h-screen ${isDarkMode ? 'dark bg-[#050505]' : 'bg-slate-50'}`}>
+        <main className="flex-1 flex flex-col p-8 md:p-20">
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
   if (currentView === View.LANDING && !isLoggedIn) {
-    return <LandingPage onGetStarted={handleGetStarted} />;
+    return <LandingPage onGetStarted={handleGetStarted} onEnterAssessment={handleEnterAssessment} />;
   }
 
   if (!isLoggedIn) {
-    return <LandingPage onGetStarted={handleGetStarted} />;
+    return <LandingPage onGetStarted={handleGetStarted} onEnterAssessment={handleEnterAssessment} />;
   }
 
   if (!userRole) {

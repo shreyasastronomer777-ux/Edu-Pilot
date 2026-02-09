@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { View, Role } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot, BrainCircuit, Sparkles, MessageSquare, Layout, FileDown, Compass, FileQuestion } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot, BrainCircuit, Sparkles, MessageSquare, Layout, FileDown, Compass, FileQuestion, ScrollText } from 'lucide-react';
 import { auth } from '../firebaseConfig';
+import { AIHeadIcon } from './Branding';
 
 interface SidebarProps {
   currentView: View;
@@ -21,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
         return [
           { id: View.DASHBOARD, label: 'Main Menu', icon: LayoutDashboard },
           { id: View.SV_CHATBOT, label: 'Chat Help', icon: MessageSquare },
+          { id: View.EXAM_GENERATOR, label: 'Exam Studio', icon: ScrollText },
           { id: View.INSTANT_LESSON, label: 'Fast Planner', icon: Sparkles },
           { id: View.LESSON_PLANNER, label: 'Make Lessons', icon: BookOpen },
           { id: View.PATHFINDER_MAKER, label: 'Pathfinder', icon: Compass },
@@ -32,7 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
       case 'student':
         return [
           { id: View.DASHBOARD, label: 'My Study', icon: LayoutDashboard },
-          { id: View.EXAM_PREP, label: 'Exam Prep', icon: FileQuestion },
+          { id: View.EXAM_PREP, label: 'LESSON-TO-EXAM', icon: BrainCircuit },
           { id: View.FOCUS_ROOM, label: 'Focus Time', icon: Timer },
           { id: View.DOUBT_SOLVER, label: 'Find Answers', icon: Mic },
           { id: View.SVG_STUDY_CARD, label: 'SVG Blueprint', icon: Layout },
@@ -50,11 +52,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
     <div className="w-72 bg-white/70 dark:bg-black/40 backdrop-blur-[60px] border-r border-slate-200/50 dark:border-white/5 h-screen fixed left-0 top-0 flex flex-col z-30 hidden md:flex transition-all duration-700">
       <div className="p-10">
         <div className="flex items-center gap-4 group cursor-pointer" onClick={() => onViewChange(View.DASHBOARD)}>
-          <div className="w-14 h-14 bg-white dark:bg-slate-900 rounded-[1.25rem] flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-500 overflow-hidden border border-slate-200 dark:border-white/10 p-1.5">
-            <img src="https://iili.io/feG2UBt.md.png" alt="SVGPT Logo" className="w-full h-full object-cover" />
+          <div className="w-14 h-14 bg-indigo-600 dark:bg-indigo-900 rounded-[1.25rem] flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-500 overflow-hidden border border-white/10 p-1.5 text-white">
+            <AIHeadIcon size={32} />
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">SVGPT</span>
+            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">ENTRANCE</span>
             <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-2">AI Assistant</span>
           </div>
         </div>

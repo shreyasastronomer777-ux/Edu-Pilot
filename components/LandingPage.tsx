@@ -1,19 +1,23 @@
+
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { Globe, Sparkles, ArrowRight, Loader2, PlayCircle, ShieldCheck, Zap, Info, AlertTriangle } from 'lucide-react';
+import { Globe, Sparkles, ArrowRight, Loader2, PlayCircle, ShieldCheck, Zap, Info, AlertTriangle, Key, ChevronRight, X } from 'lucide-react';
+import { AIHeadIcon, Credits } from './Branding';
 
 interface LandingPageProps {
   onGetStarted: () => void;
+  onEnterAssessment: (code: string) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
-  const [authView, setAuthView] = useState<'none' | 'login' | 'signup'>('none');
+const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessment }) => {
+  const [authView, setAuthView] = useState<'none' | 'login' | 'signup' | 'assessment'>('none');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState<{code?: string, message: string} | null>(null);
+  const [assessmentKey, setAssessmentKey] = useState('');
 
   const handleGoogleAuth = async () => {
     setIsLoggingIn(true);
@@ -61,6 +65,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       setError({ message: "Identity verification failed. Please verify your credentials." });
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const handleKeyEntry = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (assessmentKey.length === 6) {
+      onEnterAssessment(assessmentKey.toUpperCase());
+    } else {
+      setError({ message: "Neural keys must be exactly 6 characters." });
     }
   };
 
@@ -120,17 +133,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       <nav className="glass-nav fixed top-0 w-full z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setAuthView('none')}>
-            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-              <i className="fas fa-brain"></i>
-            </div>
+            <AIHeadIcon size={32} className="text-indigo-600" />
             <span className="font-outfit font-bold text-2xl tracking-tight text-slate-900">
-              SVGPT<span className="text-indigo-600">AI</span>
+              ENTRANCE<span className="text-indigo-600">AI</span>
             </span>
           </div>
           
           <div className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-500 uppercase tracking-widest">
-            <a href="#partner-hub" className="hover:text-indigo-600 transition-colors">Institutional Spotlight</a>
-            <a href="#workspace" className="hover:text-indigo-600 transition-colors">Workspace Tools</a>
+            <a href="#partner-hub" className="hover:text-indigo-600 transition-colors">Spotlight</a>
+            <a href="#workspace" className="hover:text-indigo-600 transition-colors">Workspace</a>
           </div>
 
           <div className="flex items-center gap-4">
@@ -148,7 +159,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             <div className="absolute inset-0 pointer-events-none z-0">
                <div className="absolute top-[-10%] right-[-5%] w-[50%] h-[60%] bg-indigo-200/20 blur-[120px] rounded-full drifting-blob" style={{ animationDelay: '0s' }}></div>
                <div className="absolute bottom-[-20%] left-[-10%] w-[45%] h-[55%] bg-purple-200/20 blur-[100px] rounded-full drifting-blob" style={{ animationDelay: '-5s' }}></div>
-               <div className="absolute top-[20%] left-[10%] w-[30%] h-[40%] bg-blue-100/10 blur-[90px] rounded-full drifting-blob" style={{ animationDelay: '-12s' }}></div>
             </div>
 
             <div className="max-w-7xl mx-auto text-center flex flex-col items-center relative z-10">
@@ -161,15 +171,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
               </h1>
               
               <p className="text-xl text-slate-500 max-w-2xl mb-12 leading-relaxed font-medium">
-                Unlock precision tools for lesson synthesis, neural evaluation, and deep focus. Join the elite academic network today.
+                Unlock precision tools for lesson synthesis, neural evaluation, and deep focus with ENTRANCE. Join the elite academic network today.
               </p>
+
+              <Credits className="mb-12" />
               
               <div className="flex flex-col sm:flex-row items-center gap-5 mb-24">
                 <button onClick={() => setAuthView('signup')} className="btn-primary text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-200 active:scale-95">Initialize Profile</button>
-                <button onClick={handleGuestAccess} className="bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all shadow-sm active:scale-95">Guest Access</button>
+                <div className="flex gap-2">
+                  <button onClick={handleGuestAccess} className="bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all shadow-sm active:scale-95">Guest Explorer</button>
+                  <button onClick={() => setAuthView('assessment')} className="bg-indigo-600 text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 active:scale-95 flex items-center gap-3">
+                    <Key size={16} /> Guest Assessment
+                  </button>
+                </div>
               </div>
 
-              {/* AD FEATURE: PHOTO OF AN AD / SPONSORED SPOTLIGHT */}
+              {/* AD FEATURE */}
               <div className="w-full max-w-5xl mb-32 group">
                  <div className="relative ad-container rounded-[3.5rem] p-1 overflow-hidden shadow-2xl transition-all duration-700 group-hover:scale-[1.01]">
                     <div className="absolute inset-0 shimmer opacity-20"></div>
@@ -208,151 +225,90 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                     </div>
                  </div>
               </div>
-
-              {/* PARTNER HUB: FULL WORKSPACE PREVIEW */}
-              <div id="partner-hub" className="w-full bg-white border-y border-slate-100 py-32 px-6">
-                 <div className="max-w-7xl mx-auto flex flex-col items-center gap-16">
-                    <div className="text-center space-y-4">
-                       <div className="flex items-center justify-center gap-3 mb-6">
-                          <div className="w-2.5 h-2.5 bg-[#7C3AED] rounded-full shadow-[0_0_12px_rgba(124,58,237,0.6)] animate-pulse"></div>
-                          <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-400">Institutional Partner Network</span>
-                       </div>
-                       <h2 className="text-5xl font-[900] tracking-tighter uppercase text-slate-900">Partner Workspace Hub</h2>
-                       <p className="text-slate-500 font-medium text-lg max-w-xl mx-auto">
-                          Synchronized gateways to institutional resources and specialized academic synthesis environments.
-                       </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full max-w-6xl">
-                        {/* Purple Resource Section */}
-                        <div className="bg-slate-50 rounded-[4rem] p-10 border border-slate-100 flex flex-col items-center text-center group hover:bg-white hover:shadow-3xl transition-all duration-700">
-                           <div className="w-20 h-20 bg-[#4B49AC]/10 rounded-[2rem] flex items-center justify-center text-[#4B49AC] mb-10 group-hover:scale-110 transition-transform duration-500">
-                              <Globe size={42} strokeWidth={1.5} />
-                           </div>
-                           <h4 className="text-2xl font-black uppercase tracking-tight mb-4">Neural Resource Portal</h4>
-                           <p className="text-slate-500 text-sm font-medium leading-relaxed mb-10 max-w-xs">
-                              Access localized knowledge buffers and standard-aligned lesson archetypes.
-                           </p>
-                           <a 
-                             href="https://shiny-fortune.com/dbm.FpzCd/GRNWviZtGNUT/JeMm_9ku/ZNU/lvkiPUT/Ya3bNKT/k/5rNNTzYGtcNKjpck1AO/Tdkp1KNvwo" 
-                             target="_blank"
-                             className="w-full py-5 bg-[#4B49AC] hover:bg-[#3f3d91] text-white rounded-[2rem] text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-3"
-                           >
-                              INITIALIZE NEURAL RESOURCE <ArrowRight size={18} />
-                           </a>
-                        </div>
-
-                        {/* Black Workspace Section */}
-                        <div className="bg-[#0B1221] rounded-[4rem] p-10 flex flex-col items-center text-center group hover:bg-slate-900 hover:shadow-3xl transition-all duration-700">
-                           <div className="w-20 h-20 bg-white/10 rounded-[2rem] flex items-center justify-center text-indigo-400 mb-10 group-hover:scale-110 transition-transform duration-500">
-                              <Sparkles size={42} strokeWidth={1.5} />
-                           </div>
-                           <h4 className="text-2xl font-black uppercase tracking-tight mb-4 text-white">Full Partner Workspace</h4>
-                           <p className="text-white/50 text-sm font-medium leading-relaxed mb-10 max-w-xs">
-                              Precision-engineered for high-volume instructional deconstruction and academic output.
-                           </p>
-                           <a 
-                             href="https://vigorousescape.com/b.3zVm0DPS3bpHvvbem/V_JoZfDF0O2ANmzhUY5NOjTOUe0KLHTpYT3-NrTVk_5xNYTwUV" 
-                             target="_blank"
-                             className="w-full py-5 bg-white text-[#0B1221] rounded-[2rem] text-[11px] font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
-                           >
-                              PARTNER WORKSPACE <ArrowRight size={18} />
-                           </a>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-4">
-                       <ShieldCheck className="text-indigo-500" size={24} />
-                       <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 text-center">
-                          Institutional Encryption Handshake: Verified
-                       </p>
-                    </div>
-                 </div>
-              </div>
-          </section>
-
-          {/* MAIN TOOLS SECTION */}
-          <section id="workspace" className="py-32 px-6 bg-white">
-            <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-24">
-                   <h2 className="text-4xl font-black tracking-tighter uppercase mb-4">Neural Infrastructure</h2>
-                   <p className="text-slate-500 font-medium">Modular components for optimized educational flows.</p>
-                </div>
-                <div className="grid md:grid-cols-3 gap-10">
-                    <div className="p-12 bg-slate-50 rounded-[3.5rem] border border-slate-100 hover:border-indigo-200 hover:bg-white hover:shadow-2xl transition-all group">
-                        <div className="w-16 h-16 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mb-10 shadow-xl group-hover:scale-110 transition-transform duration-500"><i className="fas fa-wand-sparkles text-2xl"></i></div>
-                        <h3 className="text-2xl font-black mb-4 tracking-tight uppercase">Lesson Studio</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed font-medium">Synthesize high-rigor instructional assets from raw data streams in milliseconds.</p>
-                    </div>
-                    <div className="p-12 bg-slate-50 rounded-[3.5rem] border border-slate-100 hover:border-emerald-200 hover:bg-white hover:shadow-2xl transition-all group">
-                        <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center mb-10 shadow-xl group-hover:scale-110 transition-transform duration-500"><i className="fas fa-check-double text-2xl"></i></div>
-                        <h3 className="text-2xl font-black mb-4 tracking-tight uppercase">Evaluation Engine</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed font-medium">Precision-grade student submissions with neural feedback loops and criteria matching.</p>
-                    </div>
-                    <div className="p-12 bg-slate-50 rounded-[3.5rem] border border-slate-100 hover:border-orange-200 hover:bg-white hover:shadow-2xl transition-all group">
-                        <div className="w-16 h-16 bg-orange-600 text-white rounded-2xl flex items-center justify-center mb-10 shadow-xl group-hover:scale-110 transition-transform duration-500"><i className="fas fa-brain-circuit text-2xl"></i></div>
-                        <h3 className="text-2xl font-black mb-4 tracking-tight uppercase">Isolated Archive</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed font-medium">A high-performance repository for scholarly notes and deconstructed academic nodes.</p>
-                    </div>
-                </div>
             </div>
           </section>
         </main>
       ) : (
-        /* AUTH SECTION */
+        /* AUTH & ASSESSMENT SECTION */
         <main className="min-h-screen flex items-center justify-center px-6 py-24 bg-[#F8FAFF] animate-in fade-in duration-500">
           <div className="max-w-md w-full relative z-10">
             <div className="text-center mb-12">
-              <div className="w-20 h-20 bg-indigo-600 rounded-[1.8rem] flex items-center justify-center text-white mx-auto mb-8 shadow-2xl shadow-indigo-200 animate-pulse">
-                <i className="fas fa-fingerprint text-3xl"></i>
+              <div className="w-20 h-20 bg-indigo-600 rounded-[1.8rem] flex items-center justify-center text-white mx-auto mb-8 shadow-2xl shadow-indigo-200">
+                {authView === 'assessment' ? <Key size={48} /> : <AIHeadIcon size={48} />}
               </div>
               <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tighter uppercase">
-                {authView === 'login' ? 'Authorization' : 'Registration'}
+                {authView === 'login' ? 'Authorization' : authView === 'signup' ? 'Registration' : 'Neural Entry'}
               </h2>
-              <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">
-                {authView === 'login' ? 'Sync existing profile node' : 'Initialize new scholar identity'}
-              </p>
+              <Credits />
             </div>
 
             <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-2xl shadow-indigo-100/50">
-              <form onSubmit={handleEmailAuth} className="space-y-5">
-                {authView === 'signup' && (
+              {authView === 'assessment' ? (
+                <form onSubmit={handleKeyEntry} className="space-y-8">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Academic Alias</label>
-                    <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Full Scholarly Name" className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-8 focus:ring-indigo-50 outline-none transition-all font-bold text-sm bg-slate-50/50" />
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2 text-center">Enter 6-Digit Assessment Key</label>
+                    <input 
+                      type="text" 
+                      maxLength={6}
+                      required 
+                      value={assessmentKey} 
+                      onChange={e => setAssessmentKey(e.target.value.toUpperCase())} 
+                      placeholder="XXXXXX" 
+                      className="w-full px-6 py-6 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-8 focus:ring-indigo-50 outline-none transition-all font-mono font-black text-4xl text-center bg-slate-50/50 text-indigo-600 tracking-[0.2em]" 
+                    />
                   </div>
-                )}
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Neural Link (Email)</label>
-                  <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="identity@domain.edu" className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-8 focus:ring-indigo-50 outline-none transition-all font-bold text-sm bg-slate-50/50" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Access Key (Password)</label>
-                  <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••••" className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-8 focus:ring-indigo-50 outline-none transition-all font-bold text-sm bg-slate-50/50" />
-                </div>
-
-                {error && (
-                  <div className={`p-4 rounded-xl flex flex-col gap-3 animate-in shake duration-300 border ${error.code === 'domain' ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-red-50 border-red-100 text-red-600'}`}>
-                    <div className="flex items-start gap-3">
-                       {error.code === 'domain' ? <AlertTriangle size={16} className="mt-0.5" /> : <Info size={16} className="mt-0.5" />}
-                       <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">{error.message}</p>
+                  
+                  {error && (
+                    <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-center gap-3">
+                      <X size={16} />
+                      <p className="text-[10px] font-black uppercase tracking-widest">{error.message}</p>
                     </div>
-                    {error.code === 'domain' && (
-                      <button 
-                        type="button"
-                        onClick={handleGuestAccess}
-                        className="w-full py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md hover:bg-indigo-700 transition-all"
-                      >
-                        Initialize Neural Bypass (Guest Mode)
-                      </button>
-                    )}
-                  </div>
-                )}
+                  )}
 
-                <button type="submit" disabled={isLoggingIn} className="w-full btn-primary text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl flex items-center justify-center gap-3 mt-4 disabled:opacity-50">
-                  {isLoggingIn ? <Loader2 className="animate-spin" size={18} /> : <span>{authView === 'login' ? 'Initialize Link' : 'Initialize Profile'}</span>}
-                </button>
-              </form>
+                  <button type="submit" className="w-full btn-primary text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                    Synthesize Assessment <ChevronRight size={18} />
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleEmailAuth} className="space-y-5">
+                  {authView === 'signup' && (
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Academic Alias</label>
+                      <input type="text" required value={name} onChange={e => setName(e.target.value)} placeholder="Full Scholarly Name" className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-8 focus:ring-indigo-50 outline-none transition-all font-bold text-sm bg-slate-50/50" />
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Neural Link (Email)</label>
+                    <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="identity@domain.edu" className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-8 focus:ring-indigo-50 outline-none transition-all font-bold text-sm bg-slate-50/50" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Access Key (Password)</label>
+                    <input type="password" required value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••••••" className="w-full px-6 py-4 rounded-2xl border border-slate-200 focus:border-indigo-500 focus:ring-8 focus:ring-indigo-50 outline-none transition-all font-bold text-sm bg-slate-50/50" />
+                  </div>
+
+                  {error && (
+                    <div className={`p-4 rounded-xl flex flex-col gap-3 animate-in shake duration-300 border ${error.code === 'domain' ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-red-50 border-red-100 text-red-600'}`}>
+                      <div className="flex items-start gap-3">
+                         {error.code === 'domain' ? <AlertTriangle size={16} className="mt-0.5" /> : <Info size={16} className="mt-0.5" />}
+                         <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">{error.message}</p>
+                      </div>
+                      {error.code === 'domain' && (
+                        <button 
+                          type="button"
+                          onClick={handleGuestAccess}
+                          className="w-full py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md hover:bg-indigo-700 transition-all"
+                        >
+                          Initialize Neural Bypass (Guest Mode)
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <button type="submit" disabled={isLoggingIn} className="w-full btn-primary text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl flex items-center justify-center gap-3 mt-4 disabled:opacity-50">
+                    {isLoggingIn ? <Loader2 className="animate-spin" size={18} /> : <span>{authView === 'login' ? 'Initialize Link' : 'Initialize Profile'}</span>}
+                  </button>
+                </form>
+              )}
 
               <div className="relative flex items-center justify-center my-10">
                 <div className="w-full border-t border-slate-100"></div>
@@ -375,7 +331,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
                   onClick={() => {setAuthView(authView === 'login' ? 'signup' : 'login'); setError(null);}}
                   className="text-indigo-600 text-[10px] font-black uppercase tracking-widest hover:underline"
                 >
-                  {authView === 'login' ? "Synthesize New Profile" : "Access Existing Identity"}
+                  {authView === 'login' ? "Synthesize New Profile" : authView === 'signup' ? "Access Existing Identity" : "Return to Credentials"}
                 </button>
               </div>
             </div>
@@ -391,12 +347,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
       <footer className="bg-white border-t border-slate-100 py-20 px-6 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white"><i className="fas fa-brain"></i></div>
-            <span className="font-outfit font-bold text-2xl text-slate-900 tracking-tight">SVGPT<span className="text-indigo-600">AI</span></span>
+            <AIHeadIcon size={32} className="text-indigo-600" />
+            <span className="font-outfit font-bold text-2xl text-slate-900 tracking-tight">ENTRANCE<span className="text-indigo-600">AI</span></span>
           </div>
-          <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest text-center md:text-left">
-            © 2026 SVGPT Intelligence Hub. <br className="md:hidden" /> Developed by Shreyas Gunjal, Vaibhav V Chiniwar & Vamshi Br.
-          </p>
+          <Credits />
           <div className="flex gap-8 text-slate-300">
             <a href="#" className="hover:text-indigo-600 transition-all"><i className="fab fa-twitter text-lg"></i></a>
             <a href="#" className="hover:text-indigo-600 transition-all"><i className="fab fa-linkedin text-lg"></i></a>
