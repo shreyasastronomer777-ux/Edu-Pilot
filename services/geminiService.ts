@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role, ExamPaper } from "../types";
+import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role, ExamPaper, PPTProject } from "../types";
 
 /**
  * SVGPT AI Engine - Technical Core (High Velocity Version)
@@ -15,20 +15,32 @@ const getAI = () => {
 };
 
 /**
- * Robust JSON extraction for model responses
+ * Robust extraction for SVG or JSON from model responses
  */
-const cleanJsonString = (str: string) => {
+const cleanContentString = (str: string, type: 'json' | 'svg' = 'json') => {
   if (!str) return "";
-  const match = str.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  let candidate = match ? match[1] : str;
-  if (!candidate.trim().startsWith('{') && !candidate.trim().startsWith('[')) {
+  const pattern = type === 'svg' ? /<svg[\s\S]*?<\/svg>/i : /```(?:json)?\s*([\s\S]*?)\s*```/;
+  const match = str.match(pattern);
+  
+  if (match) {
+    return type === 'svg' ? match[0] : match[1].trim();
+  }
+  
+  // Fallback: If no markdown blocks, try to find the first '{' or '<svg'
+  if (type === 'svg') {
+    const startIdx = str.toLowerCase().indexOf('<svg');
+    const endIdx = str.toLowerCase().lastIndexOf('</svg>');
+    if (startIdx !== -1 && endIdx !== -1) {
+      return str.substring(startIdx, endIdx + 6);
+    }
+  } else {
     const firstBrace = str.indexOf('{');
     const lastBrace = str.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
-      candidate = str.substring(firstBrace, lastBrace + 1);
+      return str.substring(firstBrace, lastBrace + 1).trim();
     }
   }
-  return candidate.trim();
+  return str.trim();
 };
 
 const generateWithResilience = async (params: any) => {
@@ -108,7 +120,22 @@ export const generateExamPaper = async (config: any): Promise<ExamPaper> => {
       }
     }
   });
-  return JSON.parse(cleanJsonString(response.text!)) as ExamPaper;
+  return JSON.parse(cleanContentString(response.text!, 'json')) as ExamPaper;
+};
+
+export const synthesizePPTProject = async (topic: string, grade: string, count: number): Promise<PPTProject> => {
+  const prompt = `Act as an expert teacher. Create a ${count}-slide presentation project for a ${grade} lesson on "${topic}". 
+  Requirements:
+  1. For the outline: title, bullet points, visual prompt, check for understanding.
+  2. For automation: Provide a VBA script.
+  Output JSON.`;
+
+  const response = await generateWithResilience({
+    model: "gemini-3-flash-preview",
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    config: { responseMimeType: "application/json" }
+  });
+  return JSON.parse(cleanContentString(response.text!, 'json')) as PPTProject;
 };
 
 export const chatWithEduAssistant = async (message: string, history: any[], userRole: Role | null) => {
@@ -170,27 +197,6 @@ export const streamLessonPlan = async (config: LessonPlanConfig, onChunk: (text:
   }
 };
 
-const quizSchema = {
-  type: Type.OBJECT,
-  properties: {
-    title: { type: Type.STRING },
-    questions: {
-      type: Type.ARRAY,
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          question: { type: Type.STRING },
-          options: { type: Type.ARRAY, items: { type: Type.STRING } },
-          correctAnswer: { type: Type.STRING },
-          explanation: { type: Type.STRING }
-        },
-        required: ["question", "options", "correctAnswer", "explanation"]
-      }
-    }
-  },
-  required: ["title", "questions"]
-};
-
 export const generateQuizFromSource = async (source: any, count: number = 5): Promise<Quiz> => {
   let parts: any[] = [];
   if (source.type === 'file') {
@@ -206,18 +212,18 @@ export const generateQuizFromSource = async (source: any, count: number = 5): Pr
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts }],
-    config: { responseMimeType: "application/json", responseSchema: quizSchema }
+    config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!)) as Quiz;
+  return JSON.parse(cleanContentString(response.text!, 'json')) as Quiz;
 };
 
 export const generateQuiz = async (topic: string, role: string, count: number = 5): Promise<Quiz> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Create a practice quiz for a ${role} on the topic: ${topic}. Output JSON.` }] }],
-    config: { responseMimeType: "application/json", responseSchema: quizSchema }
+    config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!)) as Quiz;
+  return JSON.parse(cleanContentString(response.text!, 'json')) as Quiz;
 };
 
 export const checkHomework = async (assignment: string, studentWork: string): Promise<string> => {
@@ -251,19 +257,9 @@ export const convertNotesToFlashcards = async (notes: string): Promise<{front: s
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Synthesize flashcards: ${notes}. JSON.` }] }],
-    config: { 
-      responseMimeType: "application/json", 
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
-          required: ["front", "back"]
-        }
-      } 
-    }
+    config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!)) as {front: string, back: string}[];
+  return JSON.parse(cleanContentString(response.text!, 'json')) as {front: string, back: string}[];
 };
 
 export const synthesizeInstantLessonAssets = async (source: any): Promise<{ plan: string, slides: SlideDeck, summary: string }> => {
@@ -283,7 +279,7 @@ export const synthesizeInstantLessonAssets = async (source: any): Promise<{ plan
     contents: [{ role: 'user', parts }],
     config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!));
+  return JSON.parse(cleanContentString(response.text!, 'json'));
 };
 
 export const generateSlidesFromLesson = async (lessonContent: string): Promise<SlideDeck> => {
@@ -292,7 +288,7 @@ export const generateSlidesFromLesson = async (lessonContent: string): Promise<S
     contents: [{ role: 'user', parts: [{ text: `Slide deck for: ${lessonContent}. JSON.` }] }],
     config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!));
+  return JSON.parse(cleanContentString(response.text!, 'json'));
 };
 
 export const generateBrainBreak = async (context: string): Promise<BrainBreak> => {
@@ -301,7 +297,7 @@ export const generateBrainBreak = async (context: string): Promise<BrainBreak> =
     contents: [{ role: 'user', parts: [{ text: `Brain break for: ${context}. JSON.` }] }],
     config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!));
+  return JSON.parse(cleanContentString(response.text!, 'json'));
 };
 
 export const gradeAnswerSheet = async (studentAsset: any, criteria: string, answerKey?: any): Promise<string> => {
@@ -341,7 +337,7 @@ export const convertAssetToFlashcards = async (base64Data: string, mimeType: str
     contents: [{ role: 'user', parts: [{ inlineData: { data: cleanData, mimeType } }, { text: "Synthesize cards. JSON." }] }],
     config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!));
+  return JSON.parse(cleanContentString(response.text!, 'json'));
 };
 
 export const summarizeAudioLecture = async (base64Audio: string, mimeType: string): Promise<string> => {
@@ -357,27 +353,27 @@ export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType:
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ parts: [{ inlineData: { data: cleanData, mimeType } }, { text: "SVG, cards, quiz from diagram. JSON." }] }],
+    contents: [{ parts: [{ inlineData: { data: cleanData, mimeType } }, { text: "Synthesize a professional SVG diagram, 5 flashcards, and a 5-question quiz. Output as a single JSON object." }] }],
     config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!));
+  return JSON.parse(cleanContentString(response.text!, 'json'));
 };
 
 export const synthesizeSVGWorksheet = async (topic: string, gradeLevel: string): Promise<string> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ parts: [{ text: `SVG Worksheet for ${topic} at ${gradeLevel}.` }] }]
+    contents: [{ parts: [{ text: `Synthesize a professional, A4-ratio SVG worksheet for ${topic} at ${gradeLevel}. Include a title, 3 diagrams, 5 problems, and space for name. Return ONLY the SVG code.` }] }]
   });
-  return response.text!;
+  return cleanContentString(response.text!, 'svg');
 };
 
 export const synthesizeSVGSlides = async (lessonContent: string): Promise<string[]> => {
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ parts: [{ text: `6 SVG slides for: ${lessonContent}. JSON array.` }] }],
+    contents: [{ parts: [{ text: `Synthesize 6 academic SVG slides for: ${lessonContent}. Output as a JSON array of SVG strings.` }] }],
     config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!));
+  return JSON.parse(cleanContentString(response.text!, 'json'));
 };
 
 export const synthesizeExamQuestions = async (input: { type: 'file' | 'text', data: string, mimeType?: string }): Promise<{ question: string, answer: string }[]> => {
@@ -395,27 +391,11 @@ export const synthesizeExamQuestions = async (input: { type: 'file' | 'text', da
   const response = await generateWithResilience({
     model: "gemini-flash-lite-latest",
     contents: [{ role: 'user', parts }],
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            question: { type: Type.STRING },
-            answer: { type: Type.STRING }
-          },
-          required: ["question", "answer"]
-        }
-      }
-    }
+    config: { responseMimeType: "application/json" }
   });
-  return JSON.parse(cleanJsonString(response.text!)) as { question: string, answer: string }[];
+  return JSON.parse(cleanContentString(response.text!, 'json')) as { question: string, answer: string }[];
 };
 
-/**
- * STREAMING VERSION - MAXIMUM VELOCITY
- */
 export const streamExamQuestions = async (input: { type: 'file' | 'text', data: string, mimeType?: string }, onChunk: (text: string) => void) => {
   const ai = getAI();
   let parts: any[] = [];
@@ -423,7 +403,7 @@ export const streamExamQuestions = async (input: { type: 'file' | 'text', data: 
     const cleanData = input.data.includes(',') ? input.data.split(',')[1] : input.data;
     parts = [
       { inlineData: { data: cleanData, mimeType: input.mimeType } },
-      { text: "Synthesize 10 rigorous exam questions. JSON array format. Return results as they are ready." }
+      { text: "Synthesize 10 rigorous exam questions. JSON array format." }
     ];
   } else {
     parts = [{ text: `Synthesize 10 rigorous exam questions for: \n\n${input.data}\n\nOutput as JSON array.` }];
@@ -432,10 +412,7 @@ export const streamExamQuestions = async (input: { type: 'file' | 'text', data: 
   const response = await ai.models.generateContentStream({
     model: "gemini-flash-lite-latest",
     contents: [{ role: 'user', parts }],
-    config: {
-      responseMimeType: "application/json",
-      thinkingConfig: { thinkingBudget: 0 }
-    }
+    config: { responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 } }
   });
 
   for await (const chunk of response) {
@@ -443,25 +420,42 @@ export const streamExamQuestions = async (input: { type: 'file' | 'text', data: 
   }
 };
 
+/**
+ * PATHFINDER SYNTHESIS - IMPROVED
+ */
 export const synthesizePathfinder = async (topic: string, gradeLevel: string): Promise<string> => {
+  const prompt = `Act as an Educational Architect. Synthesize a professional "Guided Inquiry Pathfinder" for students studying "${topic}" at ${gradeLevel} level.
+  
+  Requirements:
+  1. Output ONLY a standalone, valid SVG string.
+  2. The SVG should be designed for A4 portrait printing (viewBox="0 0 800 1100").
+  3. Visually include:
+     - A modern header with the title "${topic}".
+     - A "Research Roadmap" with 5 key milestone nodes (labeled).
+     - A "Core Inquiry Questions" section with 3 challenging questions.
+     - A "Source Checklist" (Academic Journals, Primary Sources, etc.).
+  4. Use a clean, indigo-accented academic style.
+  5. Ensure all text in the SVG is legible and properly spaced.`;
+
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ parts: [{ text: `SVG Pathfinder for ${topic}.` }] }]
+    contents: [{ parts: [{ text: prompt }] }]
   });
-  return response.text!;
+  return cleanContentString(response.text!, 'svg');
 };
 
 export const generateAudioBriefing = async (content: string): Promise<{ audioBase64: string, script: string }> => {
   const ai = getAI();
   const res = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: [{ role: 'user', parts: [{ text: `Briefing script for: ${content}` }] }]
+    contents: [{ role: 'user', parts: [{ text: `Synthesize a 1-minute briefing script for: ${content}` }] }]
   });
   const script = res.text || "";
   const audioRes = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: script }] }],
-    config: { responseModalalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } }
+    // Fix: Corrected property name from responseModalalities to responseModalities
+    config: { responseModalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } }
   });
   return { audioBase64: audioRes.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "", script };
 };

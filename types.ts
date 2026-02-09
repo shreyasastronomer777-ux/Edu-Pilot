@@ -13,6 +13,7 @@ export enum View {
   WORKSHEET_GENERATOR = 'WORKSHEET_GENERATOR',
   PATHFINDER_MAKER = 'PATHFINDER_MAKER',
   EXAM_GENERATOR = 'EXAM_GENERATOR',
+  PPT_GENERATOR = 'PPT_GENERATOR',
   GUEST_ASSESSMENT = 'GUEST_ASSESSMENT',
   // Student Views
   FLASHCARDS = 'FLASHCARDS',
@@ -70,7 +71,12 @@ export interface Quiz {
 
 export interface SlideDeck {
   title: string;
-  slides: { title: string; content: string[]; visualPrompt: string }[];
+  slides: { title: string; content: string[]; visualPrompt: string; check?: string }[];
+}
+
+export interface PPTProject {
+  outline: SlideDeck;
+  vbaScript: string;
 }
 
 export interface BrainBreak {

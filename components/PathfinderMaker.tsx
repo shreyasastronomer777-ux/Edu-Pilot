@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Compass, Printer, Loader2, Wand2, ArrowLeft, FileText, Layout, Download, Zap, AlertCircle, Sparkles } from 'lucide-react';
 import { synthesizePathfinder } from '../services/geminiService';
@@ -17,12 +16,15 @@ const PathfinderMaker: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     setSvgCode(null);
     try {
       const output = await synthesizePathfinder(topic, grade);
+      if (!output || !output.includes('<svg')) {
+        throw new Error("Neural output did not yield a valid vector blueprint.");
+      }
       setSvgCode(output);
       
       const currentPoints = Number(localStorage.getItem('svgpt_xp')) || 0;
       localStorage.setItem('svgpt_xp', (currentPoints + 90).toString());
-    } catch (e) {
-      setError("Neural path synthesis failed. Check your data link.");
+    } catch (e: any) {
+      setError(e.message || "Neural path synthesis failed. Check your data link.");
     } finally {
       setLoading(false);
     }
@@ -34,13 +36,34 @@ const PathfinderMaker: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     if (printWindow) {
       printWindow.document.write(`
         <html>
-          <head><title>SVGPT Pathfinder: ${topic}</title><style>body { margin: 0; display: flex; justify-content: center; align-items: flex-start; padding-top: 40px; background: #fff; } svg { max-width: 210mm; height: auto; }</style></head>
-          <body>${svgCode}</body>
-          <script>window.onload = () => { window.print(); window.close(); }</script>
+          <head>
+            <title>SVGPT Pathfinder: ${topic}</title>
+            <style>
+              body { margin: 0; padding: 0; background: #fff; display: flex; justify-content: center; }
+              .container { width: 210mm; height: 297mm; padding: 10mm; box-sizing: border-box; }
+              svg { width: 100%; height: 100%; }
+              @media print { body { margin: 0; } }
+            </style>
+          </head>
+          <body>
+            <div class="container">${svgCode}</div>
+            <script>window.onload = () => { window.print(); window.close(); }</script>
+          </body>
         </html>
       `);
       printWindow.document.close();
     }
+  };
+
+  const downloadSVG = () => {
+    if (!svgCode) return;
+    const blob = new Blob([svgCode], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pathfinder-${topic.toLowerCase().replace(/\s+/g, '-')}.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -55,7 +78,7 @@ const PathfinderMaker: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <div className="flex items-center gap-3 px-6 py-2 bg-indigo-500/10 rounded-full border border-indigo-500/20">
           <Compass className="text-indigo-600 dark:text-indigo-400" size={16} />
           <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-500">
-            Guided Inquiry Synthesis v1.0
+            Guided Inquiry Synthesis v2.0
           </span>
         </div>
       </div>
@@ -66,7 +89,7 @@ const PathfinderMaker: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <Compass className="text-indigo-500" size={32} />
           </div>
           <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-900 dark:text-white mb-2">Pathfinder Maker</h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-10">Synthesize research roadmaps for student printouts</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-10">Synthesize academic research roadmaps in SVG</p>
 
           <div className="space-y-6 flex-1">
             <div className="space-y-2">
@@ -75,19 +98,19 @@ const PathfinderMaker: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 type="text" 
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. Impact of Artificial Intelligence on Modern Ethics"
+                placeholder="e.g. Modern Ethical Implications of AI"
                 className="w-full px-6 py-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-900 dark:text-white font-bold outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all"
               />
             </div>
             
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Complexity Level</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Academic Level</label>
               <select 
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
                 className="w-full px-6 py-5 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/20 text-slate-900 dark:text-white font-bold outline-none focus:ring-8 focus:ring-indigo-500/10 transition-all"
               >
-                {['Middle School', 'High School', 'Undergraduate', 'Post-Graduate'].map(g => (
+                {['Middle School', 'High School', 'University', 'Post-Graduate'].map(g => (
                   <option key={g} value={g}>{g}</option>
                 ))}
               </select>
@@ -96,7 +119,7 @@ const PathfinderMaker: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <div className="p-6 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-900/30 flex gap-4">
               <Sparkles className="text-indigo-500 flex-shrink-0" size={20} />
               <p className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-                The AI will architect a research guide including key milestones, analytical questions, and verified source types in an A4-ready SVG layout.
+                Generates a printable research guide featuring milestone nodes, inquiry questions, and source checklists in Indigo Academic style.
               </p>
             </div>
           </div>
@@ -109,16 +132,26 @@ const PathfinderMaker: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Wand2 size={20} />}
             Synthesize Pathfinder
           </button>
+
+          {error && (
+            <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 text-red-600 rounded-2xl flex items-center gap-3 animate-in slide-in-from-top-2">
+              <AlertCircle size={18} />
+              <span className="text-[10px] font-black uppercase">{error}</span>
+            </div>
+          )}
         </div>
 
         <div className="bg-white/70 dark:bg-white/[0.03] backdrop-blur-3xl rounded-[3.5rem] border border-slate-200 dark:border-white/10 shadow-sm flex flex-col overflow-hidden min-h-[500px]">
           <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20 flex justify-between items-center px-10">
             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Zap size={16} className="text-indigo-500" /> Architectural Roadmap
+              <Zap size={16} className="text-indigo-500" /> Neural Blueprint
             </h3>
             {svgCode && (
               <div className="flex gap-2">
-                <button onClick={printPathfinder} className="p-2 bg-emerald-500/10 text-emerald-600 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Print Asset">
+                <button onClick={downloadSVG} className="p-2 bg-indigo-500/10 text-indigo-600 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-sm" title="Download Vector">
+                  <Download size={16} />
+                </button>
+                <button onClick={printPathfinder} className="p-2 bg-emerald-500/10 text-emerald-600 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Print Guide">
                   <Printer size={16} />
                 </button>
               </div>
@@ -136,7 +169,10 @@ const PathfinderMaker: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               </div>
             ) : svgCode ? (
               <div className="w-full h-full bg-white rounded-2xl p-6 shadow-inner border border-slate-100 flex items-start justify-center animate-in zoom-in-95 duration-700 overflow-hidden">
-                <div dangerouslySetInnerHTML={{ __html: svgCode }} className="max-w-full h-auto" />
+                <div 
+                  dangerouslySetInnerHTML={{ __html: svgCode }} 
+                  className="max-w-full h-auto flex justify-center text-indigo-600" 
+                />
               </div>
             ) : (
               <div className="opacity-10 flex flex-col items-center">
