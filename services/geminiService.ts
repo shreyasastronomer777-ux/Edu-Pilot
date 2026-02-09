@@ -1,14 +1,17 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { LessonPlanConfig, Quiz, SlideDeck, BrainBreak, Role, ExamPaper } from "../types";
 
 /**
- * SVGPT AI Engine - Technical Core
+ * SVGPT AI Engine - Technical Core (High Velocity Version)
  * Powered by Google Gemini Intelligence
  */
 
 const getAI = () => {
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = process.env.API_KEY;
+  if (!apiKey || apiKey === "undefined") {
+    throw new Error("Neural link offline. The API_KEY is missing from the environment configuration.");
+  }
+  return new GoogleGenAI({ apiKey });
 };
 
 /**
@@ -35,7 +38,7 @@ const generateWithResilience = async (params: any) => {
       ...params,
       config: {
         ...params.config,
-        // No thinking budget by default for Flash models to reduce latency
+        thinkingConfig: { thinkingBudget: 0 }
       }
     });
     if (!response.text) throw new Error("Empty neural response.");
@@ -129,7 +132,7 @@ export const chatWithEduAssistant = async (message: string, history: any[], user
 export const solveDoubt = async (base64Data: string, mimeType: string): Promise<string> => {
   const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{
       parts: [
         { inlineData: { mimeType, data: cleanBase64 } },
@@ -314,7 +317,7 @@ export const gradeAnswerSheet = async (studentAsset: any, criteria: string, answ
 
 export const checkPlagiarism = async (text: string): Promise<{ analysis: string, sources: {uri: string, title: string}[] }> => {
   const response = await generateWithResilience({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: [{ role: 'user', parts: [{ text: `Plagiarism check: ${text}` }] }],
     config: { tools: [{ googleSearch: {} }] }
   });
@@ -390,7 +393,7 @@ export const synthesizeExamQuestions = async (input: { type: 'file' | 'text', da
   }
 
   const response = await generateWithResilience({
-    model: "gemini-3-flash-preview",
+    model: "gemini-flash-lite-latest",
     contents: [{ role: 'user', parts }],
     config: {
       responseMimeType: "application/json",
@@ -408,6 +411,36 @@ export const synthesizeExamQuestions = async (input: { type: 'file' | 'text', da
     }
   });
   return JSON.parse(cleanJsonString(response.text!)) as { question: string, answer: string }[];
+};
+
+/**
+ * STREAMING VERSION - MAXIMUM VELOCITY
+ */
+export const streamExamQuestions = async (input: { type: 'file' | 'text', data: string, mimeType?: string }, onChunk: (text: string) => void) => {
+  const ai = getAI();
+  let parts: any[] = [];
+  if (input.type === 'file') {
+    const cleanData = input.data.includes(',') ? input.data.split(',')[1] : input.data;
+    parts = [
+      { inlineData: { data: cleanData, mimeType: input.mimeType } },
+      { text: "Synthesize 10 rigorous exam questions. JSON array format. Return results as they are ready." }
+    ];
+  } else {
+    parts = [{ text: `Synthesize 10 rigorous exam questions for: \n\n${input.data}\n\nOutput as JSON array.` }];
+  }
+
+  const response = await ai.models.generateContentStream({
+    model: "gemini-flash-lite-latest",
+    contents: [{ role: 'user', parts }],
+    config: {
+      responseMimeType: "application/json",
+      thinkingConfig: { thinkingBudget: 0 }
+    }
+  });
+
+  for await (const chunk of response) {
+    if (chunk.text) onChunk(chunk.text);
+  }
 };
 
 export const synthesizePathfinder = async (topic: string, gradeLevel: string): Promise<string> => {
@@ -428,7 +461,7 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
   const audioRes = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
     contents: [{ parts: [{ text: script }] }],
-    config: { responseModalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } }
+    config: { responseModalalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } }
   });
   return { audioBase64: audioRes.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || "", script };
 };

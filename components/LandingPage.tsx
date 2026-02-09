@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
@@ -29,13 +28,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessme
     } catch (err: any) {
       console.error("Auth Handshake Error:", err);
       const errorCode = err.code || "";
-      if (errorCode === 'auth/unauthorized-domain') {
+      // Handle the unauthorized domain error specifically
+      if (errorCode === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
         setError({
           code: 'domain',
-          message: "Neural Link Restricted: This domain is not whitelisted in the Firebase configuration. Use 'Neural Bypass' to continue."
+          message: "Neural Link Restricted: This domain is not whitelisted in Firebase. Use 'Neural Bypass' to initialize your workspace."
         });
+      } else if (errorCode === 'auth/popup-closed-by-user') {
+        // User closed the popup, don't show error
+        setError(null);
       } else {
-        setError({ message: `Authentication handshake failed: ${err.message || "Try again or use Guest Mode."}` });
+        setError({ message: `Handshake Failed: ${err.message || "Please use Guest Mode."}` });
       }
     } finally {
       setIsLoggingIn(false);
@@ -62,7 +65,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessme
       }
       onGetStarted();
     } catch (err: any) {
-      setError({ message: "Identity verification failed. Please verify your credentials." });
+      const errorCode = err.code || "";
+      if (errorCode === 'auth/unauthorized-domain') {
+        setError({
+          code: 'domain',
+          message: "Neural Link Restricted: Firebase domain whitelist error. Use bypass below."
+        });
+      } else {
+        setError({ message: "Identity verification failed. Verify credentials or use Guest Mode." });
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -292,13 +303,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessme
                          {error.code === 'domain' ? <AlertTriangle size={16} className="mt-0.5" /> : <Info size={16} className="mt-0.5" />}
                          <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed">{error.message}</p>
                       </div>
-                      {error.code === 'domain' && (
+                      {(error.code === 'domain' || error.message.includes('Handshake Failed')) && (
                         <button 
                           type="button"
                           onClick={handleGuestAccess}
-                          className="w-full py-2 bg-indigo-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md hover:bg-indigo-700 transition-all"
+                          className="w-full py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                         >
-                          Initialize Neural Bypass (Guest Mode)
+                          <ShieldCheck size={14} /> Initialize Neural Bypass
                         </button>
                       )}
                     </div>
