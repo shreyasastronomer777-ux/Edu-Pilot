@@ -241,7 +241,7 @@ export const synthesizeSVGDiagramAndCards = async (base64Data: string, mimeType:
   const cleanData = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
   const response = await generateWithResilience({
     model: "gemini-3-flash-preview",
-    contents: [{ parts: [{ inlineData: { data: cleanData, mimeType } }, { text: "Make a simple diagram, flashcards, and quiz. JSON." }] }],
+    contents: [{ parts: [{ inlineData: { data: cleanData, mimeType } }, { text: "Make a simple diagram, flashcards, and quiz. For the SVG diagram: Use simple paths and shapes. CRITICAL: For every important labeled component in the SVG, wrap it in a <g> tag with attributes 'data-node-label=\"Part Name\"' and 'data-node-description=\"What it does\"' to enable neural interactivity. Output ONLY JSON." }] }],
     config: { responseMimeType: "application/json" }
   });
   return JSON.parse(cleanContentString(response.text!, 'json'));
@@ -457,7 +457,7 @@ export const generateAudioBriefing = async (content: string): Promise<{ audioBas
       responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Zephyr' },
+          prebuiltVoiceConfig: { voiceName: 'Kore' },
         },
       },
     },

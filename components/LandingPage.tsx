@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { auth, googleProvider } from '../firebaseConfig';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithPopup, setPersistence, browserLocalPersistence } from 'firebase/auth';
@@ -28,14 +29,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessme
     } catch (err: any) {
       console.error("Auth Handshake Error:", err);
       const errorCode = err.code || "";
-      // Handle the unauthorized domain error specifically
       if (errorCode === 'auth/unauthorized-domain' || (err.message && err.message.includes('unauthorized-domain'))) {
         setError({
           code: 'domain',
           message: "Neural Link Restricted: This domain is not whitelisted in Firebase. Use 'Neural Bypass' to initialize your workspace."
         });
       } else if (errorCode === 'auth/popup-closed-by-user') {
-        // User closed the popup, don't show error
         setError(null);
       } else {
         setError({ message: `Handshake Failed: ${err.message || "Please use Guest Mode."}` });
@@ -103,8 +102,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessme
             border-bottom: 1px solid rgba(79, 70, 229, 0.05);
         }
         .hero-gradient {
-            background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.1), transparent 50%),
-                        radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.08), transparent 50%);
+            background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08), transparent 70%),
+                        radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.05), transparent 70%);
         }
         .btn-primary {
             background: var(--brand-primary);
@@ -130,13 +129,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessme
         }
         @keyframes drift {
           0%, 100% { transform: translate(0, 0) scale(1); }
-          25% { transform: translate(2%, 4%) scale(1.05); }
-          50% { transform: translate(-3%, 2%) scale(0.95); }
-          75% { transform: translate(1%, -3%) scale(1.02); }
+          33% { transform: translate(5%, 8%) scale(1.1); }
+          66% { transform: translate(-4%, 4%) scale(0.9); }
         }
         .drifting-blob {
-          animation: drift 25s ease-in-out infinite;
+          animation: drift 35s ease-in-out infinite;
           will-change: transform;
+        }
+        .grid-bg {
+          background-image: linear-gradient(rgba(79, 70, 229, 0.05) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(79, 70, 229, 0.05) 1px, transparent 1px);
+          background-size: 60px 60px;
+          animation: grid-move 40s linear infinite;
+        }
+        @keyframes grid-move {
+          0% { background-position: 0 0; }
+          100% { background-position: 60px 60px; }
         }
       `}</style>
 
@@ -165,29 +173,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessme
       {authView === 'none' ? (
         <main className="flex-1 flex flex-col">
           {/* HERO SECTION */}
-          <section className="relative hero-gradient pt-48 pb-10 px-6 overflow-hidden">
-            {/* Animating Background Blobs */}
+          <section className="relative hero-gradient pt-48 pb-10 px-6 overflow-hidden min-h-[90vh] flex flex-col">
+            {/* Animating Background Components */}
             <div className="absolute inset-0 pointer-events-none z-0">
-               <div className="absolute top-[-10%] right-[-5%] w-[50%] h-[60%] bg-indigo-200/20 blur-[120px] rounded-full drifting-blob" style={{ animationDelay: '0s' }}></div>
-               <div className="absolute bottom-[-20%] left-[-10%] w-[45%] h-[55%] bg-purple-200/20 blur-[100px] rounded-full drifting-blob" style={{ animationDelay: '-5s' }}></div>
+               {/* Moving Grid */}
+               <div className="absolute inset-0 grid-bg opacity-40"></div>
+               
+               {/* Organic Drifting Blobs */}
+               <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[70%] bg-indigo-300/10 blur-[140px] rounded-full drifting-blob" style={{ animationDelay: '0s' }}></div>
+               <div className="absolute bottom-[-30%] left-[-15%] w-[55%] h-[65%] bg-purple-300/10 blur-[120px] rounded-full drifting-blob" style={{ animationDelay: '-10s' }}></div>
+               <div className="absolute top-[30%] left-[-5%] w-[30%] h-[40%] bg-rose-200/5 blur-[100px] rounded-full drifting-blob" style={{ animationDelay: '-20s' }}></div>
+               
+               {/* Subtle Radial Overlay */}
+               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F8FAFF]/50 to-[#F8FAFF]"></div>
             </div>
 
             <div className="max-w-7xl mx-auto text-center flex flex-col items-center relative z-10">
-              <span className="inline-block py-1.5 px-5 bg-white/60 backdrop-blur-md shadow-sm border border-slate-100 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8 animate-in fade-in slide-in-from-bottom-2">
+              <span className="inline-block py-1.5 px-5 bg-white/80 backdrop-blur-md shadow-sm border border-slate-100 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-[0.3em] mb-8 animate-in fade-in slide-in-from-bottom-2 duration-1000">
                 Engineered for Academic Peak Performance
               </span>
               
-              <h1 className="text-6xl md:text-[7.5rem] font-[900] font-outfit text-slate-900 mb-8 leading-[0.85] tracking-tighter uppercase max-w-5xl">
+              <h1 className="text-6xl md:text-[7.5rem] font-[900] font-outfit text-slate-900 mb-8 leading-[0.85] tracking-tighter uppercase max-w-5xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
                 The Future of <br/><span className="text-indigo-600">Learning AI.</span>
               </h1>
               
-              <p className="text-xl text-slate-500 max-w-2xl mb-12 leading-relaxed font-medium">
+              <p className="text-xl text-slate-500 max-w-2xl mb-12 leading-relaxed font-medium animate-in fade-in slide-in-from-bottom-6 duration-1000">
                 Unlock precision tools for lesson synthesis, neural evaluation, and deep focus with ENTRANCE. Join the elite academic network today.
               </p>
 
-              <Credits className="mb-12" />
+              <Credits className="mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000" />
               
-              <div className="flex flex-col sm:flex-row items-center gap-5 mb-24">
+              <div className="flex flex-col sm:flex-row items-center gap-5 mb-24 animate-in fade-in slide-in-from-bottom-10 duration-1000">
                 <button onClick={() => setAuthView('signup')} className="btn-primary text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-2xl shadow-indigo-200 active:scale-95">Initialize Profile</button>
                 <div className="flex gap-2">
                   <button onClick={handleGuestAccess} className="bg-white/80 backdrop-blur-md border border-slate-200 text-slate-700 px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all shadow-sm active:scale-95">Guest Explorer</button>
@@ -198,7 +214,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onEnterAssessme
               </div>
 
               {/* AD FEATURE */}
-              <div className="w-full max-w-5xl mb-32 group">
+              <div className="w-full max-w-5xl mb-32 group animate-in fade-in slide-in-from-bottom-12 duration-1000">
                  <div className="relative ad-container rounded-[3.5rem] p-1 overflow-hidden shadow-2xl transition-all duration-700 group-hover:scale-[1.01]">
                     <div className="absolute inset-0 shimmer opacity-20"></div>
                     <div className="relative bg-white dark:bg-slate-900 rounded-[3.4rem] overflow-hidden flex flex-col md:flex-row items-center">

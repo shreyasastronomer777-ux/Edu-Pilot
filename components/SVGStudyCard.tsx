@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, Layout, Download, Copy, Trash2, Layers, AlertCircle, Image as ImageIcon, Palette, GraduationCap, ChevronRight, RotateCcw, FileDown, Printer, FileType, FileJson, Check } from 'lucide-react';
+import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, Layout, Download, Copy, Trash2, Layers, AlertCircle, Image as ImageIcon, Palette, GraduationCap, ChevronRight, RotateCcw, FileDown, Printer, FileType, FileJson, Check, Info } from 'lucide-react';
 import { synthesizeSVGDiagramAndCards, generateVisualAid } from '../services/geminiService';
 import { Quiz } from '../types';
 
@@ -15,6 +15,9 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<'blueprint' | 'illustration' | 'cards' | 'quiz'>('blueprint');
   
+  // Interactive Node State
+  const [selectedNode, setSelectedNode] = useState<{ label: string, description: string } | null>(null);
+
   // Quiz Interaction State
   const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -46,6 +49,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         setResult(null);
         setRenderedImage(null);
         setActiveTab('blueprint');
+        setSelectedNode(null);
         setQuizFinished(false);
         setQuizScore(0);
       };
@@ -62,13 +66,14 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     if (!asset) return;
     setLoading(true);
     setError(null);
+    setSelectedNode(null);
     try {
       const output = await synthesizeSVGDiagramAndCards(asset, mimeType);
       let enrichedSvg = output.svgCode;
       if (enrichedSvg.includes('<svg')) {
-        // Enhance SVG for accessibility
-        enrichedSvg = enrichedSvg.replace('<svg', `<svg role="img" aria-labelledby="blueprint-title" `);
-        enrichedSvg = enrichedSvg.replace('>', `><title id="blueprint-title">Synthesized academic diagram blueprint of ${output.quiz?.title || 'Diagram'}</title>`);
+        // Enhance SVG for accessibility and styles
+        enrichedSvg = enrichedSvg.replace('<svg', `<svg role="img" aria-labelledby="blueprint-title" style="max-height: 100%; max-width: 100%;" `);
+        enrichedSvg = enrichedSvg.replace('>', `><title id="blueprint-title">Synthesized academic diagram blueprint of ${output.quiz?.title || 'Diagram'}</title><style>[data-node-label] { cursor: pointer; transition: all 0.3s ease; } [data-node-label]:hover { filter: drop-shadow(0 0 5px rgba(99, 102, 241, 0.5)); transform: scale(1.02); transform-origin: center; }</style>`);
       }
       setResult({ ...output, svgCode: enrichedSvg });
       const currentPoints = Number(localStorage.getItem('svgpt_xp')) || 0;
@@ -77,6 +82,22 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       setError("Neural rendering failed. Ensure your drawing is clear and legible.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Interaction Handler for SVG Elements
+  const handleSVGInteraction = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const group = target.closest('[data-node-label]');
+    
+    if (group) {
+      const label = group.getAttribute('data-node-label');
+      const description = group.getAttribute('data-node-description');
+      if (label) {
+        setSelectedNode({ label, description: description || "No additional neural data available for this node." });
+      }
+    } else {
+        setSelectedNode(null);
     }
   };
 
@@ -305,7 +326,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             <Layout className="text-indigo-500" size={32} />
           </div>
           <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-900 dark:text-white mb-2">Diagram Ink-to-Vector</h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-10 text-center">Convert sketches into clean SVGs, Cards & Assessment</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-10 text-center">Convert sketches into interactive SVGs, Cards & Assessment</p>
 
           {!asset ? (
             <div 
@@ -390,10 +411,41 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
             ) : result ? (
               <div className="h-full animate-in fade-in duration-700">
                 {activeTab === 'blueprint' && (
-                  <div className="space-y-8">
-                    <div ref={svgContainerRef} className="bg-slate-50 dark:bg-black/40 rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 flex items-center justify-center min-h-[400px] shadow-inner">
+                  <div className="space-y-8 h-full flex flex-col">
+                    <div className="bg-indigo-500/5 border border-indigo-500/10 p-4 rounded-2xl flex items-center gap-3">
+                       <Info size={16} className="text-indigo-500" />
+                       <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">Interactive: Click on any labeled component to inspect neural data.</span>
+                    </div>
+
+                    <div 
+                        ref={svgContainerRef} 
+                        onClick={handleSVGInteraction}
+                        className="bg-slate-50 dark:bg-black/40 rounded-[2.5rem] p-8 border border-slate-100 dark:border-white/5 flex items-center justify-center min-h-[400px] shadow-inner relative"
+                    >
                       <div dangerouslySetInnerHTML={{ __html: result.svgCode }} className="w-full h-full max-w-full flex justify-center text-indigo-500" />
                     </div>
+
+                    {selectedNode && (
+                       <div className="animate-in slide-in-from-bottom-4 duration-500">
+                          <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border-l-8 border-indigo-500 shadow-2xl relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                                <Zap size={100} />
+                             </div>
+                             <div className="flex justify-between items-start mb-4">
+                                <div>
+                                   <span className="text-[8px] font-black uppercase text-indigo-500 tracking-[0.3em] mb-1 block">Neural Node Inspector</span>
+                                   <h4 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">{selectedNode.label}</h4>
+                                </div>
+                                <button onClick={() => setSelectedNode(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors">
+                                   <X size={18} />
+                                </button>
+                             </div>
+                             <p className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                                {selectedNode.description}
+                             </p>
+                          </div>
+                       </div>
+                    )}
                   </div>
                 )}
 
@@ -448,7 +500,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             onClick={() => exportPDF('assessment-only')}
                             className="px-8 py-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                         >
-                            <Printer size={18} className="text-indigo-500" /> PRINT EVALUATION
+                            <Printer size={18} className="text-indigo-50" /> PRINT EVALUATION
                         </button>
                     </div>
 
