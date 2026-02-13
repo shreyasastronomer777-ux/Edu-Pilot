@@ -28,7 +28,11 @@ const InstantLessonGenerator: React.FC<InstantLessonGeneratorProps> = ({ onBack 
   const [activeResultTab, setActiveResultTab] = useState<'plan' | 'slides' | 'summary'>('plan');
   const [history, setHistory] = useState<SynthesisResult[]>(() => {
     const saved = localStorage.getItem('svgpt_synthesis_history');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      return saved ? JSON.parse(saved).filter(Boolean) : [];
+    } catch (e) {
+      return [];
+    }
   });
 
   useEffect(() => {
@@ -144,13 +148,13 @@ const InstantLessonGenerator: React.FC<InstantLessonGeneratorProps> = ({ onBack 
               </div>
               <div className="bg-white dark:bg-[#0B1221] rounded-[4rem] border border-slate-200 dark:border-white/10 p-12 overflow-y-auto custom-scrollbar min-h-[600px]">
                  {activeResultTab === 'plan' && <ReactMarkdown className="prose prose-slate dark:prose-invert max-w-none">{results.plan}</ReactMarkdown>}
-                 {activeResultTab === 'slides' && (
+                 {activeResultTab === 'slides' && results.slides?.slides && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                        {results.slides.slides.map((s, i) => (
                           <div key={i} className="bg-slate-50 dark:bg-black/40 p-10 rounded-[3rem] border border-slate-100 dark:border-white/5">
                              <span className="text-[10px] font-black text-indigo-500 uppercase mb-8 block">Slide {i+1}</span>
-                             <h4 className="text-xl font-black mb-6">{s.title}</h4>
-                             <ul className="space-y-3">{s.content.map((p, idx) => <li key={idx} className="text-sm text-slate-500">• {p}</li>)}</ul>
+                             <h4 className="text-xl font-black mb-6">{s?.title || "Untitled Slide"}</h4>
+                             <ul className="space-y-3">{s?.content?.map((p, idx) => <li key={idx} className="text-sm text-slate-500">• {p}</li>)}</ul>
                           </div>
                        ))}
                     </div>
@@ -168,13 +172,13 @@ const InstantLessonGenerator: React.FC<InstantLessonGeneratorProps> = ({ onBack 
            </div>
            <div className="space-y-4 max-h-[800px] overflow-y-auto custom-scrollbar pr-2">
               {history.length > 0 ? history.map((h) => (
-                 <div key={h.id} className="bg-white dark:bg-white/[0.03] p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:border-indigo-500/30 transition-all group">
+                 <div key={h?.id || Math.random()} className="bg-white dark:bg-white/[0.03] p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:border-indigo-500/30 transition-all group">
                     <div className="flex justify-between items-start mb-2">
-                       <h4 className="text-xs font-black text-slate-900 dark:text-white truncate pr-4">{h.title}</h4>
+                       <h4 className="text-xs font-black text-slate-900 dark:text-white truncate pr-4">{h?.title || "Untitled Synthesis"}</h4>
                        <button onClick={() => setHistory(history.filter(i => i.id !== h.id))} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button>
                     </div>
                     <div className="flex items-center justify-between">
-                       <span className="text-[8px] font-black uppercase text-slate-400">{h.date.split(',')[0]}</span>
+                       <span className="text-[8px] font-black uppercase text-slate-400">{h?.date?.split(',')[0] || "No Date"}</span>
                        <button onClick={() => setResults(h)} className="text-[8px] font-black uppercase text-indigo-500 hover:underline">Deploy Asset</button>
                     </div>
                  </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { generateVisualAid } from '../services/geminiService';
-import { Image as ImageIcon, Loader2, Download, AlertCircle, Sparkles, X, Palette, Wand2, ArrowLeft, Cpu, Activity, Zap, History, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Loader2, Download, AlertCircle, Sparkles, X, Palette, Wand2, ArrowLeft, Cpu, Activity, Zap, History, Trash2, RotateCcw } from 'lucide-react';
 
 interface VisualStudioProps {
   onBack?: () => void;
@@ -73,6 +73,17 @@ const VisualStudio: React.FC<VisualStudioProps> = ({ onBack }) => {
 
   const deleteFromGallery = (id: string) => {
     setGallery(gallery.filter(a => a.id !== id));
+  };
+
+  const clearGallery = () => {
+    if (confirm('Clear entire visual history?')) {
+      setGallery([]);
+    }
+  };
+
+  const restoreAsset = (asset: VisualAsset) => {
+    setImageUrl(asset.url);
+    setPrompt(asset.prompt);
   };
 
   return (
@@ -177,9 +188,14 @@ const VisualStudio: React.FC<VisualStudioProps> = ({ onBack }) => {
 
          {/* History Sidebar */}
          <div className="space-y-6">
-            <div className="flex items-center gap-2 mb-4 px-2">
-               <History size={18} className="text-purple-500" />
-               <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">Neural Gallery</h3>
+            <div className="flex items-center justify-between mb-4 px-2">
+               <div className="flex items-center gap-2">
+                  <History size={18} className="text-purple-500" />
+                  <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight">Neural Gallery</h3>
+               </div>
+               {gallery.length > 0 && (
+                 <button onClick={clearGallery} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-red-500 transition-colors">Clear All</button>
+               )}
             </div>
             <div className="space-y-4 max-h-[800px] overflow-y-auto custom-scrollbar pr-2">
                {gallery.length > 0 ? gallery.map((asset) => (
@@ -191,8 +207,8 @@ const VisualStudio: React.FC<VisualStudioProps> = ({ onBack }) => {
                      <div className="flex items-center justify-between">
                         <span className="text-[8px] font-black uppercase text-slate-400">{asset.date.split(',')[0]}</span>
                         <div className="flex gap-2">
-                           <button onClick={() => setImageUrl(asset.url)} className="p-1.5 bg-purple-500/10 text-purple-600 rounded-lg hover:bg-purple-600 hover:text-white transition-all"><Activity size={12}/></button>
-                           <button onClick={() => deleteFromGallery(asset.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-all"><Trash2 size={12}/></button>
+                           <button onClick={() => restoreAsset(asset)} className="p-1.5 bg-purple-500/10 text-purple-600 rounded-lg hover:bg-purple-600 hover:text-white transition-all" title="Restore Prompt & Image"><RotateCcw size={12}/></button>
+                           <button onClick={() => deleteFromGallery(asset.id)} className="p-1.5 text-slate-300 hover:text-red-500 transition-all" title="Delete Asset"><Trash2 size={12}/></button>
                         </div>
                      </div>
                   </div>

@@ -1,8 +1,8 @@
 
 import React, { useState, useRef } from 'react';
-import { ScrollText, Loader2, Sparkles, Wand2, X, ArrowLeft, Zap, CheckCircle2, Download, Printer, FileText, Layout, Settings, FileDown, History, Trash2, Clipboard, Search, Filter, ShieldCheck, ChevronRight, GraduationCap, Clock, Award, FileType, Link as LinkIcon, Share2 } from 'lucide-react';
-import { generateExamPaper } from '../services/geminiService';
-import { ExamPaper } from '../types';
+import { ScrollText, Loader2, Sparkles, Wand2, X, ArrowLeft, Zap, ShieldCheck, Download, Printer, FileText, Layout, Settings, FileDown, History, Trash2, Clipboard, Search, Filter, ChevronRight, GraduationCap, Clock, Award, FileType, Link as LinkIcon, Share2, User, Plus, Brain } from 'lucide-react';
+import { generateExamPaper, parseExamData } from '../services/geminiService';
+import { ExamPaper, ExamQuestion } from '../types';
 
 type Mode = 'quick' | 'architect' | 'manual';
 
@@ -22,7 +22,47 @@ const ExamGenerator: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const [difficulty, setDifficulty] = useState({ easy: 30, medium: 50, hard: 20 });
   const [blueprint, setBlueprint] = useState({ mcq: 20, short: 30, long: 50 });
 
+  // Manual Mode States
+  const [manualQuestions, setManualQuestions] = useState<ExamQuestion[]>([]);
+  const [bulkInput, setBulkInput] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
+
+  // Customization States for Export
+  const [customTitle, setCustomTitle] = useState('');
+  const [studentName, setStudentName] = useState('');
+
   const handleSynthesize = async () => {
+    if (activeMode === 'manual') {
+      if (manualQuestions.length === 0) {
+        setError("Build your paper manually or use Neural Import first.");
+        return;
+      }
+      setLoading(true);
+      // Construct a paper from manual questions
+      const manualPaper: ExamPaper = {
+        title: customTitle || `${subject} - Official Examination`,
+        subject: subject || 'Untitled Subject',
+        grade,
+        totalMarks: manualQuestions.reduce((acc, q) => acc + q.marks, 0),
+        duration: "120 mins",
+        instructions: [
+          "Attempt all questions.",
+          "Write clearly and legibly.",
+          "The marks for each question are indicated at the end."
+        ],
+        sections: [
+          {
+            name: "SECTION A",
+            description: "Core Curriculum Evaluation",
+            questions: manualQuestions
+          }
+        ]
+      };
+      setPaper(manualPaper);
+      setLoading(false);
+      return;
+    }
+
     if (!subject || !chapters) {
       setError("Institutional parameters incomplete. Define Subject and Chapters.");
       return;
@@ -42,11 +82,50 @@ const ExamGenerator: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         mode: activeMode
       });
       setPaper(result);
+      setCustomTitle(result.title);
     } catch (e: any) {
       setError("Neural synthesis timed out. Re-initializing engine...");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBulkImport = async () => {
+    if (!bulkInput.trim()) return;
+    setIsParsing(true);
+    setError(null);
+    try {
+      const parsed = await parseExamData(bulkInput);
+      setManualQuestions([...manualQuestions, ...parsed]);
+      setBulkInput('');
+    } catch (e) {
+      setError("Neural parsing failed. Check text formatting.");
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const addManualQuestion = () => {
+    const newQ: ExamQuestion = {
+      type: 'SHORT',
+      question: 'Enter your question text here...',
+      marks: 5,
+      bloomLevel: 'Understanding',
+      estimatedTime: '10 mins',
+      answerKey: 'Enter answer key here...',
+      markingScheme: ['Point 1', 'Point 2']
+    };
+    setManualQuestions([...manualQuestions, newQ]);
+  };
+
+  const removeManualQuestion = (index: number) => {
+    setManualQuestions(manualQuestions.filter((_, i) => i !== index));
+  };
+
+  const updateManualQuestion = (index: number, field: keyof ExamQuestion, value: any) => {
+    const updated = [...manualQuestions];
+    updated[index] = { ...updated[index], [field]: value };
+    setManualQuestions(updated);
   };
 
   const generateGuestLink = () => {
@@ -62,10 +141,12 @@ const ExamGenerator: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    const activeTitle = customTitle || paper.title;
+
     printWindow.document.write(`
       <html>
         <head>
-          <title>${paper.title} - ${isAnswerKey ? 'MASTER KEY' : 'OFFICIAL PAPER'}</title>
+          <title>${activeTitle} - ${isAnswerKey ? 'MASTER KEY' : 'OFFICIAL PAPER'}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
             body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 60px; color: #1e293b; max-width: 900px; margin: 0 auto; line-height: 1.6; }
@@ -90,14 +171,14 @@ const ExamGenerator: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <body>
           <div class="header">
             <div class="school-header">HORIZON ACADEMY GLOBAL</div>
-            <div class="exam-title">${paper.title} ${isAnswerKey ? '(MASTER KEY)' : ''}</div>
+            <div class="exam-title">${activeTitle} ${isAnswerKey ? '(MASTER KEY)' : ''}</div>
           </div>
           <div class="info-grid">
             <div>SUBJECT: ${paper.subject}</div>
             <div>GRADE: ${paper.grade}</div>
             <div>DURATION: ${paper.duration}</div>
             <div>TOTAL MARKS: ${paper.totalMarks}</div>
-            <div>STUDENT NAME: ________________________</div>
+            <div>STUDENT NAME: ${studentName || '________________________'}</div>
             <div>DATE: ____________________</div>
           </div>
           <div class="instr">
@@ -170,15 +251,48 @@ const ExamGenerator: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
               </div>
 
               <div className="space-y-6">
-                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Assessment Title / Subject</label>
-                   <input type="text" value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. Astrophysics 101" className="w-full px-6 py-5 rounded-2xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 outline-none focus:ring-8 focus:ring-rose-500/5 transition-all font-bold text-sm" />
-                 </div>
+                 {activeMode !== 'manual' ? (
+                   <>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Assessment Title / Subject</label>
+                      <input type="text" value={subject} onChange={e => setSubject(e.target.value)} placeholder="e.g. Astrophysics 101" className="w-full px-6 py-5 rounded-2xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 outline-none focus:ring-8 focus:ring-rose-500/5 transition-all font-bold text-sm" />
+                    </div>
 
-                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Syllabus Coverage (Chapters)</label>
-                   <textarea value={chapters} onChange={e => setChapters(e.target.value)} placeholder="e.g. Ch 1-4, Gravitation, Black Holes" className="w-full h-32 px-6 py-5 rounded-2xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 outline-none focus:ring-8 focus:ring-rose-500/5 transition-all font-bold text-sm resize-none" />
-                 </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Syllabus Coverage (Chapters)</label>
+                      <textarea value={chapters} onChange={e => setChapters(e.target.value)} placeholder="e.g. Ch 1-4, Gravitation, Black Holes" className="w-full h-32 px-6 py-5 rounded-2xl bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-white/10 outline-none focus:ring-8 focus:ring-rose-500/5 transition-all font-bold text-sm resize-none" />
+                    </div>
+                   </>
+                 ) : (
+                    <div className="space-y-6 animate-in slide-in-from-top-4">
+                       <div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-[2.5rem]">
+                          <div className="flex items-center gap-3 mb-6">
+                             <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-500"><Brain size={18} /></div>
+                             <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-700 dark:text-indigo-300">Neural Import</h4>
+                          </div>
+                          <textarea 
+                             value={bulkInput} 
+                             onChange={e => setBulkInput(e.target.value)} 
+                             placeholder="Paste raw questions, marks, and answer keys here. Gemini will deconstruct them into structured data..." 
+                             className="w-full h-48 bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl p-5 text-xs font-medium outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none"
+                          />
+                          <button 
+                             onClick={handleBulkImport} 
+                             disabled={isParsing || !bulkInput.trim()} 
+                             className="w-full mt-6 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                          >
+                             {isParsing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                             Synthesize Raw Data
+                          </button>
+                       </div>
+                       <button 
+                          onClick={addManualQuestion} 
+                          className="w-full py-5 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[2rem] text-slate-400 hover:text-rose-500 hover:border-rose-500 transition-all flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest"
+                       >
+                          <Plus size={16} /> Build Single Question Node
+                       </button>
+                    </div>
+                 )}
 
                  {activeMode === 'architect' && (
                    <div className="space-y-6 animate-in slide-in-from-top-4">
@@ -203,12 +317,43 @@ const ExamGenerator: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                  <button onClick={handleSynthesize} disabled={loading} className="w-full py-6 premium-gradient text-white rounded-[2.5rem] font-black uppercase tracking-widest text-sm flex items-center justify-center gap-4 shadow-2xl active:scale-95 disabled:opacity-50">
                     {loading ? <Loader2 size={24} className="animate-spin" /> : <Wand2 size={24} />}
-                    {loading ? 'Synthesizing Neural Paper...' : 'Synthesize Official Paper'}
+                    {loading ? 'Synthesizing Neural Paper...' : activeMode === 'manual' ? 'Staging Manual Paper' : 'Synthesize Official Paper'}
                  </button>
               </div>
 
               {paper && (
-                <div className="mt-4 pt-8 border-t border-slate-100 dark:border-white/10">
+                <div className="mt-4 pt-8 border-t border-slate-100 dark:border-white/10 space-y-8 animate-in slide-in-from-top-4 duration-500">
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 mb-2">
+                       <Settings size={14} className="text-rose-500" />
+                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Export Personalization</h3>
+                    </div>
+                    <div className="space-y-4">
+                       <div>
+                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Custom Exam Title</label>
+                         <input 
+                            type="text" 
+                            value={customTitle} 
+                            onChange={e => setCustomTitle(e.target.value)} 
+                            placeholder="Override title..." 
+                            className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 outline-none font-bold text-xs" 
+                         />
+                       </div>
+                       <div>
+                         <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1 flex items-center gap-1">
+                            <User size={10} /> Add Student Name
+                         </label>
+                         <input 
+                            type="text" 
+                            value={studentName} 
+                            onChange={e => setStudentName(e.target.value)} 
+                            placeholder="e.g. Marcus Aurelius" 
+                            className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 outline-none font-bold text-xs" 
+                         />
+                       </div>
+                    </div>
+                  </div>
+
                   {!guestCode ? (
                     <button 
                       onClick={generateGuestLink}
@@ -269,11 +414,77 @@ const ExamGenerator: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Balancing Syllabus Weightage & Bloom's Taxonomy</p>
                        </div>
                     </div>
+                 ) : activeMode === 'manual' && !paper ? (
+                    <div className="animate-in fade-in duration-700 space-y-12 pb-20">
+                       <div className="flex items-center justify-between border-b-2 border-slate-100 dark:border-white/5 pb-8">
+                          <div>
+                            <h2 className="text-3xl font-black uppercase tracking-tighter">Drafting Table</h2>
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Staging {manualQuestions.length} Synthesis Nodes</p>
+                          </div>
+                          <button onClick={() => setManualQuestions([])} className="text-[9px] font-black uppercase text-red-500 hover:underline">Clear Roster</button>
+                       </div>
+
+                       <div className="space-y-8">
+                          {manualQuestions.map((q, idx) => (
+                             <div key={idx} className="bg-white dark:bg-black/40 p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-sm relative group animate-in slide-in-from-right-4" style={{ animationDelay: `${idx * 50}ms` }}>
+                                <button onClick={() => removeManualQuestion(idx)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-red-500 transition-colors"><X size={16} /></button>
+                                
+                                <div className="flex items-start gap-6">
+                                   <div className="w-10 h-10 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 flex items-center justify-center text-xs font-black shadow-md flex-shrink-0">{idx + 1}</div>
+                                   <div className="flex-1 space-y-6">
+                                      <textarea 
+                                         value={q.question} 
+                                         onChange={e => updateManualQuestion(idx, 'question', e.target.value)} 
+                                         className="w-full bg-transparent border-none outline-none font-bold text-lg text-slate-800 dark:text-white resize-none" 
+                                      />
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                         <div>
+                                            <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Marks</label>
+                                            <input type="number" value={q.marks} onChange={e => updateManualQuestion(idx, 'marks', Number(e.target.value))} className="w-full bg-slate-50 dark:bg-white/5 rounded-lg p-2 text-xs font-black" />
+                                         </div>
+                                         <div>
+                                            <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Level</label>
+                                            <select value={q.bloomLevel} onChange={e => updateManualQuestion(idx, 'bloomLevel', e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 rounded-lg p-2 text-[10px] font-black">
+                                               {['Knowledge', 'Understanding', 'Application', 'Analysis', 'Evaluation', 'Creation'].map(l => <option key={l} value={l}>{l}</option>)}
+                                            </select>
+                                         </div>
+                                         <div>
+                                            <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Type</label>
+                                            <select value={q.type} onChange={e => updateManualQuestion(idx, 'type', e.target.value as any)} className="w-full bg-slate-50 dark:bg-white/5 rounded-lg p-2 text-[10px] font-black">
+                                               {['MCQ', 'SHORT', 'LONG'].map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                         </div>
+                                         <div>
+                                            <label className="text-[8px] font-black text-slate-400 uppercase block mb-1">Time</label>
+                                            <input type="text" value={q.estimatedTime} onChange={e => updateManualQuestion(idx, 'estimatedTime', e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 rounded-lg p-2 text-xs font-black" />
+                                         </div>
+                                      </div>
+                                      <div className="pt-4 border-t border-slate-100 dark:border-white/5">
+                                         <label className="text-[8px] font-black text-slate-400 uppercase block mb-2">Answer Key / Logic</label>
+                                         <textarea 
+                                            value={q.answerKey} 
+                                            onChange={e => updateManualQuestion(idx, 'answerKey', e.target.value)} 
+                                            className="w-full bg-slate-50 dark:bg-white/5 rounded-xl p-4 text-xs font-medium italic text-slate-500 resize-none h-20" 
+                                         />
+                                      </div>
+                                   </div>
+                                </div>
+                             </div>
+                          ))}
+
+                          {manualQuestions.length === 0 && (
+                             <div className="h-64 flex flex-col items-center justify-center opacity-10">
+                                <Plus size={64} />
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] mt-6">Awaiting Synthesis Input</p>
+                             </div>
+                          )}
+                       </div>
+                    </div>
                  ) : paper ? (
                     <div className="animate-in fade-in duration-1000 space-y-12">
                        <div className="text-center space-y-2 border-b-4 border-slate-900 dark:border-white pb-8">
                           <h2 className="text-3xl font-black uppercase tracking-tighter">Horizon Academy Global</h2>
-                          <p className="text-lg font-bold text-slate-500 dark:text-slate-400">{paper.title} {showAnswerKey && '(MASTER KEY)'}</p>
+                          <p className="text-lg font-bold text-slate-500 dark:text-slate-400">{customTitle || paper.title} {showAnswerKey && '(MASTER KEY)'}</p>
                        </div>
 
                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6 border border-slate-200 dark:border-white/10 rounded-3xl bg-white dark:bg-black/40">

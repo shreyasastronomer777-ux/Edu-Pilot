@@ -15,6 +15,8 @@ export enum View {
   EXAM_GENERATOR = 'EXAM_GENERATOR',
   PPT_GENERATOR = 'PPT_GENERATOR',
   GUEST_ASSESSMENT = 'GUEST_ASSESSMENT',
+  STUDY_PATH = 'STUDY_PATH',
+  NEURAL_NETWORK = 'NEURAL_NETWORK',
   // Student Views
   FLASHCARDS = 'FLASHCARDS',
   STUDY_NOTES = 'STUDY_NOTES',
@@ -77,6 +79,19 @@ export interface SlideDeck {
 export interface PPTProject {
   outline: SlideDeck;
   vbaScript: string;
+}
+
+export interface StudyPathData {
+  topic: string;
+  duration: string;
+  milestones: {
+    id: string;
+    title: string;
+    objective: string;
+    keyConcepts: string[];
+    resources: string[];
+    masteryCheck: string;
+  }[];
 }
 
 export interface BrainBreak {

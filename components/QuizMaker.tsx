@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { generateQuizFromSource } from '../services/geminiService';
 import { Quiz } from '../types';
@@ -22,7 +23,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
 
   const [history, setHistory] = useState<Quiz[]>(() => {
     const saved = localStorage.getItem('svgpt_quiz_history');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? (JSON.parse(saved) as Quiz[]).filter(q => q && q.title) : [];
   });
 
   useEffect(() => {
@@ -61,8 +62,8 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
         mimeType: sourceType === 'file' ? fileData?.type : undefined
       }, 10);
       setQuiz(result);
-      setCustomTitle(result.title); // Initialize custom title with AI generated one
-      if (!history.find(h => h.title === result.title)) {
+      setCustomTitle(result?.title || 'Synthesized Quiz'); 
+      if (result && result.title && !history.find(h => h.title === result.title)) {
         setHistory([result, ...history]);
       }
     } catch (e) {
@@ -85,7 +86,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
     if (!printWindow) return;
 
     const isAnswerKey = type === 'answer-key';
-    const activeTitle = customTitle || quiz.title;
+    const activeTitle = customTitle || quiz.title || 'Academic Assessment';
 
     printWindow.document.write(`
       <html>
@@ -120,14 +121,14 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
             <div>Student Name: ${studentName || '____________________________________'}</div>
             <div>Date: ____________________</div>
           </div>
-          ${quiz.questions.map((q, i) => `
+          ${quiz.questions?.map((q, i) => `
             <div class="q">
               <div class="q-header">
                 <div class="q-num">${i + 1}</div>
                 <div class="q-text">${q.question}</div>
               </div>
               <div class="options">
-                ${q.options.map(opt => `
+                ${q.options?.map(opt => `
                   <div class="opt ${isAnswerKey && opt === q.correctAnswer ? 'correct' : ''}">
                     ${isAnswerKey && opt === q.correctAnswer ? '✓ ' : '□ '} ${opt}
                   </div>
@@ -135,7 +136,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
               </div>
               ${isAnswerKey ? `<div class="explanation"><strong>Rationale:</strong> ${q.explanation}</div>` : ''}
             </div>
-          `).join('')}
+          `).join('') || '<div class="italic">No question data available.</div>'}
           <div class="footer">Synthesized by SVGPT Neural Engine • Verified Academic Output</div>
           <script>window.onload = () => { window.print(); window.close(); }</script>
         </body>
@@ -146,7 +147,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
 
   const downloadJSON = () => {
     if (!quiz) return;
-    const activeTitle = customTitle || quiz.title;
+    const activeTitle = customTitle || quiz.title || 'Synthesized Quiz';
     const exportData = { ...quiz, title: activeTitle, studentIdentity: studentName };
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -157,7 +158,6 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
     URL.revokeObjectURL(url);
   };
 
-  // Fixed component return to render UI and added default export
   return (
     <div className="max-w-6xl mx-auto pb-20 animate-in fade-in duration-700">
       <div className="mb-8 flex items-center justify-between">
@@ -224,7 +224,7 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
                <div className="flex flex-wrap items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100 dark:border-white/5">
                   <div className="flex items-center gap-4">
                     <CheckCircle2 className="text-green-500" size={24} />
-                    <h3 className="text-xl font-black tracking-tight uppercase text-slate-900 dark:text-white">{quiz.title}</h3>
+                    <h3 className="text-xl font-black tracking-tight uppercase text-slate-900 dark:text-white">{quiz.title || "Synthesized Result"}</h3>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => exportPDF('assessment')} className="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-600 hover:text-white transition-all" title="Export PDF"><FileDown size={18}/></button>
@@ -234,18 +234,18 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
                </div>
 
                <div className="space-y-8">
-                  {quiz.questions.map((q, i) => (
+                  {quiz.questions?.map((q, i) => (
                     <div key={i} className="p-6 bg-slate-50 dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5">
                        <p className="font-bold text-slate-900 dark:text-white mb-4">Q{i+1}: {q.question}</p>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {q.options.map((opt, oi) => (
+                          {q.options?.map((opt, oi) => (
                             <div key={oi} className={`p-3 rounded-lg border text-xs font-bold ${opt === q.correctAnswer ? 'bg-green-50 dark:bg-green-900/20 border-green-200 text-green-700' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/5 text-slate-500'}`}>
                                {opt}
                             </div>
                           ))}
                        </div>
                     </div>
-                  ))}
+                  )) || <div className="italic text-slate-400">No question modules synthesized.</div>}
                </div>
             </div>
           )}
@@ -260,10 +260,10 @@ const QuizMaker: React.FC<QuizMakerProps> = ({ onBack }) => {
               {history.map((item, idx) => (
                  <div key={idx} onClick={() => setQuiz(item)} className="bg-white dark:bg-white/[0.03] p-5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:border-orange-500/30 transition-all cursor-pointer group">
                     <div className="flex justify-between items-start mb-2">
-                       <h4 className="text-xs font-black text-slate-900 dark:text-white truncate pr-4">{item.title}</h4>
+                       <h4 className="text-xs font-black text-slate-900 dark:text-white truncate pr-4">{item.title || "Untitled Quiz"}</h4>
                        <button onClick={(e) => { e.stopPropagation(); deleteFromHistory(item.title); }} className="text-slate-300 hover:text-red-500"><Trash2 size={14}/></button>
                     </div>
-                    <span className="text-[8px] font-black uppercase text-slate-400">{item.questions.length} Questions Synthesized</span>
+                    <span className="text-[8px] font-black uppercase text-slate-400">{item.questions?.length || 0} Questions Synthesized</span>
                  </div>
               ))}
            </div>

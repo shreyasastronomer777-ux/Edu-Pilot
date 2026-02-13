@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { View, Role } from '../types';
-import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Users, Moon, Sun, Layers, PenTool, Timer, Mic, Bot, BrainCircuit, Sparkles, MessageSquare, Layout, FileDown, Compass, FileQuestion, ScrollText, Presentation } from 'lucide-react';
+import { LayoutDashboard, BookOpen, GraduationCap, Image as ImageIcon, CheckSquare, Moon, Sun, Layers, PenTool, Timer, Mic, BrainCircuit, Sparkles, MessageSquare, Layout, FileDown, Compass, ScrollText, Presentation, Route, Users } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 import { AIHeadIcon } from './Branding';
 
@@ -13,33 +14,34 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode, toggleTheme, userRole }) => {
-  const user = auth.currentUser;
-
   const getMenuItems = () => {
     switch (userRole) {
       case 'teacher':
         return [
           { id: View.DASHBOARD, label: 'Main Menu', icon: LayoutDashboard },
+          { id: View.NEURAL_NETWORK, label: 'Neural Network', icon: Users },
           { id: View.SV_CHATBOT, label: 'Chat Help', icon: MessageSquare },
-          { id: View.PPT_GENERATOR, label: 'PPT Studio', icon: Presentation },
-          { id: View.EXAM_GENERATOR, label: 'Exam Studio', icon: ScrollText },
+          { id: View.PPT_GENERATOR, label: 'Make PPTs', icon: Presentation },
+          { id: View.EXAM_GENERATOR, label: 'Make Exams', icon: ScrollText },
           { id: View.INSTANT_LESSON, label: 'Fast Planner', icon: Sparkles },
-          { id: View.LESSON_PLANNER, label: 'Make Lessons', icon: BookOpen },
-          { id: View.PATHFINDER_MAKER, label: 'Pathfinder', icon: Compass },
+          { id: View.LESSON_PLANNER, label: 'Lesson Maker', icon: BookOpen },
+          { id: View.PATHFINDER_MAKER, label: 'Study Maps', icon: Compass },
           { id: View.WORKSHEET_GENERATOR, label: 'Worksheets', icon: FileDown },
-          { id: View.QUIZ_MAKER, label: 'Make Quizzes', icon: GraduationCap },
+          { id: View.QUIZ_MAKER, label: 'Quizzes', icon: GraduationCap },
           { id: View.VISUAL_STUDIO, label: 'Make Images', icon: ImageIcon },
           { id: View.HOMEWORK_CHECKER, label: 'Check Work', icon: CheckSquare },
         ];
       case 'student':
         return [
           { id: View.DASHBOARD, label: 'My Study', icon: LayoutDashboard },
-          { id: View.EXAM_PREP, label: 'LESSON-TO-EXAM', icon: BrainCircuit },
+          { id: View.NEURAL_NETWORK, label: 'Collaboration', icon: Users },
+          { id: View.STUDY_PATH, label: 'Roadmap', icon: Route },
+          { id: View.EXAM_PREP, label: 'Practice Quiz', icon: BrainCircuit },
           { id: View.FOCUS_ROOM, label: 'Focus Time', icon: Timer },
           { id: View.DOUBT_SOLVER, label: 'Find Answers', icon: Mic },
-          { id: View.SVG_STUDY_CARD, label: 'SVG Blueprint', icon: Layout },
+          { id: View.SVG_STUDY_CARD, label: 'Diagrams', icon: Layout },
           { id: View.FLASHCARDS, label: 'Flashcards', icon: Layers },
-          { id: View.STUDY_NOTES, label: 'Study Notes', icon: PenTool },
+          { id: View.STUDY_NOTES, label: 'My Notes', icon: PenTool },
         ];
       default:
         return [];
@@ -57,13 +59,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
           </div>
           <div className="flex flex-col">
             <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">ENTRANCE</span>
-            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-2">AI Assistant</span>
+            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-2">AI Helper</span>
           </div>
         </div>
       </div>
       
       <nav className="flex-1 px-5 space-y-1.5 overflow-y-auto custom-scrollbar">
-        <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em] px-5 mb-6 mt-4">All Tools</div>
+        <div className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.3em] px-5 mb-6 mt-4">Tools</div>
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
@@ -74,10 +76,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-[1.25rem] transition-all duration-500 relative group overflow-hidden ${
                 isActive 
                   ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-950 shadow-2xl scale-[1.02]' 
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
               }`}
             >
-              <Icon size={20} className={`transition-transform duration-500 group-hover:scale-110 ${isActive ? '' : 'opacity-70 group-hover:opacity-100'}`} />
+              <Icon size={20} className={isActive ? '' : 'opacity-70'} />
               <span className="text-sm font-black tracking-tight uppercase">{item.label}</span>
             </button>
           );
@@ -85,14 +87,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
       </nav>
 
       <div className="p-8 mt-auto space-y-6">
-        <div className="p-5 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 shadow-inner">
+        <div className="p-5 rounded-[2rem] bg-slate-50 dark:bg-white/5 border border-slate-200 shadow-inner">
            <button 
              onClick={toggleTheme}
-             className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-sm transition-all"
+             className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 shadow-sm transition-all"
            >
              <div className="flex items-center gap-3">
                {isDarkMode ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-indigo-500" />}
-               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+               <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{isDarkMode ? 'Light' : 'Dark'}</span>
              </div>
            </button>
         </div>
@@ -101,5 +103,4 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isDarkMode
   );
 };
 
-// Fix: Added default export for Sidebar component
 export default Sidebar;

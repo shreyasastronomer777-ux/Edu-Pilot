@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { LessonPlanConfig, SlideDeck, Quiz, BrainBreak } from '../types';
 import { streamLessonPlan, generateSlidesFromLesson, generateQuizFromSource, generateBrainBreak, generateVisualAid, synthesizeSVGSlides } from '../services/geminiService';
@@ -203,7 +204,7 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>${quiz.title} - PDF Assessment</title>
+          <title>${quiz?.title || "Assessment"} - PDF Assessment</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
             body { font-family: 'Plus Jakarta Sans', sans-serif; padding: 60px; color: #1e293b; max-width: 800px; margin: 0 auto; line-height: 1.5; }
@@ -219,19 +220,19 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
         </head>
         <body>
           <div class="badge">Official Assessment</div>
-          <div class="header"><h1>${quiz.title}</h1></div>
+          <div class="header"><h1>${quiz?.title || "Assessment"}</h1></div>
           <div style="border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 40px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">
              Student Name: ____________________________________ <span style="float:right">Date: ________________</span>
           </div>
-          ${quiz.questions.map((q: any, i: number) => `
+          ${quiz?.questions?.map((q: any, i: number) => `
             <div class="q">
               <div class="q-num">${i + 1}</div>
-              <div class="q-text">${q.question}</div>
+              <div class="q-text">${q?.question || "Question"}</div>
               <div style="padding-left: 10px;">
-                ${q.options.map((opt: string) => `<div class="opt">□ ${opt}</div>`).join('')}
+                ${q?.options?.map((opt: string) => `<div class="opt">□ ${opt}</div>`).join('') || ""}
               </div>
             </div>
-          `).join('')}
+          `).join('') || ""}
           <div class="footer">Synthesized via SVGPT AI Architect Core</div>
           <script>window.onload = () => { window.print(); window.close(); }</script>
         </body>
@@ -449,14 +450,14 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2">
               {filteredHistory.map(p => (
-                <div key={p.id} onClick={() => loadPlan(p)} className="p-4 bg-white dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5 hover:border-indigo-500/30 cursor-pointer group transition-all">
+                <div key={p?.id || Math.random()} onClick={() => loadPlan(p)} className="p-4 bg-white dark:bg-black/20 rounded-2xl border border-slate-100 dark:border-white/5 hover:border-indigo-500/30 cursor-pointer group transition-all">
                   <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-xs font-black text-slate-900 dark:text-white truncate pr-4">{p.config.topic}</h4>
+                    <h4 className="text-xs font-black text-slate-900 dark:text-white truncate pr-4">{p?.config?.topic || "Untitled"}</h4>
                     <button onClick={(e) => { e.stopPropagation(); setSavedPlans(savedPlans.filter(sp => sp.id !== p.id)); }} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500"><Trash2 size={12}/></button>
                   </div>
                   <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-400">
-                    <span>{p.config.subject}</span>
-                    <span>{p.date}</span>
+                    <span>{p?.config?.subject}</span>
+                    <span>{p?.date}</span>
                   </div>
                 </div>
               ))}
@@ -537,10 +538,10 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
                           <div className="bg-slate-900 rounded-[3rem] p-12 text-white relative overflow-hidden aspect-video flex flex-col justify-center shadow-3xl">
                              <div className="absolute top-0 right-0 p-8 opacity-20"><Presentation size={180} /></div>
                              <div className="relative z-10">
-                                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-6 block">Module Slide {activeSlideIndex + 1} / {exportData.data.slides.length}</span>
-                                <h3 className="text-5xl font-[900] tracking-tighter uppercase mb-10 leading-[0.9]">{exportData.data.slides[activeSlideIndex].title}</h3>
+                                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-400 mb-6 block">Module Slide {activeSlideIndex + 1} / {exportData.data?.slides?.length || 0}</span>
+                                <h3 className="text-5xl font-[900] tracking-tighter uppercase mb-10 leading-[0.9]">{exportData.data?.slides?.[activeSlideIndex]?.title || "Untitled"}</h3>
                                 <ul className="space-y-5">
-                                   {exportData.data.slides[activeSlideIndex].content.map((c: string, idx: number) => (
+                                   {exportData.data?.slides?.[activeSlideIndex]?.content?.map((c: string, idx: number) => (
                                      <li key={idx} className="flex items-start gap-4 text-xl font-medium opacity-80">
                                         <div className="w-2 h-2 rounded-full bg-indigo-500 mt-3 flex-shrink-0"></div>
                                         {c}
@@ -568,7 +569,7 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
                           <div className="flex justify-center gap-4">
                              <button disabled={activeSlideIndex === 0} onClick={() => setActiveSlideIndex(prev => prev - 1)} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-500 hover:text-indigo-600 disabled:opacity-30"><ChevronLeft size={24}/></button>
                              <div className="flex items-center gap-2 px-8 bg-slate-50 dark:bg-black/20 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400">Node {activeSlideIndex + 1}</div>
-                             <button disabled={activeSlideIndex === exportData.data.slides.length - 1} onClick={() => setActiveSlideIndex(prev => prev + 1)} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-500 hover:text-indigo-600 disabled:opacity-30"><ChevronRight size={24}/></button>
+                             <button disabled={activeSlideIndex === (exportData.data?.slides?.length || 1) - 1} onClick={() => setActiveSlideIndex(prev => prev + 1)} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-500 hover:text-indigo-600 disabled:opacity-30"><ChevronRight size={24}/></button>
                           </div>
                        </div>
                     )}
@@ -580,14 +581,14 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
                           <div className="flex justify-center gap-4">
                              <button disabled={activeSlideIndex === 0} onClick={() => setActiveSlideIndex(prev => prev - 1)} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-500 hover:text-indigo-600 disabled:opacity-30"><ChevronLeft size={24}/></button>
                              <div className="flex items-center gap-2 px-8 bg-slate-50 dark:bg-black/20 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-400">Asset {activeSlideIndex + 1}</div>
-                             <button disabled={activeSlideIndex === exportData.data.length - 1} onClick={() => setActiveSlideIndex(prev => prev + 1)} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-500 hover:text-indigo-600 disabled:opacity-30"><ChevronRight size={24}/></button>
+                             <button disabled={activeSlideIndex === (exportData.data?.length || 1) - 1} onClick={() => setActiveSlideIndex(prev => prev + 1)} className="p-4 bg-slate-100 dark:bg-white/5 rounded-2xl text-slate-500 hover:text-indigo-600 disabled:opacity-30"><ChevronRight size={24}/></button>
                           </div>
                        </div>
                     )}
                     {exportData.type === 'quiz' && (
                        <div className="space-y-10">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-3xl font-[900] tracking-tighter uppercase">{exportData.data.title}</h3>
+                            <h3 className="text-3xl font-[900] tracking-tighter uppercase">{exportData.data?.title || "Assessment"}</h3>
                             <div className="flex gap-3">
                                <button onClick={exportQuizPDF} className="px-6 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 hover:bg-indigo-700 transition-all">
                                   <FileDown size={16} /> Export to PDF
@@ -598,11 +599,11 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
                             </div>
                           </div>
                           <div className="space-y-6">
-                             {exportData.data.questions.map((q: any, i: number) => (
+                             {exportData.data?.questions?.map((q: any, i: number) => (
                                <div key={i} className="p-8 bg-slate-50 dark:bg-black/40 rounded-[2.5rem] border border-slate-100 dark:border-white/5">
-                                  <p className="text-lg font-bold mb-6">Q{i+1}: {q.question}</p>
+                                  <p className="text-lg font-bold mb-6">Q{i+1}: {q?.question || "Question data missing"}</p>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                     {q.options.map((o: string, idx: number) => <div key={idx} className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/5 text-sm font-medium">□ {o}</div>)}
+                                     {q?.options?.map((o: string, idx: number) => <div key={idx} className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/5 text-sm font-medium">□ {o}</div>)}
                                   </div>
                                </div>
                              ))}
@@ -612,12 +613,12 @@ const LessonPlanner: React.FC<LessonPlannerProps> = ({ onBack }) => {
                     {exportData.type === 'break' && (
                        <div className="max-w-2xl mx-auto p-12 bg-indigo-500 rounded-[4rem] text-white text-center shadow-3xl relative overflow-hidden">
                           <div className="absolute top-0 left-0 p-8 opacity-10"><Gamepad2 size={140} /></div>
-                          <h3 className="text-4xl font-[900] tracking-tighter uppercase mb-4">{exportData.data.activityName}</h3>
+                          <h3 className="text-4xl font-[900] tracking-tighter uppercase mb-4">{exportData.data?.activityName || "Activity"}</h3>
                           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-200 mb-10">Neural Recalibration Phase</p>
                           <div className="space-y-4 text-left mb-10">
-                             {exportData.data.instructions.map((ins: string, idx: number) => <p key={idx} className="text-lg font-medium opacity-90 leading-relaxed">• {ins}</p>)}
+                             {exportData.data?.instructions?.map((ins: string, idx: number) => <p key={idx} className="text-lg font-medium opacity-90 leading-relaxed">• {ins}</p>)}
                           </div>
-                          <div className="p-6 bg-white/10 rounded-3xl border border-white/20 text-xs font-bold italic">Benefit: {exportData.data.pedagogicalBenefit}</div>
+                          <div className="p-6 bg-white/10 rounded-3xl border border-white/20 text-xs font-bold italic">Benefit: {exportData.data?.pedagogicalBenefit}</div>
                        </div>
                     )}
                  </div>

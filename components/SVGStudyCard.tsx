@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, Loader2, Sparkles, Wand2, X, ArrowLeft, BrainCircuit, Zap, CheckCircle2, FileText, Layout, Download, Copy, Trash2, Layers, AlertCircle, Image as ImageIcon, Palette, GraduationCap, ChevronRight, RotateCcw, FileDown, Printer, FileType, FileJson, Check } from 'lucide-react';
 import { synthesizeSVGDiagramAndCards, generateVisualAid } from '../services/geminiService';
@@ -67,7 +68,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       if (enrichedSvg.includes('<svg')) {
         // Enhance SVG for accessibility
         enrichedSvg = enrichedSvg.replace('<svg', `<svg role="img" aria-labelledby="blueprint-title" `);
-        enrichedSvg = enrichedSvg.replace('>', `><title id="blueprint-title">Synthesized academic diagram blueprint of ${output.quiz.title}</title>`);
+        enrichedSvg = enrichedSvg.replace('>', `><title id="blueprint-title">Synthesized academic diagram blueprint of ${output.quiz?.title || 'Diagram'}</title>`);
       }
       setResult({ ...output, svgCode: enrichedSvg });
       const currentPoints = Number(localStorage.getItem('svgpt_xp')) || 0;
@@ -98,13 +99,13 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     if (showExplanation) return;
     setSelectedOption(opt);
     setShowExplanation(true);
-    if (opt === result?.quiz.questions[currentQuizIndex].correctAnswer) {
+    if (opt === result?.quiz?.questions[currentQuizIndex]?.correctAnswer) {
       setQuizScore(prev => prev + 1);
     }
   };
 
   const nextQuizQuestion = () => {
-    if (currentQuizIndex < (result?.quiz.questions.length || 0) - 1) {
+    if (currentQuizIndex < (result?.quiz?.questions?.length || 0) - 1) {
       setCurrentQuizIndex(prev => prev + 1);
       setSelectedOption(null);
       setShowExplanation(false);
@@ -145,7 +146,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   const copySemanticData = () => {
     if (!result) return;
-    const text = `Title: ${result.quiz.title}\n\nFlashcards:\n${result.cards.map(c => `- ${c.front}: ${c.back}`).join('\n')}`;
+    const text = `Title: ${result.quiz?.title || 'Synthesis'}\n\nFlashcards:\n${result.cards?.map(c => `- ${c.front}: ${c.back}`).join('\n')}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -156,7 +157,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const title = result.quiz.title || "Academic Study Guide";
+    const title = result.quiz?.title || "Academic Study Guide";
     
     let content = '';
     
@@ -180,7 +181,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           <div class="badge">Recall Nodes</div>
           <h2>Active Recall Library</h2>
           <div class="card-grid">
-            ${result.cards.map(c => `
+            ${result.cards?.map(c => `
               <div class="p-card">
                 <div class="p-card-f"><strong>Front:</strong> ${c.front}</div>
                 <div class="p-card-b"><strong>Back:</strong> ${c.back}</div>
@@ -197,11 +198,11 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           <div class="badge">Assessment</div>
           <h2>Concept Evaluation: ${title}</h2>
           <div class="quiz-block">
-            ${result.quiz.questions.map((q, i) => `
+            ${result.quiz?.questions?.map((q, i) => `
               <div class="q-row">
                 <p><strong>Q${i + 1}:</strong> ${q.question}</p>
                 <div class="opts">
-                  ${q.options.map(o => `<span>□ ${o}</span>`).join('')}
+                  ${q.options?.map(o => `<span>□ ${o}</span>`).join('')}
                 </div>
               </div>
             `).join('')}
@@ -424,7 +425,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
                 {activeTab === 'cards' && (
                   <div className="grid grid-cols-1 gap-4">
-                    {result.cards.map((card, i) => (
+                    {result.cards?.map((card, i) => (
                       <div key={i} className="p-6 bg-slate-50 dark:bg-white/[0.02] rounded-3xl border border-slate-100 dark:border-white/5 hover:border-indigo-500/30 transition-all flex items-start gap-4 group">
                         <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-[10px] font-black text-indigo-500 shadow-sm">{i + 1}</div>
                         <div className="flex-1">
@@ -432,7 +433,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed italic">"{card.back}"</p>
                         </div>
                       </div>
-                    ))}
+                    )) || <div className="text-center text-slate-400 italic py-10">No cards synthesized.</div>}
                   </div>
                 )}
 
@@ -441,7 +442,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                     {/* Header matching user's "Artificial Intelligence Fundamentals" reference */}
                     <div className="bg-white dark:bg-white/[0.04] p-8 md:p-10 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl backdrop-blur-xl mb-10 flex flex-wrap items-center justify-between gap-6">
                         <h3 className="text-2xl md:text-3xl font-[900] text-slate-900 dark:text-white tracking-tighter uppercase leading-none">
-                            {result.quiz.title}
+                            {result.quiz?.title || "Concept Assessment"}
                         </h3>
                         <button 
                             onClick={() => exportPDF('assessment-only')}
@@ -451,7 +452,7 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                         </button>
                     </div>
 
-                    {!quizFinished ? (
+                    {!quizFinished && result.quiz?.questions ? (
                       <div className="flex-1 flex flex-col animate-in slide-in-from-right-4">
                          <div className="mb-8 flex justify-between items-center bg-indigo-500/5 p-4 rounded-2xl border border-indigo-500/10">
                             <div className="flex flex-col">
@@ -462,11 +463,11 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                          </div>
 
                          <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-10 leading-relaxed">
-                            {result.quiz.questions[currentQuizIndex].question}
+                            {result.quiz.questions[currentQuizIndex]?.question}
                          </h3>
 
                          <div className="space-y-3 flex-1">
-                            {result.quiz.questions[currentQuizIndex].options.map((opt, idx) => {
+                            {result.quiz.questions[currentQuizIndex]?.options?.map((opt, idx) => {
                                const isCorrect = opt === result.quiz.questions[currentQuizIndex].correctAnswer;
                                const isSelected = selectedOption === opt;
                                let btnClass = "w-full text-left p-5 rounded-2xl border-2 transition-all font-bold text-sm ";
@@ -484,14 +485,14 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                                      {opt}
                                   </button>
                                );
-                            })}
+                            }) || <div className="italic text-slate-400">Question options unavailable.</div>}
                          </div>
 
                          {showExplanation && (
                             <div className="mt-8 animate-in fade-in slide-in-from-bottom-2">
                                <div className="p-6 bg-slate-50 dark:bg-black/40 rounded-2xl border border-slate-200 dark:border-white/5 mb-6">
                                   <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed italic">
-                                     <strong>Feedback:</strong> {result.quiz.questions[currentQuizIndex].explanation}
+                                     <strong>Feedback:</strong> {result.quiz.questions[currentQuizIndex]?.explanation || "Neural node explanation missing."}
                                   </p>
                                </div>
                                <button onClick={nextQuizQuestion} className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-3 shadow-xl">
@@ -500,18 +501,20 @@ const SVGStudyCard: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                             </div>
                          )}
                       </div>
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-500">
+                    ) : quizFinished ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-700">
                          <div className="w-24 h-24 bg-indigo-500/10 rounded-[2.5rem] flex items-center justify-center text-indigo-500 mb-8 animate-bounce shadow-inner">
                             <GraduationCap size={48} />
                          </div>
                          <h2 className="text-4xl font-black tracking-tighter uppercase mb-2">Mastery Confirmed</h2>
-                         <p className="text-slate-500 dark:text-slate-400 mb-10 text-lg font-medium">Final Score: <span className="text-indigo-500 font-black">{quizScore} / {result.quiz.questions.length}</span></p>
+                         <p className="text-slate-500 dark:text-slate-400 mb-10 text-lg font-medium">Final Score: <span className="text-indigo-500 font-black">{quizScore} / {result.quiz?.questions?.length || 0}</span></p>
                          <div className="flex gap-4">
                             <button onClick={restartQuiz} className="px-10 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all">Repeat Cycle</button>
                             <button onClick={() => setActiveTab('blueprint')} className="px-10 py-4 bg-white dark:bg-slate-800 text-slate-500 rounded-2xl font-black uppercase text-xs tracking-widest border border-slate-200 dark:border-white/10 hover:bg-slate-50 transition-all">Study Blueprint</button>
                          </div>
                       </div>
+                    ) : (
+                      <div className="text-center text-slate-400 italic py-10">Quiz data unavailable for this blueprint.</div>
                     )}
                   </div>
                 )}

@@ -16,9 +16,9 @@ const GuestAssessment: React.FC<GuestAssessmentProps> = ({ paper, onFinish }) =>
 
   useEffect(() => {
     // Parse duration string e.g. "120 mins"
-    const mins = parseInt(paper.duration) || 60;
+    const mins = parseInt(paper?.duration || "60") || 60;
     setTimeLeft(mins * 60);
-  }, [paper.duration]);
+  }, [paper?.duration]);
 
   useEffect(() => {
     if (timeLeft > 0 && !isFinished) {
@@ -44,7 +44,7 @@ const GuestAssessment: React.FC<GuestAssessmentProps> = ({ paper, onFinish }) =>
     return `${hrs > 0 ? hrs + ':' : ''}${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const currentSection = paper.sections[currentSectionIndex];
+  const currentSection = paper?.sections?.[currentSectionIndex];
 
   if (isFinished) {
     return (
@@ -54,7 +54,7 @@ const GuestAssessment: React.FC<GuestAssessmentProps> = ({ paper, onFinish }) =>
         </div>
         <h2 className="text-5xl font-[900] tracking-tighter uppercase mb-4">Submission Verified</h2>
         <p className="text-slate-500 dark:text-slate-400 font-medium text-xl mb-12 max-w-md">
-          Your neural assessment for <span className="text-indigo-500 font-bold">{paper.subject}</span> has been archived and staged for educator review.
+          Your neural assessment for <span className="text-indigo-500 font-bold">{paper?.subject || "Subject"}</span> has been archived and staged for educator review.
         </p>
         <div className="p-8 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[3rem] shadow-sm mb-12 w-full">
            <div className="flex justify-between items-center px-6">
@@ -65,7 +65,7 @@ const GuestAssessment: React.FC<GuestAssessmentProps> = ({ paper, onFinish }) =>
               <div className="w-px h-10 bg-slate-100 dark:bg-white/5"></div>
               <div className="text-right">
                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-1">Time Logged</span>
-                 <span className="text-xl font-black uppercase text-indigo-500">{paper.duration}</span>
+                 <span className="text-xl font-black uppercase text-indigo-500">{paper?.duration || "N/A"}</span>
               </div>
            </div>
         </div>
@@ -79,6 +79,10 @@ const GuestAssessment: React.FC<GuestAssessmentProps> = ({ paper, onFinish }) =>
     );
   }
 
+  if (!paper || !paper.sections) {
+    return <div className="text-center py-20 text-slate-400 font-black uppercase tracking-widest">Neural Paper Corrupted or Incomplete.</div>;
+  }
+
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-10 animate-in fade-in duration-700">
       <header className="flex flex-col md:flex-row justify-between items-end md:items-center gap-6 pb-10 border-b border-slate-200 dark:border-white/10">
@@ -87,7 +91,7 @@ const GuestAssessment: React.FC<GuestAssessmentProps> = ({ paper, onFinish }) =>
               <BrainCircuit size={32} />
            </div>
            <div>
-              <h1 className="text-4xl font-[900] tracking-tighter uppercase leading-none">{paper.title}</h1>
+              <h1 className="text-4xl font-[900] tracking-tighter uppercase leading-none">{paper?.title || "Assessment"}</h1>
               <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.3em] mt-2">Institutional Exam Mode Active</p>
            </div>
         </div>
@@ -124,52 +128,58 @@ const GuestAssessment: React.FC<GuestAssessmentProps> = ({ paper, onFinish }) =>
 
         <div className="lg:col-span-3">
            <div className="bg-white dark:bg-[#0B1221] rounded-[4rem] border border-slate-200 dark:border-white/10 shadow-sm p-12 md:p-16 min-h-[600px] flex flex-col">
-              <div className="mb-12">
-                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 text-indigo-500 text-[9px] font-black uppercase rounded-full mb-4">
-                    <Zap size={10} /> Section {currentSectionIndex + 1}
-                 </div>
-                 <h2 className="text-3xl font-black uppercase tracking-tight mb-2">{currentSection.name}</h2>
-                 <p className="text-slate-400 font-medium text-lg italic">{currentSection.description}</p>
-              </div>
-
-              <div className="space-y-16 flex-1">
-                 {currentSection.questions.map((q, qi) => (
-                    <div key={qi} className="group">
-                       <div className="flex items-start gap-8">
-                          <div className="w-12 h-12 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl flex items-center justify-center text-lg font-black shadow-lg flex-shrink-0">
-                             {qi + 1}
-                          </div>
-                          <div className="flex-1 space-y-8">
-                             <div className="flex justify-between items-start gap-4">
-                                <p className="text-2xl font-bold leading-tight">{q.question}</p>
-                                <span className="text-xs font-black text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded">[{q.marks}M]</span>
-                             </div>
-
-                             {q.options ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                   {q.options.map((opt, oi) => (
-                                      <button 
-                                        key={oi}
-                                        onClick={() => handleAnswerChange(`${currentSectionIndex}-${qi}`, opt)}
-                                        className={`w-full text-left p-6 rounded-3xl border-2 transition-all font-bold text-sm ${answers[`${currentSectionIndex}-${qi}`] === opt ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl scale-[1.02]' : 'bg-white dark:bg-black/20 border-slate-100 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:border-indigo-400'}`}
-                                      >
-                                         {opt}
-                                      </button>
-                                   ))}
-                                </div>
-                             ) : (
-                                <textarea 
-                                  value={answers[`${currentSectionIndex}-${qi}`] || ''}
-                                  onChange={(e) => handleAnswerChange(`${currentSectionIndex}-${qi}`, e.target.value)}
-                                  placeholder="Formulate your logical response here..."
-                                  className="w-full h-48 p-8 rounded-[2.5rem] bg-slate-50 dark:bg-black/40 border border-slate-100 dark:border-white/5 outline-none focus:ring-8 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-lg shadow-inner resize-none"
-                                />
-                             )}
-                          </div>
-                       </div>
+              {currentSection ? (
+                <>
+                  <div className="mb-12">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/10 text-indigo-500 text-[9px] font-black uppercase rounded-full mb-4">
+                        <Zap size={10} /> Section {currentSectionIndex + 1}
                     </div>
-                 ))}
-              </div>
+                    <h2 className="text-3xl font-black uppercase tracking-tight mb-2">{currentSection.name}</h2>
+                    <p className="text-slate-400 font-medium text-lg italic">{currentSection.description}</p>
+                  </div>
+
+                  <div className="space-y-16 flex-1">
+                    {currentSection.questions?.map((q, qi) => (
+                        <div key={qi} className="group">
+                          <div className="flex items-start gap-8">
+                              <div className="w-12 h-12 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-2xl flex items-center justify-center text-lg font-black shadow-lg flex-shrink-0">
+                                {qi + 1}
+                              </div>
+                              <div className="flex-1 space-y-8">
+                                <div className="flex justify-between items-start gap-4">
+                                    <p className="text-2xl font-bold leading-tight">{q.question}</p>
+                                    <span className="text-xs font-black text-slate-400 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded">[{q.marks}M]</span>
+                                </div>
+
+                                {q.options ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      {q.options.map((opt, oi) => (
+                                          <button 
+                                            key={oi}
+                                            onClick={() => handleAnswerChange(`${currentSectionIndex}-${qi}`, opt)}
+                                            className={`w-full text-left p-6 rounded-3xl border-2 transition-all font-bold text-sm ${answers[`${currentSectionIndex}-${qi}`] === opt ? 'bg-indigo-600 border-indigo-600 text-white shadow-xl scale-[1.02]' : 'bg-white dark:bg-black/20 border-slate-100 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:border-indigo-400'}`}
+                                          >
+                                            {opt}
+                                          </button>
+                                      ))}
+                                    </div>
+                                ) : (
+                                    <textarea 
+                                      value={answers[`${currentSectionIndex}-${qi}`] || ''}
+                                      onChange={(e) => handleAnswerChange(`${currentSectionIndex}-${qi}`, e.target.value)}
+                                      placeholder="Formulate your logical response here..."
+                                      className="w-full h-48 p-8 rounded-[2.5rem] bg-slate-50 dark:bg-black/40 border border-slate-100 dark:border-white/5 outline-none focus:ring-8 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-lg shadow-inner resize-none"
+                                    />
+                                )}
+                              </div>
+                          </div>
+                        </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center italic text-slate-400">Section content unavailable.</div>
+              )}
 
               <div className="mt-20 pt-10 border-t border-slate-100 dark:border-white/5 flex justify-between">
                  <button 

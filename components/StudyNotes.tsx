@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PenTool, Search, Plus, Tag, X, Save, Sparkles, Loader2, FileUp, FileText, Image as ImageIcon, Wand2, Trash2, Pin, PinOff } from 'lucide-react';
+import { PenTool, Search, Plus, Tag, X, Save, Sparkles, Loader2, FileUp, FileText, Image as ImageIcon, Wand2, Trash2, Pin, PinOff, Share2, Check } from 'lucide-react';
 import { generateRevisionInsights } from '../services/geminiService';
 import { auth } from '../firebaseConfig';
 
@@ -20,7 +20,12 @@ const StudyNotes: React.FC = () => {
 
   const [notes, setNotes] = useState<Note[]>(() => {
     const saved = localStorage.getItem(storageKey);
-    const parsed = saved ? JSON.parse(saved) : [];
+    let parsed: Note[] = [];
+    try {
+      parsed = saved ? JSON.parse(saved).filter(Boolean) : [];
+    } catch (e) {
+      parsed = [];
+    }
     
     // Create a default welcome note if the archive is empty
     if (parsed.length === 0) {
@@ -41,6 +46,7 @@ const StudyNotes: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [shareCode, setShareCode] = useState<Record<string, string>>({});
   
   const [newTitle, setNewTitle] = useState('');
   const [newSubject, setNewSubject] = useState('General');
@@ -108,12 +114,18 @@ const StudyNotes: React.FC = () => {
     setNotes(notes.map(n => n.id === id ? { ...n, isPinned: !n.isPinned } : n));
   };
 
+  const transmitNode = (id: string) => {
+    const code = `NK-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    setShareCode(prev => ({ ...prev, [id]: code }));
+    setTimeout(() => setShareCode(prev => ({ ...prev, [id]: '' })), 5000);
+  };
+
   const filteredNotes = notes
-    .filter(n => 
-      n.title.toLowerCase().includes(search.toLowerCase()) || 
-      n.subject.toLowerCase().includes(search.toLowerCase()) ||
-      n.content.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter(n => n && (
+      n.title?.toLowerCase().includes(search.toLowerCase()) || 
+      n.subject?.toLowerCase().includes(search.toLowerCase()) ||
+      n.content?.toLowerCase().includes(search.toLowerCase())
+    ))
     .sort((a, b) => (a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1));
 
   return (
@@ -154,26 +166,40 @@ const StudyNotes: React.FC = () => {
        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-10">
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredNotes.map(note => (
-              <div key={note.id} className={`group relative bg-white dark:bg-white/[0.03] p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl transition-all duration-500 ${note.color}`}>
+              <div key={note?.id || Math.random()} className={`group relative bg-white dark:bg-white/[0.03] p-8 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-2xl transition-all duration-500 ${note?.color || "bg-slate-100"}`}>
                  <div className="flex justify-between items-start mb-6">
                     <span className="px-3 py-1 bg-white/60 dark:bg-black/20 rounded-full text-[9px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 border border-black/5 dark:border-white/5">
-                      {note.subject}
+                      {note?.subject}
                     </span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => togglePin(note.id)} className={`p-1.5 rounded-lg transition-colors ${note.isPinned ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:text-indigo-500'}`}>
-                        {note.isPinned ? <Pin size={14} /> : <PinOff size={14} />}
+                      <button onClick={() => togglePin(note.id)} className={`p-1.5 rounded-lg transition-colors ${note?.isPinned ? 'text-indigo-600 bg-indigo-50' : 'text-slate-300 hover:text-indigo-500'}`}>
+                        {note?.isPinned ? <Pin size={14} /> : <PinOff size={14} />}
                       </button>
-                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{note.date}</span>
+                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{note?.date}</span>
                     </div>
                  </div>
-                 <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{note.title}</h3>
-                 <p className="text-slate-600 dark:text-slate-300 text-sm font-medium leading-relaxed whitespace-pre-wrap line-clamp-[6]">{note.content}</p>
+                 <h3 className="text-xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{note?.title}</h3>
+                 <p className="text-slate-600 dark:text-slate-300 text-sm font-medium leading-relaxed whitespace-pre-wrap line-clamp-[6]">{note?.content}</p>
                  
                  <div className="absolute top-4 right-12 opacity-0 group-hover:opacity-100 transition-all flex gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); if(confirm('Delete permanently?')) setNotes(notes.filter(n => n.id !== note.id)); }} className="p-2.5 bg-red-500 text-white rounded-xl shadow-lg hover:scale-110 active:scale-90 transition-all">
+                    <button 
+                      onClick={() => transmitNode(note.id)}
+                      className={`p-2.5 rounded-xl shadow-lg hover:scale-110 active:scale-90 transition-all ${shareCode[note.id] ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-slate-800 text-indigo-500'}`}
+                    >
+                      {shareCode[note.id] ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); if(confirm('Delete permanently?')) setNotes(notes.filter(n => n.id !== note.id)); }} className="p-2.5 bg-red-50 text-white rounded-xl shadow-lg hover:scale-110 active:scale-90 transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
                  </div>
+
+                 {shareCode[note.id] && (
+                   <div className="absolute inset-x-0 bottom-8 px-8 animate-in slide-in-from-bottom-2">
+                      <div className="bg-slate-900 text-white p-3 rounded-xl text-center text-[10px] font-mono font-black tracking-widest shadow-2xl">
+                         LINK: {shareCode[note.id]}
+                      </div>
+                   </div>
+                 )}
               </div>
             ))}
          </div>

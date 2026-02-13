@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -21,6 +22,8 @@ import PathfinderMaker from './components/PathfinderMaker';
 import ExamPrep from './components/ExamPrep';
 import ExamGenerator from './components/ExamGenerator';
 import PPTGenerator from './components/PPTGenerator';
+import StudyPath from './components/StudyPath';
+import NeuralNetwork from './components/NeuralNetwork';
 import GuestAssessment from './components/GuestAssessment';
 import RoleSelection from './components/RoleSelection';
 import SVChatbot from './components/SVChatbot';
@@ -118,6 +121,8 @@ const App: React.FC = () => {
       case View.EXAM_PREP: return <ExamPrep onBack={backToRoot} />;
       case View.EXAM_GENERATOR: return <ExamGenerator onBack={backToRoot} />;
       case View.PPT_GENERATOR: return <PPTGenerator onBack={backToRoot} />;
+      case View.STUDY_PATH: return <StudyPath onBack={backToRoot} />;
+      case View.NEURAL_NETWORK: return <NeuralNetwork onBack={backToRoot} onChangeView={setCurrentView} />;
       case View.GUEST_ASSESSMENT: return activeGuestExam ? <GuestAssessment paper={activeGuestExam} onFinish={() => setCurrentView(View.LANDING)} /> : null;
       case View.SV_CHATBOT: return <SVChatbot onBack={backToRoot} userRole={userRole === 'teacher' ? 'teacher' : 'student'} />;
       case View.INSTANT_LESSON: return <InstantLessonGenerator onBack={backToRoot} />;
